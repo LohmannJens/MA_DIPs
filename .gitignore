@@ -1,0 +1,3 @@
+*.sam.gz
+__pycache__/
+*.pyc

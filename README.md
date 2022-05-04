@@ -1,1 +1,1 @@
-# MA_DIPs
+# Master thesis about defective interfering particles (DIPs)
