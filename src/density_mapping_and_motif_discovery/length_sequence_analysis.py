@@ -22,12 +22,14 @@ from sklearn.linear_model import LinearRegression
 sys.path.insert(0, "..")
 from utils import SEGMENTS, get_seq_len, load_excel, load_short_reads
 
+
 data_folder = os.path.join("..", "..", "data", "alnaji2019")
 filepath = os.path.join(data_folder, "DI_Influenza_FA_JVI.xlsx")
 cleaned_data_dict = load_excel(filepath)
 
 short_reads_filepath = os.path.join(data_folder, "Small_deletionSize_FA.xlsx")
-short_reads_dict = load_short_reads(cleaned_data_dict, short_reads_filepath)
+all_reads_dict = load_short_reads(cleaned_data_dict, short_reads_filepath)
+
 
 # is used to check if the length of the deletions is very often modulo 3
 # would be an indication that keeping the codons is important
@@ -35,7 +37,7 @@ seq_len_modulo_dict = dict({'0': 0, '1': 0, '2': 0})
 
 # create a histogram for each line, indicating the length of the deletions
 # just to get an overview about the data
-for key, value in cleaned_data_dict.items():
+for key, value in all_reads_dict.items():
     # create a dict for each segment including the NGS read count
     count_dict = dict()
     for s in SEGMENTS:
@@ -56,7 +58,7 @@ for key, value in cleaned_data_dict.items():
     for i, s in enumerate(SEGMENTS):
         axs[i].hist(count_dict[s].keys(), weights=count_dict[s].values(), bins=50)
         axs[i].set_title(f"{s}")
-        axs[i].set_xlim(0, get_seq_len(key, s))
+        axs[i].set_xlim(left=0)
         axs[i].set_xlabel("deletion length")
     save_path = os.path.join("results", f"{key}_length_del_hist.pdf")
     plt.savefig(save_path)
@@ -64,7 +66,7 @@ for key, value in cleaned_data_dict.items():
 print(seq_len_modulo_dict)
 
 # uses 'Start' and 'End' to indicate where the deletions happen on the sequence
-for key, value in cleaned_data_dict.items():
+for key, value in all_reads_dict.items():
     # create a dict for each segment using Start and End
     count_dict = dict()
     for s in SEGMENTS:
@@ -79,7 +81,7 @@ for key, value in cleaned_data_dict.items():
     for i, s in enumerate(SEGMENTS):
         axs[i].hist(count_dict[s].keys(), weights=count_dict[s].values(), bins=50)
         axs[i].set_title(f"{s}")
-        axs[i].set_xlim(0, get_seq_len(key, s))
+        axs[i].set_xlim(left=0)
         axs[i].set_xlabel("sequence position")
     save_path = os.path.join("results", f"{key}_del_position.pdf")
     plt.savefig(save_path)

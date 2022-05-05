@@ -60,6 +60,6 @@ for key, value in cleaned_data_dict.items():
         axs[i].annotate(s, (x[ix], y[ix]))
     i += 1
 
-save_path = os.path.join("results", "num_del_vs_length.pdf")
+save_path = os.path.join("results", "regression_alnaji2019.pdf")
 plt.savefig(save_path)
 

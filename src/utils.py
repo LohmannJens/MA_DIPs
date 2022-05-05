@@ -64,15 +64,32 @@ def load_excel(path: str)-> dict:
 
 def load_short_reads(data_dict: dict, path: str)-> dict:
     '''
+        loads the short reads from extra excel file and adds them to an
+        existing dictionary.
+        :param data_dict: dictionary with longer deletions
+        :param path: path to the excel file with the short deletions
 
+        :return: gives a combined dictionary of both sources
     '''
-
-    # combine lineage 1 and 2 for each of the 4 strains
-
-
     # load short read excel as dict of dataframes
+    short_data_dict = pd.read_excel(io=path,
+                                    sheet_name=None,
+                                    header=0,
+                                    na_values=["", "None"],
+                                    keep_default_na=False)
 
+    # calculate length for all seqments and add as extra column
+    for key, value in short_data_dict.items():
+        value["Length"] = np.nan
+        for s in SEGMENTS:
+            seq_length = get_seq_len(f"{key}***", s)
+            length = value["Start"] + (seq_length - value["End"] + 1)
+            value.loc[value["Segment"] == s, "Length"] = length
+    
+    # merge each dataframe to the loaded dictionary with the short deletions
+    for key, value in data_dict.items():
+        short_data_dict[key[:-3]] = pd.concat([short_data_dict[key[:-3]], value])
 
-    # merge every dataframe in each of the four key, value pairs
+    return short_data_dict
 
 
