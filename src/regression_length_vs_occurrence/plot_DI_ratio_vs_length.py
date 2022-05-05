@@ -6,7 +6,8 @@ import matplotlib.pyplot as plt
 
 from sklearn.linear_model import LinearRegression
 
-xlsx_path = os.path.join("data", "SchwartzLowen_Fig3a_MdckP3.xlsx")
+
+xlsx_path = os.path.join("..", "..", "data", "schwartz2016", "SchwartzLowen_Fig3a_MdckP3.xlsx")
 df = pd.read_excel(xlsx_path, skiprows=[9,10,11,12])
 
 x = np.array(df["Length"]).reshape((-1, 1))
@@ -15,7 +16,7 @@ err = np.array(df["standard_deviation"])
 segments = np.array(df["Reference"])
 segments[5] = "NA"
 
-fig, ax = plt.subplots(figsize = (9, 9))
+fig, ax = plt.subplots(figsize = (10, 10))
 ax.scatter(x, y, s=60, alpha=0.7, edgecolors="k")
 ax.errorbar(x, y, yerr=err, fmt="o", capsize=5.0)
 
@@ -35,11 +36,12 @@ exp_model_x = model_x.reshape((1, -1))[0]
 exp_model = np.polyfit(exp_x, np.log(y), 1)
 ax.plot(exp_model_x, np.exp(exp_model[1]) * np.exp(exp_model[0] * exp_model_x), label="exponential model")
 
-ax.set_xlabel("sequence position")
+ax.set_xlabel("sequence length")
 ax.set_ylabel("ratio terminal/internal")
 ax.set_xlim(left=0)
+ax.set_ylim(bottom=0)
 plt.legend(loc="upper left")
-
+plt.suptitle("ratio of terminal to internal primers against sequence length")
 
 fig_path = os.path.join("results", "regression_internal_vs_external.pdf")
 plt.savefig(fig_path)

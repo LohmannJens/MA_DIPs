@@ -1,56 +1,33 @@
+'''
+Loads the Start and End points of the deletion sides from Alnaji 2019 and gives
+insights about the data distribution.
+
+1. Creates a histogram for each line in each strain containing the length of
+   the deletion sides multiplied by their occurence.
+
+2. Creates a plot where the start and end point of the deletion sides are
+   plotted onto the sequence.
+'''
+
 import os
+import sys
 
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
 
 from Bio import SeqIO
+from sklearn.linear_model import LinearRegression
 
+sys.path.insert(0, "..")
+from utils import SEGMENTS, get_seq_len, load_excel, load_short_reads
 
-SEGMENTS = ["PB2", "PB1", "PA", "NP", "HA", "NA", "M", "NS"]
+data_folder = os.path.join("..", "..", "data", "alnaji2019")
+filepath = os.path.join(data_folder, "DI_Influenza_FA_JVI.xlsx")
+cleaned_data_dict = load_excel(filepath)
 
-
-def get_seq_len(strain: str, seg:str)-> int:
-    '''
-        calculates the length of a specific segment.
-        uses a fasta file for that.
-        :param strain: name of the strain (including suffix "_l1" or "_l2")
-        :param seg: name of the segment of the strain
-
-        :return: returns the length of the sequence as int
-    '''
-    fasta_file = os.path.join("data", strain[:-3], f"{seg}.fasta")
-    return len(SeqIO.read(fasta_file, "fasta"))
-
-
-filepath = os.path.join("data", "DI_Influenza_FA_JVI.xlsx")
-data_dict = pd.read_excel(io=filepath,
-                          sheet_name=None,
-                          header=1,
-                          na_values=["", "None"],
-                          keep_default_na=False)
-
-# Splitting up the two lines in new data frames and cleaning NaN data
-# For l2 the columns get renamed, they get the same names as in l1
-# Cleaned data is stored in a dict, can be accessed by [datasetname]_[l1/l2]
-# dataset names are "Cal07", "NC", "Perth", "B_LEE"
-cleaned_data_dict = dict()
-for key, value in data_dict.items():
-    cleaned_data_dict[f"{key}_l1"] = data_dict[key].iloc[:, 0:4]
-    cleaned_data_dict[f"{key}_l2"] = data_dict[key].iloc[:, 5:9]
-
-    cleaned_data_dict[f"{key}_l1"].dropna(how="all", inplace=True)
-    cleaned_data_dict[f"{key}_l2"].dropna(how="all", inplace=True)
-
-    cleaned_data_dict[f"{key}_l2"].columns = cleaned_data_dict[f"{key}_l1"].columns 
-
-
-# calculate length for all seqments and add as extra column
-for key, value in cleaned_data_dict.items():
-    value["Length"] = np.nan
-    for s in SEGMENTS:
-        seq_length = get_seq_len(key, s)
-        value.loc[value["Segment"] == s, "Length"] = value["Start"] + (seq_length - value["End"] + 1)
+short_reads_filepath = os.path.join(data_folder, "Small_deletionSize_FA.xlsx")
+short_reads_dict = load_short_reads(cleaned_data_dict, short_reads_filepath)
 
 # is used to check if the length of the deletions is very often modulo 3
 # would be an indication that keeping the codons is important
@@ -59,12 +36,15 @@ seq_len_modulo_dict = dict({'0': 0, '1': 0, '2': 0})
 # create a histogram for each line, indicating the length of the deletions
 # just to get an overview about the data
 for key, value in cleaned_data_dict.items():
-    # create a dict for each segment using Start and End
+    # create a dict for each segment including the NGS read count
     count_dict = dict()
     for s in SEGMENTS:
         count_dict[s] = dict()
     for i, r in value.iterrows():
-        count_dict[r["Segment"]][r["Length"]] = r["NGS_read_count"]
+        if r["Length"] in count_dict[r["Segment"]]:
+            count_dict[r["Segment"]][r["Length"]] += r["NGS_read_count"]
+        else:
+            count_dict[r["Segment"]][r["Length"]] = r["NGS_read_count"]
 
     for seg_dict in count_dict.values():
         for k, v in seg_dict.items():
@@ -103,7 +83,3 @@ for key, value in cleaned_data_dict.items():
         axs[i].set_xlabel("sequence position")
     save_path = os.path.join("results", f"{key}_del_position.pdf")
     plt.savefig(save_path)
-
-
-
-
