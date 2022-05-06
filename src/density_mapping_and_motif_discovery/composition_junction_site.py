@@ -123,8 +123,10 @@ for k, v in sequence_list_dict.items():
         x += 0.2
 
     for i in range(2):
-        axs[i].set_xticks([1,2,3,4,5,6,7,8,9])
+        axs[i].axhline(y=0.25, c="black", ls="--", lw=0.5)
         axs[i].legend()
+        axs[i].set_ylim(top=0.8)
+        axs[i].set_xticks([1,2,3,4,5,6,7,8,9])
         axs[i].set_xlabel("position at junction side")
         axs[i].set_ylabel("relative occurrence")
         pos = "start" if i == 0 else "end"
