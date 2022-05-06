@@ -10,17 +10,25 @@ from Bio import SeqIO
 SEGMENTS = ["PB2", "PB1", "PA", "NP", "HA", "NA", "M", "NS"]
 
 
-def get_seq_len(strain: str, seg:str)-> int:
+def get_sequence(strain: str, seg: str)-> object:
+    '''
+        loads a DNA sequence by strain and segment.
+        :param strain: name of the strain
+        :param seg: name of the segment of the strain
+    '''
+    fasta_file = os.path.join("..", "..", "data", "alnaji2019", strain, f"{seg}.fasta")
+    return SeqIO.read(fasta_file, "fasta")
+
+def get_seq_len(strain: str, seg: str)-> int:
     '''
         calculates the length of a specific segment.
         uses a fasta file for that.
-        :param strain: name of the strain (including suffix "_l1" or "_l2")
+        :param strain: name of the strain
         :param seg: name of the segment of the strain
 
         :return: length of the sequence as int
     '''
-    fasta_file = os.path.join("..", "..", "data", "alnaji2019", strain[:-3], f"{seg}.fasta")
-    return len(SeqIO.read(fasta_file, "fasta"))
+    return len(get_sequence(strain, seg))
 
 def load_excel(path: str)-> dict:
     '''
@@ -56,7 +64,7 @@ def load_excel(path: str)-> dict:
     for key, value in cleaned_data_dict.items():
         value["Length"] = np.nan
         for s in SEGMENTS:
-            seq_length = get_seq_len(key, s)
+            seq_length = get_seq_len(key[:-3], s)
             length = value["Start"] + (seq_length - value["End"] + 1)
             value.loc[value["Segment"] == s, "Length"] = length
 
@@ -82,7 +90,7 @@ def load_short_reads(data_dict: dict, path: str)-> dict:
     for key, value in short_data_dict.items():
         value["Length"] = np.nan
         for s in SEGMENTS:
-            seq_length = get_seq_len(f"{key}***", s)
+            seq_length = get_seq_len(key, s)
             length = value["Start"] + (seq_length - value["End"] + 1)
             value.loc[value["Segment"] == s, "Length"] = length
     
