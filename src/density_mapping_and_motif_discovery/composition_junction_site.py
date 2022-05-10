@@ -1,7 +1,14 @@
 '''
 Loads the data for the deletion sides (start/end point) from Alnaji 2019.
+Does different analysis with the data.
+
+1.
 Takes a look at the nucleotide distribution around these points.
 Goal is to see if any of the four nucleotides occure more/less often.
+
+2.
+Compares the nucleotides before the junction start with the ones before
+the junction end site. Counts the number of nucleotides, that are the same.
 '''
 import os
 import sys
@@ -66,6 +73,33 @@ def count_nucleotide_occurrence(seq: str, p: int)-> dict:
     return r_dict
 
 
+def calculate_overlapping_nucleotides(seq: str, s: int, e: int)-> (int, str):
+    '''
+        calculates the number of overlapping nucleotides directly before start
+        and end of junction site.
+        :param seq: sequence where the overlap will be calculated on
+        :param s: start point of the junction site
+        :param e: end point of the junction site
+
+        :return: integer indicating the length of the overlapping sequence
+        :return: string of the overlapping sequence
+    '''
+    window_len = 10
+    start_window = seq[s-window_len: s]
+    end_window = seq[e-1-window_len: e-1]
+    counter = 0
+
+    for i in range(window_len - 1, -1, -1):
+        if start_window[i] == end_window[i]:
+            counter += 1
+        else:
+            break
+    return counter, str(start_window[i:window_len])
+
+
+
+
+# MAIN #
 data_folder = os.path.join("..", "..", "data", "alnaji2019")
 filepath = os.path.join(data_folder, "DI_Influenza_FA_JVI.xlsx")
 cleaned_data_dict = load_excel(filepath)
@@ -103,8 +137,10 @@ for key, value in all_reads_dict.items():
             nuc_count[n] = nuc_count[n] + whole_sequence.count(n)
     sequence_list_dict[key] = sequence_list
 
+
 '''
-# Loop over the different strains
+# Loop over the different strains and calculate the occurrence of each
+# nucleotide in the sequences
 for k, v in sequence_list_dict.items():
 
     count_start_dict = dict({"A": np.zeros(9), "C": np.zeros(9), "G": np.zeros(9), "U": np.zeros(9)})
@@ -145,48 +181,27 @@ for k, v in sequence_list_dict.items():
     plt.savefig(savepath)
 '''
 
-def calculate_overlapping_nucleotides(seq: str, s: int, e: int)-> int:
-    '''
-    calculates the number of overlapping nucleotides directly before start
-        and end of junction site.
-        :param seq: sequence where the overlap will be calculated on
-        :param s: start point of the junction site
-        :param e: end point of the junction site
 
-        :return: integer indicating the length of the overlapping sequence
-    '''
-    window_len = 10
-    start_window = seq[s-window_len: s]
-    end_window = seq[e-1-window_len: e-1]
-    counter = 0
-
-    for i in range(window_len - 1, -1, -1):
-        if start_window[i] == end_window[i]:
-            counter += 1
-        else:
-            break
-    return counter
-
-####
-#TODO
-#   Check if nucleotides directly before junction site have the same sequence
-#   as the ones directly before junction site at the end
+# Check if nucleotides directly before junction site have the same sequence
+# as the ones directly before junction site at the end
+overlap_seq_dict = dict()
 for k, v in sequence_list_dict.items():
     nuc_overlap_dict = dict({0: 0, 1: 0, 2: 0, 3: 0, 4: 0, 5: 0, 6: 0, 7: 0, 8: 0, 9: 0, 10:0})
 
     for seq_dict in v:
         sequence = seq_dict["WholeSequence"]
-        i = calculate_overlapping_nucleotides(sequence, seq_dict["Start"], seq_dict["End"])
+        i, overlap_seq = calculate_overlapping_nucleotides(sequence, seq_dict["Start"], seq_dict["End"])
         nuc_overlap_dict[i] += seq_dict["Count"]
+        if overlap_seq in overlap_seq_dict:
+            overlap_seq_dict[overlap_seq] += 1
+        else:
+            overlap_seq_dict[overlap_seq] = 1
 
     y = np.array([*nuc_overlap_dict.values()])
 
     def expected(x):
         return pow(0.25, x) * 0.75
-
     expected_values = np.fromfunction(expected, (11,), dtype=float)
-    print(expected_values)
-    print(nuc_overlap_dict.keys())
     plt.figure()
     plt.bar(x=nuc_overlap_dict.keys(), height=y/np.sum(y), width=-0.4, align="edge")
     plt.bar(x=list(nuc_overlap_dict.keys()), height=expected_values, width=0.4, align="edge")
@@ -197,6 +212,21 @@ for k, v in sequence_list_dict.items():
 
     savepath = os.path.join("results", f"{k}_overlapping_nucleotides.pdf")
     plt.savefig(savepath)
+    
+plot_dict = dict()
+for key, value in overlap_seq_dict.items():
+    if value >= 10:
+        plot_dict[key] = value
 
+plot_dict = {k: v for k, v in sorted(plot_dict.items(), key=lambda item: item[1], reverse=True)}
 
+plt.figure(figsize=(15, 5))
+plt.bar(x=plot_dict.keys(), height=plot_dict.values(), width=0.5)
+
+plt.xlabel("nucleotide sequence")
+plt.ylabel("absolute occurrence (without weight)")
+plt.title(f"occurrence of sequences that overlap at start and end")
+
+savepath = os.path.join("results", f"sequence_overlap_distribution.pdf")
+plt.savefig(savepath)
 
