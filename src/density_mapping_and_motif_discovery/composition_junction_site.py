@@ -98,6 +98,49 @@ def calculate_overlapping_nucleotides(seq: str, s: int, e: int)-> (int, str):
     return counter, str(start_window[i:window_len])
 
 
+def create_sequence_library(data_dict: dict)-> (dict, dict):
+    '''
+        gets the raw loaded sequence data, which is a dict over all strains.
+        In each dict the value is a data frame with the rows and columns from
+        the loaded excel file.
+        Creates the deletion sequence and saves it with other features as 
+        sequence length, ... in a dict.
+        :param data_dict: dictionary of the loaded excel
+
+        :return: dictionary with key for each strain. Value is a list where
+                 each entry is a dictionary that describes a sequence
+        :return: dictionary with the nucleotide count over all sequences
+    '''
+    sequence_list_dict = dict()
+    nuc_count = dict({"A": 0, "C": 0, "G": 0, "U": 0})
+
+    for k, v in data_dict.items():
+        sequence_list = list()
+        # loop over rows of value dataframe
+        for i, row in v.iterrows():
+            length = int(row["Length"])
+            count = int(row["NGS_read_count"])
+            start = int(row["Start"])
+            end = int(row["End"])
+            segment = row["Segment"]
+            del_sequence = create_sequence(start, end, k, segment, crop=True)
+            whole_sequence = create_sequence(start, end, k, segment, crop=False)
+        
+            entry_dict = dict({"Length": length,
+                               "Count": count,
+                               "Start": start,
+                               "End": end,
+                               "Segment": segment,
+                               "DelSequence": del_sequence,
+                               "WholeSequence": whole_sequence,
+                               "NucleotideCount": nuc_count})
+            sequence_list.append(entry_dict)
+        
+            for n in NUCLEOTIDES:
+                nuc_count[n] = nuc_count[n] + whole_sequence.count(n)
+        sequence_list_dict[k] = sequence_list
+    return sequence_list_dict, nuc_count
+
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Analyze NP density and junction site of deletions")
     parser.add_argument("-w", "--weighted", action="store_true")
@@ -113,36 +156,7 @@ if __name__ == "__main__":
     all_reads_dict = load_short_reads(cleaned_data_dict, short_reads_filepath)
 
     # Create a sequence library for each strain
-    sequence_list_dict = dict()
-    nuc_count = dict({"A": 0, "C": 0, "G": 0, "U": 0})
-
-    for key, value in all_reads_dict.items():
-        sequence_list = list()
-        # loop over rows of value dataframe
-        for i, row in value.iterrows():
-            length = int(row["Length"])
-            count = int(row["NGS_read_count"])
-            start = int(row["Start"])
-            end = int(row["End"])
-            segment = row["Segment"]
-            del_sequence = create_sequence(start, end, key, segment, crop=True)
-            whole_sequence = create_sequence(start, end, key, segment, crop=False)
-        
-            entry_dict = dict({"Length": length,
-                               "Count": count,
-                               "Start": start,
-                               "End": end,
-                               "Segment": segment,
-                               "DelSequence": del_sequence,
-                               "WholeSequence": whole_sequence,
-                               "NucleotideCount": nuc_count})
-            sequence_list.append(entry_dict)
-        
-            for n in NUCLEOTIDES:
-                nuc_count[n] = nuc_count[n] + whole_sequence.count(n)
-        sequence_list_dict[key] = sequence_list
-
-
+    sequence_list_dict, nuc_count = create_sequence_library(all_reads_dict)
 
     # Loop over the different strains and calculate the occurrence of each
     # nucleotide in the sequences
@@ -171,19 +185,25 @@ if __name__ == "__main__":
             axs[1].bar(x, height=count_end_dict[key]/normalize, width=0.2, label=key)
             x += 0.2
 
+        
         colors = dict({"A": "blue", "C": "yellow", "G": "green", "U": "red"})
 
         for i in range(2):
             for n in NUCLEOTIDES:
                 axs[i].axhline(y=float(nuc_count[n]/sum(nuc_count.values())), c=colors[n], ls="--", lw=0.5)
             axs[i].legend()
+            axs[i].margins(x=0)
+            axs[i].set_xlim(left=0.5)
             axs[i].set_ylim(top=0.8)
             axs[i].set_xticks([1,2,3,4,5,6,7,8,9])
             axs[i].set_xlabel("position at junction side")
             axs[i].set_ylabel("relative occurrence")
             pos = "start" if i == 0 else "end"
             axs[i].set_title(f"relative occurrence of nucleotides at {pos} of deletion site")
-
+        # make background after pos 5 grey for start and before 5 at end (deletion site)
+        axs[0].add_patch(plt.Rectangle((5.5, 0), 4, 1, color="grey", alpha=0.3))
+        axs[1].add_patch(plt.Rectangle((0.5, 0), 4, 1, color="grey", alpha=0.3))
+        
         savepath = os.path.join("results", f"{k}_relative_occurrence_nucleotides.pdf")
         plt.savefig(savepath)
 
