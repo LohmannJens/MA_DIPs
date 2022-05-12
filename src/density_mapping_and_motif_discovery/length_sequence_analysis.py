@@ -31,10 +31,6 @@ short_reads_filepath = os.path.join(data_folder, "Small_deletionSize_FA.xlsx")
 all_reads_dict = load_short_reads(cleaned_data_dict, short_reads_filepath)
 
 
-# is used to check if the length of the deletions is very often modulo 3
-# would be an indication that keeping the codons is important
-seq_len_modulo_dict = dict({'0': 0, '1': 0, '2': 0})
-
 # create a histogram for each line, indicating the length of the deletions
 # just to get an overview about the data
 for key, value in all_reads_dict.items():
@@ -48,10 +44,6 @@ for key, value in all_reads_dict.items():
         else:
             count_dict[r["Segment"]][r["Length"]] = r["NGS_read_count"]
 
-    for seg_dict in count_dict.values():
-        for k, v in seg_dict.items():
-            seq_len_modulo_dict[str(int(k % 3))] += v
-
     # create a subplot for each key, value pair in count_dict
     fig, axs = plt.subplots(8, 1, figsize=(10, 20), tight_layout=True)
     fig.suptitle(f"absolute occurrences of deletions for {key}", x=0.3)
@@ -63,7 +55,6 @@ for key, value in all_reads_dict.items():
     save_path = os.path.join("results", f"{key}_length_del_hist.pdf")
     plt.savefig(save_path)
 
-print(seq_len_modulo_dict)
 
 # uses 'Start' and 'End' to indicate where the deletions happen on the sequence
 for key, value in all_reads_dict.items():

@@ -97,7 +97,8 @@ def calculate_overlapping_nucleotides(seq: str, s: int, e: int)-> (int, str):
     return counter, str(start_window[i:window_len])
 
 
-
+# parameter #
+weighted = False
 
 # MAIN #
 data_folder = os.path.join("..", "..", "data", "alnaji2019")
@@ -138,7 +139,7 @@ for key, value in all_reads_dict.items():
     sequence_list_dict[key] = sequence_list
 
 
-'''
+
 # Loop over the different strains and calculate the occurrence of each
 # nucleotide in the sequences
 for k, v in sequence_list_dict.items():
@@ -151,10 +152,12 @@ for k, v in sequence_list_dict.items():
     for entry in v:
         seq_start_dict = count_nucleotide_occurrence(entry["WholeSequence"], entry["Start"]) 
         seq_end_dict = count_nucleotide_occurrence(entry["WholeSequence"], entry["End"])
-        normalize += entry["Count"]
+
+        weight = entry["Count"] if weighted else 1
+        normalize += weight
         for nuc in count_start_dict.keys():
-            count_start_dict[nuc] += seq_start_dict[nuc] * entry["Count"]
-            count_end_dict[nuc] += seq_end_dict[nuc] * entry["Count"]
+            count_start_dict[nuc] += seq_start_dict[nuc] * weight
+            count_end_dict[nuc] += seq_end_dict[nuc] * weight
 
     fig, axs = plt.subplots(2, 1, figsize=(5, 10), tight_layout=True)
     x = np.arange(0.7, 9.7, dtype=np.float64)
@@ -179,7 +182,7 @@ for k, v in sequence_list_dict.items():
 
     savepath = os.path.join("results", f"{k}_relative_occurrence_nucleotides.pdf")
     plt.savefig(savepath)
-'''
+
 
 
 # Check if nucleotides directly before junction site have the same sequence
@@ -191,11 +194,13 @@ for k, v in sequence_list_dict.items():
     for seq_dict in v:
         sequence = seq_dict["WholeSequence"]
         i, overlap_seq = calculate_overlapping_nucleotides(sequence, seq_dict["Start"], seq_dict["End"])
-        nuc_overlap_dict[i] += seq_dict["Count"]
+
+        weight = seq_dict["Count"] if weighted else 1
+        nuc_overlap_dict[i] += weight
         if overlap_seq in overlap_seq_dict:
-            overlap_seq_dict[overlap_seq] += 1
+            overlap_seq_dict[overlap_seq] += weight
         else:
-            overlap_seq_dict[overlap_seq] = 1
+            overlap_seq_dict[overlap_seq] = weight
 
     y = np.array([*nuc_overlap_dict.values()])
 
