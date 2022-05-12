@@ -48,7 +48,8 @@ if __name__ == "__main__":
         fig, axs = plt.subplots(8, 1, figsize=(10, 20), tight_layout=True)
         fig.suptitle(f"absolute occurrences of deletions for {key}", x=0.3)
         for i, s in enumerate(SEGMENTS):
-            axs[i].hist(count_dict[s].keys(), weights=count_dict[s].values(), bins=50)
+            #axs[i].bar(count_dict[s].keys(), height=count_dict[s].values())
+            axs[i].hist(count_dict[s].keys(), weights=count_dict[s].values(), bins=100)
             axs[i].set_title(f"{s}")
             axs[i].set_xlim(left=0)
             axs[i].set_xlabel("deletion length")
@@ -70,7 +71,8 @@ if __name__ == "__main__":
         fig, axs = plt.subplots(8, 1, figsize=(10, 20), tight_layout=True)
         fig.suptitle(f"position of deletions on sequence for {key}", x=0.3)
         for i, s in enumerate(SEGMENTS):
-            axs[i].hist(count_dict[s].keys(), weights=count_dict[s].values(), bins=50)
+            #axs[i].bar(count_dict[s].keys(), height=count_dict[s].values())
+            axs[i].hist(count_dict[s].keys(), weights=count_dict[s].values(), bins=100)
             axs[i].set_title(f"{s}")
             axs[i].set_xlim(left=0)
             axs[i].set_xlabel("sequence position")
