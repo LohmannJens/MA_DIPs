@@ -20,16 +20,14 @@ from Bio import SeqIO
 from sklearn.linear_model import LinearRegression
 
 sys.path.insert(0, "..")
-from utils import SEGMENTS, get_seq_len, load_excel, load_short_reads
-
+from utils import DATAPATH, RESULTSPATH, SEGMENTS, get_seq_len, load_excel, load_short_reads
 
 
 if __name__ == "__main__":
-    data_folder = os.path.join("..", "..", "data", "alnaji2019")
-    filepath = os.path.join(data_folder, "DI_Influenza_FA_JVI.xlsx")
+    filepath = os.path.join(DATAPATH, "alnaji2019", "DI_Influenza_FA_JVI.xlsx")
     cleaned_data_dict = load_excel(filepath)
 
-    short_reads_filepath = os.path.join(data_folder, "Small_deletionSize_FA.xlsx")
+    short_reads_filepath = os.path.join(DATAPATH, "alnaji2019", "Small_deletionSize_FA.xlsx")
     all_reads_dict = load_short_reads(cleaned_data_dict, short_reads_filepath)
 
 
@@ -54,7 +52,7 @@ if __name__ == "__main__":
             axs[i].set_title(f"{s}")
             axs[i].set_xlim(left=0)
             axs[i].set_xlabel("deletion length")
-        save_path = os.path.join("results", f"{key}_length_del_hist.pdf")
+        save_path = os.path.join(RESULTSPATH, "deletion_length_and_position", f"{key}_length_del_hist.pdf")
         plt.savefig(save_path)
 
 
@@ -76,5 +74,5 @@ if __name__ == "__main__":
             axs[i].set_title(f"{s}")
             axs[i].set_xlim(left=0)
             axs[i].set_xlabel("sequence position")
-        save_path = os.path.join("results", f"{key}_del_position.pdf")
+        save_path = os.path.join(RESULTSPATH, "deletion_length_and_position", f"{key}_del_position.pdf")
         plt.savefig(save_path)

@@ -1,4 +1,5 @@
 import os
+import sys
 
 import numpy as np
 import pandas as pd
@@ -6,8 +7,12 @@ import matplotlib.pyplot as plt
 
 from sklearn.linear_model import LinearRegression
 
+sys.path.insert(0, "..")
+from utils import DATAPATH, RESULTSPATH
+
+
 if __name__ == "__main__":
-    xlsx_path = os.path.join("..", "..", "data", "schwartz2016", "SchwartzLowen_Fig3a_MdckP3.xlsx")
+    xlsx_path = os.path.join(DATAPATH, "schwartz2016", "SchwartzLowen_Fig3a_MdckP3.xlsx")
     df = pd.read_excel(xlsx_path, skiprows=[9,10,11,12])
 
     x = np.array(df["Length"]).reshape((-1, 1))
@@ -43,5 +48,5 @@ if __name__ == "__main__":
     plt.legend(loc="upper left")
     plt.suptitle("ratio of terminal to internal primers against sequence length")
 
-    fig_path = os.path.join("results", "regression_internal_vs_external.pdf")
+    fig_path = os.path.join(RESULTSPATH, "regression_length_count", "regression_internal_vs_external.pdf")
     plt.savefig(fig_path)

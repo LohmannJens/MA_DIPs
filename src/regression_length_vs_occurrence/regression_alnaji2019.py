@@ -14,11 +14,11 @@ from Bio import SeqIO
 from sklearn.linear_model import LinearRegression
 
 sys.path.insert(0, "..")
-from utils import SEGMENTS, get_seq_len, load_excel
+from utils import DATAPATH, RESULTSPATH, SEGMENTS, get_seq_len, load_excel
 
 
 if __name__ == "__main__":
-    filepath = os.path.join("..", "..", "data", "alnaji2019", "DI_Influenza_FA_JVI.xlsx")
+    filepath = os.path.join(DATAPATH, "alnaji2019", "DI_Influenza_FA_JVI.xlsx")
     cleaned_data_dict = load_excel(filepath)
 
     # plotting number of deletions per strain and segment against length of segment
@@ -29,7 +29,7 @@ if __name__ == "__main__":
         y = list()
         for s in SEGMENTS:
             y.append(value.loc[value["Segment"] == s]["NGS_read_count"].sum())
-            x.append(get_seq_len(key, s))
+            x.append(get_seq_len(key[:-3], s))
         axs[i].scatter(x, y, label=f"{key}")
         axs[i].set_title(f"{key}")
         axs[i].set_xlim(left=0)
@@ -42,8 +42,6 @@ if __name__ == "__main__":
         idx = 0
         while (idx < len(y_exp)):
             if y_exp[idx] == 0:
-         #       x_exp = np.delete(x_exp, idx)
-          #      y_exp = np.delete(y_exp, idx)
                 y_exp[idx] = 1
                 idx += 1
             else:
@@ -61,6 +59,6 @@ if __name__ == "__main__":
             axs[i].annotate(s, (x[ix], y[ix]))
         i += 1
 
-    save_path = os.path.join("results", "regression_alnaji2019.pdf")
+    save_path = os.path.join(RESULTSPATH, "regression_length_count", "regression_alnaji2019.pdf")
     plt.savefig(save_path)
 

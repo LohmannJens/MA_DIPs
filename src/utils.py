@@ -2,13 +2,16 @@ import os
 
 import numpy as np
 import pandas as pd
-import matplotlib.pyplot as plt
 
 from Bio import SeqIO
 
+# needs to be changed when cloning the repo
+REPOPATH = "/home/jens/Masterarbeit/MA_DIPs"
+
+DATAPATH = os.path.join(REPOPATH, "data")
+RESULTSPATH = os.path.join(REPOPATH, "results")
 
 SEGMENTS = ["PB2", "PB1", "PA", "NP", "HA", "NA", "M", "NS"]
-
 
 def get_sequence(strain: str, seg: str)-> object:
     '''
@@ -16,7 +19,7 @@ def get_sequence(strain: str, seg: str)-> object:
         :param strain: name of the strain
         :param seg: name of the segment of the strain
     '''
-    fasta_file = os.path.join("..", "..", "data", "alnaji2019", strain, f"{seg}.fasta")
+    fasta_file = os.path.join(DATAPATH, "alnaji2019", strain, f"{seg}.fasta")
     return SeqIO.read(fasta_file, "fasta")
 
 def get_seq_len(strain: str, seg: str)-> int:

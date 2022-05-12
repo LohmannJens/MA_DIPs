@@ -20,11 +20,10 @@ import matplotlib.pyplot as plt
 from Bio.Seq import Seq
 
 sys.path.insert(0, "..")
-from utils import SEGMENTS, load_excel, load_short_reads, get_sequence
+from utils import DATAPATH, RESULTSPATH, SEGMENTS, load_excel, load_short_reads, get_sequence
 
 
 NUCLEOTIDES = list(["A", "C", "G", "U"])
-RESULTSPATH = os.path.join("..", "..", "results")
 
 def create_sequence(s: int, e: int, strain: str, seg: str, crop: bool = False)-> str:
     '''
@@ -205,11 +204,10 @@ if __name__ == "__main__":
     weighted = args.weighted
 
 
-    data_folder = os.path.join("..", "..", "data", "alnaji2019")
-    filepath = os.path.join(data_folder, "DI_Influenza_FA_JVI.xlsx")
+    filepath = os.path.join(DATAPATH, "alnaji2019", "DI_Influenza_FA_JVI.xlsx")
     cleaned_data_dict = load_excel(filepath)
 
-    short_reads_filepath = os.path.join(data_folder, "Small_deletionSize_FA.xlsx")
+    short_reads_filepath = os.path.join(DATAPATH, "alnaji2019", "Small_deletionSize_FA.xlsx")
     all_reads_dict = load_short_reads(cleaned_data_dict, short_reads_filepath)
 
     # Create a sequence library for each strain
@@ -252,7 +250,7 @@ if __name__ == "__main__":
         plt.ylabel("relative occurrence")
         plt.title(f"nucleotide overlap at junction site for {k}")
 
-        savepath = os.path.join("results", f"{k}_overlapping_nucleotides.pdf")
+        savepath = os.path.join(RESULTSPATH, "overlapping_nucleotides", f"{k}.pdf")
         plt.savefig(savepath)
         
     plot_dict = dict()
@@ -269,6 +267,6 @@ if __name__ == "__main__":
     plt.ylabel("absolute occurrence (without weight)")
     plt.title(f"occurrence of sequences that overlap at start and end")
 
-    savepath = os.path.join("results", f"sequence_overlap_distribution.pdf")
+    savepath = os.path.join(RESULTSPATH, "overlapping_nucleotides", f"sequence_distribution.pdf")
     plt.savefig(savepath)
 
