@@ -12,6 +12,7 @@ the junction end site. Counts the number of nucleotides, that are the same.
 '''
 import os
 import sys
+import argparse
 
 import numpy as np
 import matplotlib.pyplot as plt
@@ -97,141 +98,144 @@ def calculate_overlapping_nucleotides(seq: str, s: int, e: int)-> (int, str):
     return counter, str(start_window[i:window_len])
 
 
-# parameter #
-weighted = False
-
-# MAIN #
-data_folder = os.path.join("..", "..", "data", "alnaji2019")
-filepath = os.path.join(data_folder, "DI_Influenza_FA_JVI.xlsx")
-cleaned_data_dict = load_excel(filepath)
-
-short_reads_filepath = os.path.join(data_folder, "Small_deletionSize_FA.xlsx")
-all_reads_dict = load_short_reads(cleaned_data_dict, short_reads_filepath)
-
-# Create a sequence library for each strain
-sequence_list_dict = dict()
-nuc_count = dict({"A": 0, "C": 0, "G": 0, "U": 0})
-
-for key, value in all_reads_dict.items():
-    sequence_list = list()
-    # loop over rows of value dataframe
-    for i, row in value.iterrows():
-        length = int(row["Length"])
-        count = int(row["NGS_read_count"])
-        start = int(row["Start"])
-        end = int(row["End"])
-        segment = row["Segment"]
-        del_sequence = create_sequence(start, end, key, segment, crop=True)
-        whole_sequence = create_sequence(start, end, key, segment, crop=False)
-    
-        entry_dict = dict({"Length": length,
-                           "Count": count,
-                           "Start": start,
-                           "End": end,
-                           "Segment": segment,
-                           "DelSequence": del_sequence,
-                           "WholeSequence": whole_sequence,
-                           "NucleotideCount": nuc_count})
-        sequence_list.append(entry_dict)
-    
-        for n in NUCLEOTIDES:
-            nuc_count[n] = nuc_count[n] + whole_sequence.count(n)
-    sequence_list_dict[key] = sequence_list
+if __name__ == "__main__":
+    parser = argparse.ArgumentParser(description="Analyze NP density and junction site of deletions")
+    parser.add_argument("-w", "--weighted", action="store_true")
+    args = parser.parse_args()
+    weighted = args.weighted
 
 
+    data_folder = os.path.join("..", "..", "data", "alnaji2019")
+    filepath = os.path.join(data_folder, "DI_Influenza_FA_JVI.xlsx")
+    cleaned_data_dict = load_excel(filepath)
 
-# Loop over the different strains and calculate the occurrence of each
-# nucleotide in the sequences
-for k, v in sequence_list_dict.items():
+    short_reads_filepath = os.path.join(data_folder, "Small_deletionSize_FA.xlsx")
+    all_reads_dict = load_short_reads(cleaned_data_dict, short_reads_filepath)
 
-    count_start_dict = dict({"A": np.zeros(9), "C": np.zeros(9), "G": np.zeros(9), "U": np.zeros(9)})
-    count_end_dict = dict({"A": np.zeros(9), "C": np.zeros(9), "G": np.zeros(9), "U": np.zeros(9)})
+    # Create a sequence library for each strain
+    sequence_list_dict = dict()
+    nuc_count = dict({"A": 0, "C": 0, "G": 0, "U": 0})
 
-    normalize = 0
+    for key, value in all_reads_dict.items():
+        sequence_list = list()
+        # loop over rows of value dataframe
+        for i, row in value.iterrows():
+            length = int(row["Length"])
+            count = int(row["NGS_read_count"])
+            start = int(row["Start"])
+            end = int(row["End"])
+            segment = row["Segment"]
+            del_sequence = create_sequence(start, end, key, segment, crop=True)
+            whole_sequence = create_sequence(start, end, key, segment, crop=False)
+        
+            entry_dict = dict({"Length": length,
+                               "Count": count,
+                               "Start": start,
+                               "End": end,
+                               "Segment": segment,
+                               "DelSequence": del_sequence,
+                               "WholeSequence": whole_sequence,
+                               "NucleotideCount": nuc_count})
+            sequence_list.append(entry_dict)
+        
+            for n in NUCLEOTIDES:
+                nuc_count[n] = nuc_count[n] + whole_sequence.count(n)
+        sequence_list_dict[key] = sequence_list
 
-    for entry in v:
-        seq_start_dict = count_nucleotide_occurrence(entry["WholeSequence"], entry["Start"]) 
-        seq_end_dict = count_nucleotide_occurrence(entry["WholeSequence"], entry["End"])
 
-        weight = entry["Count"] if weighted else 1
-        normalize += weight
-        for nuc in count_start_dict.keys():
-            count_start_dict[nuc] += seq_start_dict[nuc] * weight
-            count_end_dict[nuc] += seq_end_dict[nuc] * weight
 
-    fig, axs = plt.subplots(2, 1, figsize=(5, 10), tight_layout=True)
-    x = np.arange(0.7, 9.7, dtype=np.float64)
+    # Loop over the different strains and calculate the occurrence of each
+    # nucleotide in the sequences
+    for k, v in sequence_list_dict.items():
 
-    for key in count_start_dict.keys():
-        axs[0].bar(x, height=count_start_dict[key]/normalize, width=0.2, label=key)
-        axs[1].bar(x, height=count_end_dict[key]/normalize, width=0.2, label=key)
-        x += 0.2
+        count_start_dict = dict({"A": np.zeros(9), "C": np.zeros(9), "G": np.zeros(9), "U": np.zeros(9)})
+        count_end_dict = dict({"A": np.zeros(9), "C": np.zeros(9), "G": np.zeros(9), "U": np.zeros(9)})
 
-    colors = dict({"A": "blue", "C": "yellow", "G": "green", "U": "red"})
+        normalize = 0
 
-    for i in range(2):
-        for n in NUCLEOTIDES:
-            axs[i].axhline(y=float(nuc_count[n]/sum(nuc_count.values())), c=colors[n], ls="--", lw=0.5)
-        axs[i].legend()
-        axs[i].set_ylim(top=0.8)
-        axs[i].set_xticks([1,2,3,4,5,6,7,8,9])
-        axs[i].set_xlabel("position at junction side")
-        axs[i].set_ylabel("relative occurrence")
-        pos = "start" if i == 0 else "end"
-        axs[i].set_title(f"relative occurrence of nucleotides at {pos} of deletion site")
+        for entry in v:
+            seq_start_dict = count_nucleotide_occurrence(entry["WholeSequence"], entry["Start"]) 
+            seq_end_dict = count_nucleotide_occurrence(entry["WholeSequence"], entry["End"])
 
-    savepath = os.path.join("results", f"{k}_relative_occurrence_nucleotides.pdf")
+            weight = entry["Count"] if weighted else 1
+            normalize += weight
+            for nuc in count_start_dict.keys():
+                count_start_dict[nuc] += seq_start_dict[nuc] * weight
+                count_end_dict[nuc] += seq_end_dict[nuc] * weight
+
+        fig, axs = plt.subplots(2, 1, figsize=(5, 10), tight_layout=True)
+        x = np.arange(0.7, 9.7, dtype=np.float64)
+
+        for key in count_start_dict.keys():
+            axs[0].bar(x, height=count_start_dict[key]/normalize, width=0.2, label=key)
+            axs[1].bar(x, height=count_end_dict[key]/normalize, width=0.2, label=key)
+            x += 0.2
+
+        colors = dict({"A": "blue", "C": "yellow", "G": "green", "U": "red"})
+
+        for i in range(2):
+            for n in NUCLEOTIDES:
+                axs[i].axhline(y=float(nuc_count[n]/sum(nuc_count.values())), c=colors[n], ls="--", lw=0.5)
+            axs[i].legend()
+            axs[i].set_ylim(top=0.8)
+            axs[i].set_xticks([1,2,3,4,5,6,7,8,9])
+            axs[i].set_xlabel("position at junction side")
+            axs[i].set_ylabel("relative occurrence")
+            pos = "start" if i == 0 else "end"
+            axs[i].set_title(f"relative occurrence of nucleotides at {pos} of deletion site")
+
+        savepath = os.path.join("results", f"{k}_relative_occurrence_nucleotides.pdf")
+        plt.savefig(savepath)
+
+
+
+    # Check if nucleotides directly before junction site have the same sequence
+    # as the ones directly before junction site at the end
+    overlap_seq_dict = dict()
+    for k, v in sequence_list_dict.items():
+        nuc_overlap_dict = dict({0: 0, 1: 0, 2: 0, 3: 0, 4: 0, 5: 0, 6: 0, 7: 0, 8: 0, 9: 0, 10:0})
+
+        for seq_dict in v:
+            sequence = seq_dict["WholeSequence"]
+            i, overlap_seq = calculate_overlapping_nucleotides(sequence, seq_dict["Start"], seq_dict["End"])
+
+            weight = seq_dict["Count"] if weighted else 1
+            nuc_overlap_dict[i] += weight
+            if overlap_seq in overlap_seq_dict:
+                overlap_seq_dict[overlap_seq] += weight
+            else:
+                overlap_seq_dict[overlap_seq] = weight
+
+        y = np.array([*nuc_overlap_dict.values()])
+
+        def expected(x):
+            return pow(0.25, x) * 0.75
+        expected_values = np.fromfunction(expected, (11,), dtype=float)
+        plt.figure()
+        plt.bar(x=nuc_overlap_dict.keys(), height=y/np.sum(y), width=-0.4, align="edge")
+        plt.bar(x=list(nuc_overlap_dict.keys()), height=expected_values, width=0.4, align="edge")
+
+        plt.xlabel("number of overlapping nucleotides")
+        plt.ylabel("relative occurrence")
+        plt.title(f"nucleotide overlap at junction site for {k}")
+
+        savepath = os.path.join("results", f"{k}_overlapping_nucleotides.pdf")
+        plt.savefig(savepath)
+        
+    plot_dict = dict()
+    for key, value in overlap_seq_dict.items():
+        if value >= 10:
+            plot_dict[key] = value
+
+    plot_dict = {k: v for k, v in sorted(plot_dict.items(), key=lambda item: item[1], reverse=True)}
+
+    plt.figure(figsize=(15, 5))
+    plt.bar(x=plot_dict.keys(), height=plot_dict.values(), width=0.5)
+
+    plt.xlabel("nucleotide sequence")
+    plt.ylabel("absolute occurrence (without weight)")
+    plt.title(f"occurrence of sequences that overlap at start and end")
+
+    savepath = os.path.join("results", f"sequence_overlap_distribution.pdf")
     plt.savefig(savepath)
-
-
-
-# Check if nucleotides directly before junction site have the same sequence
-# as the ones directly before junction site at the end
-overlap_seq_dict = dict()
-for k, v in sequence_list_dict.items():
-    nuc_overlap_dict = dict({0: 0, 1: 0, 2: 0, 3: 0, 4: 0, 5: 0, 6: 0, 7: 0, 8: 0, 9: 0, 10:0})
-
-    for seq_dict in v:
-        sequence = seq_dict["WholeSequence"]
-        i, overlap_seq = calculate_overlapping_nucleotides(sequence, seq_dict["Start"], seq_dict["End"])
-
-        weight = seq_dict["Count"] if weighted else 1
-        nuc_overlap_dict[i] += weight
-        if overlap_seq in overlap_seq_dict:
-            overlap_seq_dict[overlap_seq] += weight
-        else:
-            overlap_seq_dict[overlap_seq] = weight
-
-    y = np.array([*nuc_overlap_dict.values()])
-
-    def expected(x):
-        return pow(0.25, x) * 0.75
-    expected_values = np.fromfunction(expected, (11,), dtype=float)
-    plt.figure()
-    plt.bar(x=nuc_overlap_dict.keys(), height=y/np.sum(y), width=-0.4, align="edge")
-    plt.bar(x=list(nuc_overlap_dict.keys()), height=expected_values, width=0.4, align="edge")
-
-    plt.xlabel("number of overlapping nucleotides")
-    plt.ylabel("relative occurrence")
-    plt.title(f"nucleotide overlap at junction site for {k}")
-
-    savepath = os.path.join("results", f"{k}_overlapping_nucleotides.pdf")
-    plt.savefig(savepath)
-    
-plot_dict = dict()
-for key, value in overlap_seq_dict.items():
-    if value >= 10:
-        plot_dict[key] = value
-
-plot_dict = {k: v for k, v in sorted(plot_dict.items(), key=lambda item: item[1], reverse=True)}
-
-plt.figure(figsize=(15, 5))
-plt.bar(x=plot_dict.keys(), height=plot_dict.values(), width=0.5)
-
-plt.xlabel("nucleotide sequence")
-plt.ylabel("absolute occurrence (without weight)")
-plt.title(f"occurrence of sequences that overlap at start and end")
-
-savepath = os.path.join("results", f"sequence_overlap_distribution.pdf")
-plt.savefig(savepath)
 
