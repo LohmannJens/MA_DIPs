@@ -24,7 +24,7 @@ from utils import SEGMENTS, load_excel, load_short_reads, get_sequence
 
 
 NUCLEOTIDES = list(["A", "C", "G", "U"])
-
+RESULTSPATH = os.path.join("..", "..", "results")
 
 def create_sequence(s: int, e: int, strain: str, seg: str, crop: bool = False)-> str:
     '''
@@ -133,13 +133,70 @@ def create_sequence_library(data_dict: dict)-> (dict, dict):
                                "Segment": segment,
                                "DelSequence": del_sequence,
                                "WholeSequence": whole_sequence,
-                               "NucleotideCount": nuc_count})
+                               "NucleotideCount": nuc_count,
+                               "Segment" : segment})
             sequence_list.append(entry_dict)
         
             for n in NUCLEOTIDES:
                 nuc_count[n] = nuc_count[n] + whole_sequence.count(n)
         sequence_list_dict[k] = sequence_list
     return sequence_list_dict, nuc_count
+
+def nucleotide_occurrence_deletion_site(seq_dict: dict, seg: str, weighted: bool)-> None:
+    '''
+        gets the sequences for all four strains and calculates the occurrence
+        of each nucleotide at the start and end deletion site.
+        :param seq_dict: 
+        :param seg: name of the segment that is analyzed; 'all' if all 8 are used
+        :param weighted: True if the NGS count should be included
+
+        :return: None
+    '''
+    for k, v in seq_dict.items():
+        count_start_dict = dict({"A": np.zeros(9), "C": np.zeros(9), "G": np.zeros(9), "U": np.zeros(9)})
+        count_end_dict = dict({"A": np.zeros(9), "C": np.zeros(9), "G": np.zeros(9), "U": np.zeros(9)})
+        normalize = 0
+        for entry in v:
+            if entry["Segment"] != seg:
+                continue
+            seq_start_dict = count_nucleotide_occurrence(entry["WholeSequence"], entry["Start"]) 
+            seq_end_dict = count_nucleotide_occurrence(entry["WholeSequence"], entry["End"])
+            weight = entry["Count"] if weighted else 1
+            normalize += weight
+            for nuc in count_start_dict.keys():
+                count_start_dict[nuc] += seq_start_dict[nuc] * weight
+                count_end_dict[nuc] += seq_end_dict[nuc] * weight
+        # only plot results of the counting as a barplot if more than 10 values
+        if normalize <= 10:
+            continue
+        fig, axs = plt.subplots(2, 1, figsize=(5, 10), tight_layout=True)
+        x = np.arange(0.7, 9.7, dtype=np.float64)
+        for key in count_start_dict.keys():
+            axs[0].bar(x, height=count_start_dict[key]/normalize, width=0.2, label=key)
+            axs[1].bar(x, height=count_end_dict[key]/normalize, width=0.2, label=key)
+            x += 0.2
+
+        colors = dict({"A": "blue", "C": "yellow", "G": "green", "U": "red"})
+        for i in range(2):
+            for n in NUCLEOTIDES:
+                axs[i].axhline(y=float(nuc_count[n]/sum(nuc_count.values())), c=colors[n], ls="--", lw=0.5)
+            axs[i].legend()
+            axs[i].margins(x=0)
+            axs[i].set_xlim(left=0.5)
+            axs[i].set_ylim(top=0.8)
+            axs[i].set_xticks([1,2,3,4,5,6,7,8,9])
+            axs[i].set_xlabel("position at junction side")
+            axs[i].set_ylabel("relative occurrence")
+            pos = "start" if i == 0 else "end"
+            axs[i].set_title(f"{pos} of deletion site of {seg} of {k} ({normalize})")
+        # make background after pos 5 grey for start and before 5 at end (deletion site)
+        axs[0].add_patch(plt.Rectangle((5.5, 0), 4, 1, color="grey", alpha=0.3))
+        axs[1].add_patch(plt.Rectangle((0.5, 0), 4, 1, color="grey", alpha=0.3))
+        
+        savepath = os.path.join(RESULTSPATH, "relative_occurrence_nucleotides", f"{k}_{seg}.pdf")
+        plt.savefig(savepath)
+        plt.close()
+
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Analyze NP density and junction site of deletions")
@@ -160,52 +217,8 @@ if __name__ == "__main__":
 
     # Loop over the different strains and calculate the occurrence of each
     # nucleotide in the sequences
-    for k, v in sequence_list_dict.items():
-
-        count_start_dict = dict({"A": np.zeros(9), "C": np.zeros(9), "G": np.zeros(9), "U": np.zeros(9)})
-        count_end_dict = dict({"A": np.zeros(9), "C": np.zeros(9), "G": np.zeros(9), "U": np.zeros(9)})
-
-        normalize = 0
-
-        for entry in v:
-            seq_start_dict = count_nucleotide_occurrence(entry["WholeSequence"], entry["Start"]) 
-            seq_end_dict = count_nucleotide_occurrence(entry["WholeSequence"], entry["End"])
-
-            weight = entry["Count"] if weighted else 1
-            normalize += weight
-            for nuc in count_start_dict.keys():
-                count_start_dict[nuc] += seq_start_dict[nuc] * weight
-                count_end_dict[nuc] += seq_end_dict[nuc] * weight
-
-        fig, axs = plt.subplots(2, 1, figsize=(5, 10), tight_layout=True)
-        x = np.arange(0.7, 9.7, dtype=np.float64)
-
-        for key in count_start_dict.keys():
-            axs[0].bar(x, height=count_start_dict[key]/normalize, width=0.2, label=key)
-            axs[1].bar(x, height=count_end_dict[key]/normalize, width=0.2, label=key)
-            x += 0.2
-
-        
-        colors = dict({"A": "blue", "C": "yellow", "G": "green", "U": "red"})
-
-        for i in range(2):
-            for n in NUCLEOTIDES:
-                axs[i].axhline(y=float(nuc_count[n]/sum(nuc_count.values())), c=colors[n], ls="--", lw=0.5)
-            axs[i].legend()
-            axs[i].margins(x=0)
-            axs[i].set_xlim(left=0.5)
-            axs[i].set_ylim(top=0.8)
-            axs[i].set_xticks([1,2,3,4,5,6,7,8,9])
-            axs[i].set_xlabel("position at junction side")
-            axs[i].set_ylabel("relative occurrence")
-            pos = "start" if i == 0 else "end"
-            axs[i].set_title(f"relative occurrence of nucleotides at {pos} of deletion site")
-        # make background after pos 5 grey for start and before 5 at end (deletion site)
-        axs[0].add_patch(plt.Rectangle((5.5, 0), 4, 1, color="grey", alpha=0.3))
-        axs[1].add_patch(plt.Rectangle((0.5, 0), 4, 1, color="grey", alpha=0.3))
-        
-        savepath = os.path.join("results", f"{k}_relative_occurrence_nucleotides.pdf")
-        plt.savefig(savepath)
+    for s in SEGMENTS:
+        nucleotide_occurrence_deletion_site(sequence_list_dict, s, weighted)
 
 
 
