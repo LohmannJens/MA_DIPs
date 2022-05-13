@@ -47,8 +47,9 @@ def load_excel(path: str)-> dict:
                               sheet_name=None,
                               header=1,
                               na_values=["", "None"],
-                              keep_default_na=False)
-
+                              keep_default_na=False,
+                              converters={"Start": int,"End": int, "NGS_read_count": int,
+                                          "Start.1": int,"End.1": int, "NGS_read_count.1": int})
     # Splitting up the two lines in new data frames and cleaning NaN data
     # For l2 the columns get renamed, they get the same names as in l1
     # Cleaned data is stored in a dict, can be accessed by [datasetname]_[l1/l2]
@@ -87,7 +88,8 @@ def load_short_reads(data_dict: dict, path: str)-> dict:
                                     sheet_name=None,
                                     header=0,
                                     na_values=["", "None"],
-                                    keep_default_na=False)
+                                    keep_default_na=False,
+                                    converters={"Start": int,"End": int, "NGS_read_count": int})
 
     # calculate length for all seqments and add as extra column
     for key, value in short_data_dict.items():
