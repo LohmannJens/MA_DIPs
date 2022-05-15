@@ -11,7 +11,7 @@ REPOPATH = "/home/jens/Masterarbeit/MA_DIPs"
 DATAPATH = os.path.join(REPOPATH, "data")
 RESULTSPATH = os.path.join(REPOPATH, "results")
 
-SEGMENTS = ["PB2", "PB1", "PA", "NP", "HA", "NA", "M", "NS"]
+SEGMENTS = ["PB2", "PB1", "PA", "HA", "NP", "NA", "M", "NS"]
 
 def get_sequence(strain: str, seg: str)-> object:
     '''
