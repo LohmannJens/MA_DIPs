@@ -24,7 +24,7 @@ sys.path.insert(0, "..")
 from utils import DATAPATH, RESULTSPATH, SEGMENTS, load_excel, load_short_reads, get_sequence
 
 
-COLORS = dict({"A": "blue", "C": "yellow", "G": "green", "U": "red"})
+COLORS = dict({"A": "blue", "C": "orange", "G": "green", "U": "red"})
 NUCLEOTIDES = list(["A", "C", "G", "U"])
 
 def create_sequence(s: int, e: int, strain: str, seg: str, crop: bool = False)-> str:
