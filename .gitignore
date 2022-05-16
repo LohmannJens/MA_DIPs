@@ -1,3 +1,4 @@
 *.sam.gz
 __pycache__/
 *.pyc
+data/Lee2017

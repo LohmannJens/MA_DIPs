@@ -1,6 +1,10 @@
 '''
-Loads the Start and End points of the deletion sides from Alnaji 2019 and
-does a linear and exponential regression.
+Does a linear and exponential regression for data from Schwartz 2016 and 
+Alnaji 2019. Data is normalized by sum of y values for all data sets.
+Expected value is calculated by dividing length of each segment with sum of
+the length of all segements.
+
+Also creates a model for all three IV A strains together.
 '''
 
 import os
@@ -41,7 +45,7 @@ def format_dataset_for_plotting(df, dataset_name: str)-> (list, list, list):
         for s in SEGMENTS:
             y.append(df.loc[df["Segment"] == s]["NGS_read_count"].sum())
             x.append(get_seq_len(dataset_name, s))
-    return np.array(x), np.array(y), err
+    return np.array(x), np.array(y) / np.array(y).sum(), err / np.array(y).sum()
 
 
 def perform_regression_analysis(data: dict)-> None:
@@ -57,7 +61,7 @@ def perform_regression_analysis(data: dict)-> None:
         fig, ax = plt.subplots(1, 1, figsize=(10, 10), tight_layout=True)
         x, y, err = format_dataset_for_plotting(v, k)
 
-        ax.scatter(x, y)
+        ax.scatter(x, y, label="observation")
         if err.size != 0:
             ax.errorbar(x, y, yerr=err, fmt="o", capsize=5.0)
         for i, s in enumerate(SEGMENTS):
@@ -68,7 +72,7 @@ def perform_regression_analysis(data: dict)-> None:
         idx = 0
         while (idx < len(y_exp)):
             if y_exp[idx] == 0:
-                y_exp[idx] = 1
+                y_exp[idx] = 0.000001
             idx += 1
         
         if k in ["Cal07", "NC", "Perth"]:
@@ -76,18 +80,25 @@ def perform_regression_analysis(data: dict)-> None:
                 x_IVA = np.concatenate((x_IVA, x))
                 y_IVA = np.concatenate((y_IVA, y))
                 y_IVA_exp = np.concatenate((y_IVA_exp, y_exp))
+                y_IVA_expected = np.concatenate((y_IVA_expected, x / x.sum()))
             else:
                 x_IVA = x
                 y_IVA = y
                 y_IVA_exp = y_exp
+                y_IVA_expected = x / x.sum()
 
         x_plot = np.linspace(0, 2341, num=100).reshape((-1, 1))
 
         model = LinearRegression().fit(x.reshape((-1, 1)), y)
         exp_model = np.polyfit(x, np.log(y_exp), 1)
 
-        ax.plot(x, model.predict(x.reshape((-1, 1))), label=f"linear model (R²: {model.score(x.reshape((-1, 1)), y):.2f})")
-        ax.plot(x_plot, np.exp(exp_model[1]) * np.exp(exp_model[0] * x_plot), label="exponential model")
+        y_pred = model.predict(x.reshape((-1, 1)))
+        y_exp_pred = np.exp(exp_model[1]) * np.exp(exp_model[0] * x_plot)
+
+        ax.plot(x, y_pred, label=f"linear model (R²: {model.score(x.reshape((-1, 1)), y):.2f})")
+        ax.plot(x_plot, y_exp_pred, label="exponential model")
+
+        ax.scatter(x, x / x.sum(), label="expected", color="grey")
 
         ax.legend(loc="upper left")
         ax.set_title(f"{k}")
@@ -103,20 +114,25 @@ def perform_regression_analysis(data: dict)-> None:
 
     # do regression for all three IV A strains together
     fig, ax = plt.subplots(1, 1, figsize=(10, 10), tight_layout=True)
-    ax.scatter(x_IVA, y_IVA)
+    ax.scatter(x_IVA, y_IVA, label="observation")
 
     model = LinearRegression().fit(x_IVA.reshape((-1, 1)), y_IVA)
     exp_model = np.polyfit(x_IVA, np.log(y_IVA_exp), 1)
 
-    ax.plot(x_IVA, model.predict(x_IVA.reshape((-1, 1))), label=f"linear model (R²: {model.score(x_IVA.reshape((-1, 1)), y_IVA):.2f})")
-    ax.plot(x_plot, np.exp(exp_model[1]) * np.exp(exp_model[0] * x_plot), label="exponential model")
+    y_pred = model.predict(x_IVA.reshape((-1, 1)))
+    y_exp_pred = np.exp(exp_model[1]) * np.exp(exp_model[0] * x_plot)
+
+    ax.plot(x_IVA, y_pred, label=f"linear model (R²: {model.score(x_IVA.reshape((-1, 1)), y_IVA):.2f})")
+    ax.plot(x_plot,  y_exp_pred, label="exponential model")
+
+    ax.scatter(x_IVA, y_IVA_expected, label="expected", color="grey")
 
     for i, s in enumerate(SEGMENTS):
         ax.annotate(s, (x_IVA[i], y_IVA[i]))
         ax.annotate(s, (x_IVA[i+8], y_IVA[i+8]))
         ax.annotate(s, (x_IVA[i+16], y_IVA[i+16]))
     ax.legend(loc="upper left")
-    ax.set_title(f"{k}")
+    ax.set_title(f"All three IV A strains")
     ax.set_xlim(left=0)
     ax.set_ylim(bottom=0)
     ax.set_xlabel("sequence position")
