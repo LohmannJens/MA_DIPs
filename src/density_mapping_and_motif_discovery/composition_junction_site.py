@@ -190,7 +190,7 @@ def nucleotide_occurrence_analysis(seq_dict: dict, seg: str)-> None:
         n = len(v.index)
 
         # only plot results if more then 10 data points
-        if n <= 10:
+        if n <= 3:
             continue
 
         # get expected values
@@ -225,7 +225,7 @@ def nucleotide_occurrence_analysis(seq_dict: dict, seg: str)-> None:
             axs[idx, 0].add_patch(plt.Rectangle((5.5, 0), 4, 1, color="grey", alpha=0.3))
             axs[idx, 1].add_patch(plt.Rectangle((0.5, 0), 4, 1, color="grey", alpha=0.3))
   
-        plt.suptitle(f"start (left) and end (right) of deletion site of {seg} of {k} ({n})")
+        plt.suptitle(f"start (left) and end (right) of {seg} of {k} ({n})")
         savepath = os.path.join(RESULTSPATH, "relative_occurrence_nucleotides", f"{k}_{seg}.pdf")
         plt.savefig(savepath)
         plt.close()
@@ -248,7 +248,7 @@ def nucleotide_overlap_analysis(seq_dict: dict, seg: str)-> None:
         nuc_overlap_dict, overlap_seq_dict = count_overlapping_nucleotides_overall(v)
         n = len(v.index)
         # only plot results if more then 10 data points
-        if n <= 10:
+        if n <= 1:
             continue
         
         # get expected values
@@ -268,9 +268,9 @@ def nucleotide_overlap_analysis(seq_dict: dict, seg: str)-> None:
         axs[i, 0].bar(x=x, height=h/h.sum(), width=-0.4, align="edge", label="observed")
         axs[i, 0].bar(x=x_exp, height=y_exp/y_exp.sum(), width=0.4, align="edge", label="expected")
 
-        axs[i, 0].set_xlabel("numbaer of overlapping nucleotides")
+        axs[i, 0].set_xlabel("number of overlapping nucleotides")
         axs[i, 0].set_ylabel("relative occurrence")
-        axs[i, 0].set_title(f"{k}")
+        axs[i, 0].set_title(f"{k} ({n})")
         axs[i, 0].legend("upper left")
 
         plot_dict = dict()
