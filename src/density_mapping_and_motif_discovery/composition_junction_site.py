@@ -35,7 +35,7 @@ def create_sequence(s: int, e: int, strain: str, seg: str, crop: bool = False)->
         :param s: start of the deletion (included in the remaining sequence)
         :param e: end of the deletion (included in the remaining sequence)
         :param strain: name of the virus strain
-        :param seg: segment where the sequenz is coming from
+        :param seg: segment where the sequence is coming from
         :param crop: Indicates if the sequence should be cropped (True) to
                      exclude the deletion side or take whole sequence (False)
 
@@ -44,7 +44,6 @@ def create_sequence(s: int, e: int, strain: str, seg: str, crop: bool = False)->
     full_dna_record = get_sequence(strain, seg)
     full_dna_seq = full_dna_record.seq
     full_rna_seq = full_dna_seq.transcribe()
-
     if crop:
         return full_rna_seq[:s] + full_rna_seq[e-1:]
     else:
@@ -74,7 +73,7 @@ def create_sequence_library(data_dict: dict)-> dict:
             whole_sequence = create_sequence(start, end, k, segment, crop=False)
             del_sequence_list.append(del_sequence)
             whole_sequence_list.append(whole_sequence)
-        
+
         data_dict[k]["DelSequence"] = del_sequence_list
         data_dict[k]["WholeSequence"] = whole_sequence_list
 
