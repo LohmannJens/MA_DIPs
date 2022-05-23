@@ -4,7 +4,7 @@
 """
 import os
 import sys
-import shutil
+import argparse
 
 import numpy as np
 import pandas as pd
@@ -64,6 +64,14 @@ def load_fimo_files(folders: list):
 
 
 if __name__ == "__main__":
+    p = argparse.ArgumentParser(description="plot position of xstreme motifs agains start and end points of junction site")
+    p.add_argument("--cropped", "-c", action="store_true")
+    p.add_argument("--data", "-d", type=str, help="define which data to use; should be 'all', 'IVA', or 'seg1-3'")
+    args = p.parse_args()
+
+    if args.data == "seg1-3":
+        SEGMENTS = SEGMENTS[:3]
+
     filepath = os.path.join(DATAPATH, "alnaji2019", "DI_Influenza_FA_JVI.xlsx")
     
     cleaned_data_dict = load_excel(filepath)
@@ -71,17 +79,22 @@ if __name__ == "__main__":
     all_reads_dict = load_short_reads(cleaned_data_dict, short_reads_filepath)
     
     # get all fimo files
-    fimo_path = os.path.join(DATAPATH, "meme_suite", "alnaji2019", "full_sequences", "all_xstreme")
+    seq_folder = "cropped_sequences" if args.cropped else "full_sequences"
+    xstreme_folder = f"{args.data}_xstreme"
+    fimo_path = os.path.join(DATAPATH, "meme_suite", "alnaji2019", seq_folder, xstreme_folder)
     fimo_folders = get_fimo_folders(fimo_path)
     fimo_df = load_fimo_files(fimo_folders)
 
+    if args.data == "IVA":
+        del all_reads_dict["B_LEE"]
+
     # have 4 figures (for each strain) including 8 subplots (for each segment)    
     for k, v in all_reads_dict.items(): 
-        fig, axs = plt.subplots(8, 1, figsize=(10,20), tight_layout=True)
+        fig, axs = plt.subplots(8, 1, figsize=(10,10), tight_layout=True)
 
         # create color labels for motifs
         color_labels = fimo_df["motif_alt_id"].unique()
-        viridis = cm.get_cmap("viridis", len(color_labels))
+        viridis = cm.get_cmap("gist_ncar", len(color_labels))
         color_values = viridis(np.linspace(0,1,len(color_labels)))
         color_map = dict(zip(color_labels, color_values))
 
@@ -111,9 +124,10 @@ if __name__ == "__main__":
             handles, labels = ax.get_legend_handles_labels()
             by_label.update(dict(zip(labels, handles)))
 
-        fig.legend(by_label.values(), by_label.keys(), ncol=5)
-        fig.suptitle(f"{k}")
+        fig.legend(by_label.values(), by_label.keys(), ncol=8, mode="expand")
+        fig.suptitle(f"\n\n\n{k}")
+        fig.subplots_adjust(top=0.2)
 
-        savepath = os.path.join(RESULTSPATH, "motif_discovery", f"{k}_motif_on_sequence.pdf")
+        savepath = os.path.join(RESULTSPATH, "motif_discovery", f"{k}_{args.data}_motif_on_sequence.pdf")
         plt.savefig(savepath)
 
