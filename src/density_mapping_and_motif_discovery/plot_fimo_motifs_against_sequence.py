@@ -67,6 +67,7 @@ if __name__ == "__main__":
     p = argparse.ArgumentParser(description="plot position of xstreme motifs agains start and end points of junction site")
     p.add_argument("--cropped", "-c", action="store_true")
     p.add_argument("--data", "-d", type=str, help="define which data to use; should be 'all', 'IVA', or 'seg1-3'")
+    p.add_argument("--weighted", "-w", action="store_true")
     args = p.parse_args()
 
     if args.data == "seg1-3":
@@ -88,6 +89,7 @@ if __name__ == "__main__":
     if args.data == "IVA":
         del all_reads_dict["B_LEE"]
 
+
     # have 4 figures (for each strain) including 8 subplots (for each segment)    
     for k, v in all_reads_dict.items(): 
         fig, axs = plt.subplots(8, 1, figsize=(10,10), tight_layout=True)
@@ -104,9 +106,16 @@ if __name__ == "__main__":
             if not df.empty:
                 s = df["Start"]
                 e = df["End"]
-                # plot start and end point of junctions as scatter
-                axs[i].scatter(x=s, y=np.zeros(len(s)), marker="|")
-                axs[i].scatter(x=e, y=np.zeros(len(e)), marker="|")
+                if args.weighted:
+                    w = df["NGS_read_count"]
+                    rect_height = max(w)/10
+                    axs[i].bar(x=s, height=w)
+                    axs[i].bar(x=e, height=w)
+                else:    
+                    # plot start and end point of junctions as scatter
+                    rect_height = 0.5
+                    axs[i].scatter(x=s, y=np.zeros(len(s)), marker="|")
+                    axs[i].scatter(x=e, y=np.zeros(len(e)), marker="|")
 
             # plot the found motifs as rectangles
             sliced_fimo_df = fimo_df.loc[fimo_df["sequence_name"] == id]
@@ -115,7 +124,7 @@ if __name__ == "__main__":
                 s = row["start"]
                 e = row["stop"]
                 label = row["motif_alt_id"]
-                axs[i].add_patch(patches.Rectangle((s, 0), e-s, 0.5, linewidth=0.5, label=label, color=color_map[label]))
+                axs[i].add_patch(patches.Rectangle((s, 0), e-s, rect_height, linewidth=0.5, label=label, color=color_map[label]))
 
             axs[i].set_title(f"{seg}")
 
@@ -127,7 +136,10 @@ if __name__ == "__main__":
         fig.legend(by_label.values(), by_label.keys(), ncol=8, mode="expand")
         fig.suptitle(f"\n\n\n{k}")
         fig.subplots_adjust(top=0.2)
-
-        savepath = os.path.join(RESULTSPATH, "motif_discovery", f"{k}_{args.data}_motif_on_sequence.pdf")
+        if args.weighted:
+            filename = f"{k}_{args.data}_weighted_motif_on_sequence.pdf"
+        else:
+            filename = f"{k}_{args.data}_motif_on_sequence.pdf"
+        savepath = os.path.join(RESULTSPATH, "motif_discovery", filename)
         plt.savefig(savepath)
 
