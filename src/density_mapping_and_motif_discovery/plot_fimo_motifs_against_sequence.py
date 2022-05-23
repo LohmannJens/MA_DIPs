@@ -92,7 +92,7 @@ if __name__ == "__main__":
 
     # have 4 figures (for each strain) including 8 subplots (for each segment)    
     for k, v in all_reads_dict.items(): 
-        fig, axs = plt.subplots(8, 1, figsize=(10,10), tight_layout=True)
+        fig, axs = plt.subplots(len(SEGMENTS), 1, figsize=(10,10), tight_layout=True)
 
         # create color labels for motifs
         color_labels = fimo_df["motif_alt_id"].unique()
