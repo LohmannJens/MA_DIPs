@@ -16,11 +16,19 @@ import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
 
-from Bio import SeqIO
-from sklearn.linear_model import LinearRegression
-
 sys.path.insert(0, "..")
 from utils import DATAPATH, RESULTSPATH, SEGMENTS, get_seq_len, load_excel, load_short_reads
+
+
+def load_density_data(path: str)-> dict:
+    '''
+
+    '''
+    density_dict = dict()
+    for s in SEGMENTS:
+        df = pd.read_csv(os.path.join(path, f"{s}.csv"), names=["x", "y"])
+        density_dict[s] = df
+    return density_dict
 
 
 if __name__ == "__main__":
@@ -30,7 +38,7 @@ if __name__ == "__main__":
     short_reads_filepath = os.path.join(DATAPATH, "alnaji2019", "Small_deletionSize_FA.xlsx")
     all_reads_dict = load_short_reads(cleaned_data_dict, short_reads_filepath)
 
-
+    '''
     # create a histogram for each line, indicating the length of the deletions
     # just to get an overview about the data
     for key, value in all_reads_dict.items():
@@ -55,7 +63,10 @@ if __name__ == "__main__":
             axs[i].set_xlabel("deletion length")
         save_path = os.path.join(RESULTSPATH, "deletion_length_and_position", f"{key}_length_del_hist.pdf")
         plt.savefig(save_path)
+    '''
 
+    density_path = os.path.join(DATAPATH, "Lee2017", "csv_NPdensity")
+    density_data = load_density_data(density_path)
 
     # uses 'Start' and 'End' to indicate where the deletions happen on the sequence
     for key, value in all_reads_dict.items():
@@ -71,10 +82,17 @@ if __name__ == "__main__":
         fig, axs = plt.subplots(8, 1, figsize=(10, 20), tight_layout=True)
         fig.suptitle(f"position of deletions on sequence for {key}", x=0.3)
         for i, s in enumerate(SEGMENTS):
-            #axs[i].bar(count_dict[s].keys(), height=count_dict[s].values())
-            axs[i].hist(count_dict[s].keys(), weights=count_dict[s].values(), bins=100)
+            l1 = axs[i].bar(count_dict[s].keys(), height=count_dict[s].values(), label="count")
+         #   axs[i].hist(count_dict[s].keys(), weights=count_dict[s].values(), bins=100)
+            axs[i].set_ylabel("number of occurrences")
+            l2, = axs[i].twinx().plot(density_data[s]["x"], density_data[s]["y"], label="NP density", alpha=0.5, color="red", fillstyle="full")
             axs[i].set_title(f"{s}")
             axs[i].set_xlim(left=0)
             axs[i].set_xlabel("sequence position")
+
+        fig.legend([l1, l2], ["count", "NP density"])        
+
         save_path = os.path.join(RESULTSPATH, "deletion_length_and_position", f"{key}_del_position.pdf")
         plt.savefig(save_path)
+        plt.close()
+
