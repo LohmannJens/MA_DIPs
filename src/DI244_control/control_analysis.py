@@ -45,15 +45,20 @@ if __name__ == "__main__":
     end = count_nucleotide_occurrence(data["WholeSequence"], data["End"])
 
     print(start, end)
-    print(data["WholeSequence"][START-5:START+5])
-    print(data["WholeSequence"][END-5:END+5])
+    print("1234J6789\t\t\tJ is position 244 (last one in sequence that is not deleted)")
+    print(data["WholeSequence"][START-5:START+4])
+    print("1234J6789\t\t\tJ is position 2191 (first one after deletion)")
+    print(data["WholeSequence"][END-5:END+4])
 
     # calculate number of overlapping nucleotides
     # gives numver of overlapping nt and sequence of overlap
-    count, overlap_seq = calculate_overlapping_nucleotides(data["WholeSequence"], data["Start"], data["End"])
+    count, overlap_seq = calculate_overlapping_nucleotides(data["WholeSequence"], data["Start"], data["End"], w_len=10, m=1)
 
     print(count, overlap_seq)
 
+    count, overlap_seq = calculate_overlapping_nucleotides(data["WholeSequence"], data["Start"], data["End"], w_len=10, m=2)
+
+    print(count, overlap_seq)
 
 
 
