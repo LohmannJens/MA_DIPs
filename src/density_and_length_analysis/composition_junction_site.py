@@ -394,7 +394,8 @@ def motif_analysis(df, segments: list)-> None:
     ax.set_title(f"start and end positions of sequences with 'UG' overlap")
     plt.legend()
     
-    plt.show()
+    savepath = os.path.join(RESULTSPATH, "overlapping_nucleotides", f"UG_occurrence.pdf")
+    plt.savefig(savepath)
     plt.close()
 
 
