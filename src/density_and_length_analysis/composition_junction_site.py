@@ -80,6 +80,24 @@ def create_sequence_library(data_dict: dict)-> dict:
     return data_dict
 
 
+def count_nucleotide_occurrence(seq: str, p: int)-> dict:
+    '''
+        Counts the number of nucleotides next to a given point.
+        Goes 5 steps in both directions.
+        :param seq: whole RNA sequence
+        :param p: point on the sequence where to count
+
+        :return: returns a counter dict with an entry for each nucleotide. In
+                 each entry the counter for each position is given.
+    '''
+    window = seq[p-4:p+5]
+    r_dict = dict({n: np.zeros(9) for n in NUCLEOTIDES})
+
+    for i, char in enumerate(window):
+        r_dict[char][i] = 1
+    return r_dict
+
+
 def count_nucleotide_occurrence_overall(df)-> (dict, dict):
     '''
         Counts the occurrence of each nucleotide at different positions around
@@ -90,13 +108,6 @@ def count_nucleotide_occurrence_overall(df)-> (dict, dict):
                     dict with nucleotide count for start site
                     dict with nucleotide count for end site
     '''
-    def count_nucleotide_occurrence(seq: str, p: int)-> dict: 
-        window = seq[p-4:p+5]
-        r_dict = dict({n: np.zeros(9) for n in NUCLEOTIDES})
- 
-        for i, char in enumerate(window):
-            r_dict[char][i] = 1
-        return r_dict
 
     count_start_dict = dict({n: np.zeros(9) for n in NUCLEOTIDES})
     count_end_dict = dict({n: np.zeros(9) for n in NUCLEOTIDES})
