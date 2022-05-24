@@ -80,13 +80,13 @@ def create_sequence_library(data_dict: dict)-> dict:
     return data_dict
 
 
-def count_nucleotide_occurrence_overall(df):
+def count_nucleotide_occurrence_overall(df)-> (dict, dict):
     '''
         Counts the occurrence of each nucleotide at different positions around
         the junction site
         :param df: dataframe with sequence and junction site data
 
-        :return: tupel with three entries:
+        :return: tupel with two entries:
                     dict with nucleotide count for start site
                     dict with nucleotide count for end site
     '''
