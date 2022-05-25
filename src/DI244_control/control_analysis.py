@@ -7,10 +7,11 @@ import sys
 from Bio import SeqIO
 
 sys.path.insert(0, "..")
-from utils import DATAPATH, RESULTSPATH, SEGMENTS, load_excel, load_short_reads, get_sequence
+from utils import DATAPATH, RESULTSPATH, SEGMENTS, load_excel, get_sequence
 sys.path.insert(0, "../density_and_length_analysis")
 from composition_junction_site import count_nucleotide_occurrence, calculate_overlapping_nucleotides
 
+### parameters of DI244 (from Dimmock 2008) ###
 START = 244
 END = 2191
 LENGTH = 2341
@@ -34,31 +35,52 @@ def load_sequence_as_dict(path: str)-> object:
     return data
 
 
+def check_deletion_site(seq, s, e)-> None:
+    '''
+
+    '''
+    # print out deletion site
+    print("\n#####")
+    print(f"1234J6789\t\t\tJ is position {s} (last one in sequence that is not deleted)")
+    print(seq[s-5:s+4])
+    print(f"1234J6789\t\t\tJ is position {e} (first one after deletion)")
+    print(seq[e-5:e+4])
+
+    # check the nucleotide overlap at start and end
+    count, overlap_seq = calculate_overlapping_nucleotides(seq, s, e, w_len=10, m=1)
+    print(count, overlap_seq)
+    count, overlap_seq = calculate_overlapping_nucleotides(seq, s, e, w_len=10, m=2)
+    print(count, overlap_seq)
+
+    return
+
+
 if __name__ == "__main__":
     # load sequence
     # save as dict
     fasta_file = os.path.join(DATAPATH, "Dimmock2008", "PB2.fasta")
-    data = load_sequence_as_dict(fasta_file)
+    DI244_dict = load_sequence_as_dict(fasta_file)
 
-    # count nucleotides before and after junction site with
-    start = count_nucleotide_occurrence(data["WholeSequence"], data["Start"])
-    end = count_nucleotide_occurrence(data["WholeSequence"], data["End"])
+    excel_file = os.path.join(DATAPATH, "alnaji2019", "DI_Influenza_FA_JVI.xlsx")
+    alnaji_dict = load_excel(excel_file)
 
-    print(start, end)
-    print("1234J6789\t\t\tJ is position 244 (last one in sequence that is not deleted)")
-    print(data["WholeSequence"][START-5:START+4])
-    print("1234J6789\t\t\tJ is position 2191 (first one after deletion)")
-    print(data["WholeSequence"][END-5:END+4])
+    # do analysis for DI244 (control DI RNA)
+    seq = DI244_dict["WholeSequence"]
+    s = DI244_dict["Start"]
+    e =DI244_dict["End"]
+    check_deletion_site(seq, s, e)
 
-    # calculate number of overlapping nucleotides
-    # gives numver of overlapping nt and sequence of overlap
-    count, overlap_seq = calculate_overlapping_nucleotides(data["WholeSequence"], data["Start"], data["End"], w_len=10, m=1)
+    # do analysis for all fragments from alnaji that have NGS_count > 1000
+    for k, v in alnaji_dict.items():
+        print(k)
+        for row in v.iterrows():
+            r = row[1]
+            if r.loc["NGS_read_count"] > 1000:
+                record = get_sequence(k[:-3], r["Segment"])
+                RNA_seq = record.seq.transcribe()
+                check_deletion_site(str(RNA_seq), r["Start"], r["End"])
 
-    print(count, overlap_seq)
 
-    count, overlap_seq = calculate_overlapping_nucleotides(data["WholeSequence"], data["Start"], data["End"], w_len=10, m=2)
-
-    print(count, overlap_seq)
 
 
 
