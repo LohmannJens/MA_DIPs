@@ -141,17 +141,18 @@ def calculate_overlapping_nucleotides(seq: str, s: int, e: int, w_len: int, m: i
                     Integer giving the number of overlapping nucleotides
                     String of the overlapping nucleotides
     '''
-    start_window = seq[s-w_len: s]
-    end_window = seq[e-1-w_len: e-1]
+
     counter = 0
 
     if m == 1:
+        start_window = seq[s-w_len: s]
+        end_window = seq[e-1-w_len: e-1]
         for i in range(w_len - 1, -1, -1):
             if start_window[i] == end_window[i]:
                 counter += 1
             else:
                 break
-        overlap_seq = str(start_window[i:w_len-1])
+        overlap_seq = str(start_window[i+1:w_len])
     elif m == 2:
 
         for i in range(w_len):
