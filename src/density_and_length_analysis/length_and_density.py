@@ -146,7 +146,9 @@ def correlate_position_with_density(data: dict, density_data: dict)-> None:
             axs[i%4][j].set_title(s)
             axs[i%4][j].set_xlabel("normalized NGS count")
             axs[i%4][j].set_ylabel("NP density")
-            
+            axs[i%4][j].set_xlim(0, 100)
+            axs[i%4][j].set_ylim(0, 100)
+
             if i == 3:
                 j = 1
 
