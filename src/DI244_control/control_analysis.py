@@ -67,7 +67,7 @@ if __name__ == "__main__":
     # do analysis for DI244 (control DI RNA)
     seq = DI244_dict["WholeSequence"]
     s = DI244_dict["Start"]
-    e =DI244_dict["End"]
+    e = DI244_dict["End"]
     check_deletion_site(seq, s, e)
 
     # do analysis for all fragments from alnaji that have NGS_count > 1000
