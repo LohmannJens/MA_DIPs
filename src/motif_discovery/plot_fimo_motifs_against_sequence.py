@@ -17,7 +17,7 @@ from Bio.SeqRecord import SeqRecord
 
 sys.path.insert(0, "..")
 sys.path.insert(0, "../density_and_length_analysis")
-from utils import DATAPATH, RESULTSPATH, SEGMENTS, load_excel, load_short_reads, get_sequence
+from utils import DATAPATH, RESULTSPATH, SEGMENTS, load_excel, load_short_reads, get_sequence, join_lineages
 from composition_junction_site import create_sequence_library
 
 
@@ -77,8 +77,7 @@ if __name__ == "__main__":
     filepath = os.path.join(DATAPATH, "alnaji2019", "DI_Influenza_FA_JVI.xlsx")
     
     cleaned_data_dict = load_excel(filepath)
-    short_reads_filepath = os.path.join(DATAPATH, "alnaji2019", "Small_deletionSize_FA.xlsx")
-    all_reads_dict = load_short_reads(cleaned_data_dict, short_reads_filepath)
+    all_reads_dict = join_lineages(cleaned_data_dict)
     
     # get all fimo files
     seq_folder = "cropped_sequences" if args.cropped else "full_sequences"

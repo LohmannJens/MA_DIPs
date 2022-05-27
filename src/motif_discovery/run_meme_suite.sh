@@ -10,7 +10,7 @@ while getopts d:c:p: flag
 do
     case "${flag}" in
         d) dataset=${OPTARG};; # name of dataset (without .fasta)
-        c) cropped=${OPTARG};; # 'crop' or 'full'
+        c) cropped=${OPTARG};; # 'crop', 'full' or 'window'
         p) program=${OPTARG};; # program to run (meme, streme, xstreme, glam)
     esac
 done
@@ -22,11 +22,17 @@ then
 elif [[ $cropped == "crop" ]]
 then
     path="$dir_crop/$dataset"
+elif [[ ${cropped:0:6} == "window" ]]
+then
+    path="$dir/$cropped""_sequences/$dataset"
 else
-    echo "use 'full' or 'crop' as argument when calling script. Exiting script"
+    echo "use 'full', 'crop' or 'window_{n}' as argument for when calling script."
+    echo "Input for -c/--cropped was $cropped"
+    echo "Exiting script!"
     exit
 fi
 
+echo $path
 
 if [[ $program == "meme" ]]
 then

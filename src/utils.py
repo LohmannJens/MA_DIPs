@@ -74,6 +74,22 @@ def load_excel(path: str)-> dict:
 
     return cleaned_data_dict
 
+def join_lineages(data: dict)-> dict:
+    '''
+        gets the loaded excel file of Alnaji 2019 and joins the lineages by
+        strains. Dict with eight key-value pairs gets reduced to four pairs
+        :param data: loaded dict with strain as key and data frame as value
+
+        :return: dict with dataframes joined by strain name
+    '''
+    merged_dict = dict()
+    for k, v in data.items():
+        if k in merged_dict:
+            merged_dict[k[:-3]] = pd.concat([merged_dict[k[:-3]], v])
+        else:
+            merged_dict[k[:-3]] = v
+    return merged_dict
+
 def load_short_reads(data_dict: dict, path: str)-> dict:
     '''
         loads the short reads from extra excel file and adds them to an
@@ -92,16 +108,16 @@ def load_short_reads(data_dict: dict, path: str)-> dict:
                                     converters={"Start": int,"End": int, "NGS_read_count": int})
 
     # calculate length for all seqments and add as extra column
-    for key, value in short_data_dict.items():
-        value["Length"] = np.nan
+    for k, v in short_data_dict.items():
+        v["Length"] = np.nan
         for s in SEGMENTS:
-            seq_length = get_seq_len(key, s)
-            length = value["Start"] + (seq_length - value["End"] + 1)
-            value.loc[value["Segment"] == s, "Length"] = length
+            seq_length = get_seq_len(k, s)
+            length = v["Start"] + (seq_length - v["End"] + 1)
+            v.loc[v["Segment"] == s, "Length"] = length
     
     # merge each dataframe to the loaded dictionary with the short deletions
-    for key, value in data_dict.items():
-        short_data_dict[key[:-3]] = pd.concat([short_data_dict[key[:-3]], value])
+    for k, v in data_dict.items():
+        short_data_dict[k[:-3]] = pd.concat([short_data_dict[k[:-3]], v])
 
     return short_data_dict
 

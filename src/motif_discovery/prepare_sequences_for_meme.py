@@ -52,7 +52,7 @@ def create_full_seq_files(strains: list)-> None:
         if input("[Y/n]: ") == "Y":
             shutil.rmtree(root_folder)
         else:
-            exit()
+            return
     os.makedirs(root_folder)
 
     for st in strains:
@@ -76,7 +76,7 @@ def create_cropped_seq_files(d: dict)-> None:
         if input("[Y/n]: ") == "Y":
             shutil.rmtree(root_folder)
         else:
-            exit()
+            return
     os.makedirs(root_folder)
 
     for k, v in d.items():
@@ -87,6 +87,39 @@ def create_cropped_seq_files(d: dict)-> None:
             s = r["Start"]
             e = r["End"]
             record = SeqRecord(seq, id=f"{k}_{seg}_{s}_{e}")
+            write_sequence(record, k, seg, root_folder)
+
+
+def create_windows_del_site_files(d: dict, n: int)-> None:
+    '''
+        Creates FASTA files for a n wide window around the start and end of the
+        sequences of the different strains and segments. 
+        :param d: dict containing sequence and deletion site info
+        :param n: half window size (only indicating size in one direction)
+
+        :return: None
+    '''
+    root_folder = os.path.join(DATAPATH, "meme_suite", "alnaji2019", f"window_{n}_sequences")
+    if os.path.exists(root_folder):
+        print(f"{root_folder} already exists! Should it be overwritten?")
+        if input("[Y/n]: ") == "Y":
+            shutil.rmtree(root_folder)
+        else:
+            return
+    os.makedirs(root_folder)
+
+    for k, v in d.items():
+        for row in v.iterrows():
+            r = row[1]
+            seq = r["WholeSequence"]
+            seg = r["Segment"]
+            s = r["Start"]
+            e = r["End"]
+            # cropping the two windows at the deletion site and concatenating
+            # them. Min/Max operator to avoid conflicts when site is close to
+            # the beginning/end of the whole sequence.
+            window_seq = seq[max(s-n, 0):s+n] + seq[e-n:min(s+n, len(seq))]
+            record = SeqRecord(window_seq, id=f"{k}_{seg}_{s}_{e}")
             write_sequence(record, k, seg, root_folder)
 
 
@@ -101,3 +134,5 @@ if __name__ == "__main__":
 
     seq_library = create_sequence_library(all_reads_dict)
     create_cropped_seq_files(seq_library)
+
+    create_windows_del_site_files(seq_library, 50)
