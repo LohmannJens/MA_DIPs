@@ -58,7 +58,10 @@ def create_cropped_seq_files(d: dict)-> None:
             seg = r["Segment"]
             s = r["Start"]
             e = r["End"]
-            id = f"{k}_{seg}_{s}_{e}"
+            NGS = r["NGS_read_count"]
+            if k == "B_LEE":
+                k = "BLEE"
+            id = f"{k}_{seg}_{s}_{e}_{NGS}"
             record = SeqRecord(seq, id=id)
             write_sequence(record, id, root_folder)
 
