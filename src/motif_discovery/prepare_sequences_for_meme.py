@@ -90,12 +90,14 @@ def create_cropped_seq_files(d: dict)-> None:
             write_sequence(record, k, seg, root_folder)
 
 
-def create_windows_del_site_files(d: dict, n: int)-> None:
+def create_windows_del_site_files(d: dict, n: int, combine: bool)-> None:
     '''
         Creates FASTA files for a n wide window around the start and end of the
         sequences of the different strains and segments. 
         :param d: dict containing sequence and deletion site info
         :param n: half window size (only indicating size in one direction)
+        :param combine: states if the start and end window should be
+                        concatenated or not
 
         :return: None
     '''
@@ -118,9 +120,18 @@ def create_windows_del_site_files(d: dict, n: int)-> None:
             # cropping the two windows at the deletion site and concatenating
             # them. Min/Max operator to avoid conflicts when site is close to
             # the beginning/end of the whole sequence.
-            window_seq = seq[max(s-n, 0):s+n] + seq[e-n:min(e+n, len(seq))]
-            record = SeqRecord(window_seq, id=f"{k}_{seg}_{s}_{e}")
-            write_sequence(record, k, seg, root_folder)
+            if combine:
+                window_seq = seq[max(s-n, 0):s+n] + seq[e-n:min(e+n, len(seq))]
+                record = SeqRecord(window_seq, id=f"{k}_{seg}_{s}_{e}")
+                write_sequence(record, k, seg, root_folder)
+            else:
+                window_seq = seq[max(s-n, 0):s+n]
+                record = SeqRecord(window_seq, id=f"{k}_{seg}_{s}_start")
+                write_sequence(record, k, seg, root_folder)
+
+                window_seq = seq[e-n:min(e+n, len(seq))]
+                record = SeqRecord(window_seq, id=f"{k}_{seg}_{e}_end")
+                write_sequence(record, k, seg, root_folder)
 
 
 if __name__ == "__main__":
@@ -135,4 +146,4 @@ if __name__ == "__main__":
     seq_library = create_sequence_library(all_reads_dict)
     create_cropped_seq_files(seq_library)
 
-    create_windows_del_site_files(seq_library, 50)
+    create_windows_del_site_files(seq_library, 20, False)
