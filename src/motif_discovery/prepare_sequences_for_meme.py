@@ -118,7 +118,7 @@ def create_windows_del_site_files(d: dict, n: int)-> None:
             # cropping the two windows at the deletion site and concatenating
             # them. Min/Max operator to avoid conflicts when site is close to
             # the beginning/end of the whole sequence.
-            window_seq = seq[max(s-n, 0):s+n] + seq[e-n:min(s+n, len(seq))]
+            window_seq = seq[max(s-n, 0):s+n] + seq[e-n:min(e+n, len(seq))]
             record = SeqRecord(window_seq, id=f"{k}_{seg}_{s}_{e}")
             write_sequence(record, k, seg, root_folder)
 
