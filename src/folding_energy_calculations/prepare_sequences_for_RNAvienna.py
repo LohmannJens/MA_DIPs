@@ -6,8 +6,13 @@ import os
 import sys
 import shutil
 
+import numpy as np
+
+
 from Bio import SeqIO
+from Bio.Seq import Seq
 from Bio.SeqRecord import SeqRecord
+from random import randrange
 
 sys.path.insert(0, "..")
 sys.path.insert(0, "../density_and_length_analysis")
@@ -33,16 +38,34 @@ def write_sequence(seq, name: str, folder: str)-> None:
         SeqIO.write(seq, f, "fasta")
 
 
-def create_cropped_seq_files(d: dict)-> None:
+def random_crop_sequence(s: str, n: int)-> str:
+    '''
+
+    '''
+    start = randrange(len(s)-n)
+    seq = s[start:start+n]
+    assert len(seq) == n, "length of random sequence is not same as original"
+    return seq
+
+def create_cropped_seq_files(d: dict, shuffle: bool=False, random: bool=False)-> None:
     '''
         Creates FASTA files for the cropped sequences of the different strains
         and segments. Cropped sequences are the ones that exclude the deletion
         site of the DI RNA.
         :param d: dict containing sequence and deletion site info
+        :param shuffle: indicates if the sequence should be shuffled. Is used
+                        to generate a comparision
+        :param random: indicates if a randomly cropped sequence should be
+                       generated
 
         :return: None
     '''
-    root_folder = os.path.join(DATAPATH, "energy_calculation", "cropped_sequences")
+    folder = "cropped_sequences"
+    if shuffle:
+        folder = f"{folder}_shuffled"
+    elif random:
+        folder = f"{folder}_randomcrop"
+    root_folder = os.path.join(DATAPATH, "energy_calculation", folder)
     if os.path.exists(root_folder):
         print(f"{root_folder} already exists! Should it be overwritten?")
         if input("[Y/n]: ") == "Y":
@@ -54,7 +77,17 @@ def create_cropped_seq_files(d: dict)-> None:
     for k, v in d.items():
         for r in v.iterrows():
             r = r[1]
-            seq = r["DelSequence"]
+            if shuffle:
+                seq_list = list(r["DelSequence"])
+                np.random.shuffle(seq_list)
+                seq = Seq("".join(seq_list))
+            elif random:
+                n = len(r["DelSequence"])
+                full_seq = r["WholeSequence"]
+                seq = random_crop_sequence(full_seq, n)
+            else:
+                seq = r["DelSequence"]
+                
             seg = r["Segment"]
             s = r["Start"]
             e = r["End"]
@@ -62,6 +95,10 @@ def create_cropped_seq_files(d: dict)-> None:
             if k == "B_LEE":
                 k = "BLEE"
             id = f"{k}_{seg}_{s}_{e}_{NGS}"
+            if shuffle:
+                id = f"{id}_shuffled"
+            elif random:
+                id = f"{id}_randomcrop"
             record = SeqRecord(seq, id=id)
             write_sequence(record, id, root_folder)
 
@@ -76,3 +113,6 @@ if __name__ == "__main__":
     seq_library = create_sequence_library(all_reads_dict)
     create_cropped_seq_files(seq_library)
 
+    create_cropped_seq_files(seq_library, shuffle=True)
+
+    create_cropped_seq_files(seq_library, random=True)

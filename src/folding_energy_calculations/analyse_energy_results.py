@@ -1,6 +1,6 @@
 """
 This script analyses the results that were created by Vienna RNA package.
-It loads the .fold files and compares them.
+It loads the .fold files and analyses the delta G in different ways.
 """
 import os
 import re
@@ -55,6 +55,8 @@ def structure_dataframe(path: str)-> object:
     segments = list()
     lengths = list()
     delta_Gs = list()
+    delta_Gs_shuffled = list()
+    delta_Gs_random = list()
     starts = list()
     ends = list()
     NGSs = list()
@@ -72,9 +74,20 @@ def structure_dataframe(path: str)-> object:
                 ends.append(int(f_split[3]))
                 NGSs.append(int(f_split[4]))
 
+                path_shuffled = os.path.join(f"{path}_shuffled",
+                                             f"{f[:-5]}_shuffled.fold")
+                _, delta_G_shuffled = extract_data_from_file(path_shuffled)
+                delta_Gs_shuffled.append(delta_G_shuffled)
+
+                path_random = os.path.join(f"{path}_randomcrop",
+                                           f"{f[:-5]}_randomcrop.fold")
+                _, delta_G_random = extract_data_from_file(path_random)
+                delta_Gs_random.append(delta_G_random)
+
             length, delta_G = extract_data_from_file(os.path.join(path, f))
             lengths.append(length)
             delta_Gs.append(delta_G)
+
 
     # convert dict to data frame
     d = dict()
@@ -86,6 +99,8 @@ def structure_dataframe(path: str)-> object:
         d["start"] = starts
         d["end"] = ends
         d["NGS_read_count"] = NGSs
+        d["delta_G_shuffled"] = delta_Gs_shuffled
+        d["delta_G_random"] = delta_Gs_random
 
     df = pd.DataFrame.from_dict(d)
     return df
@@ -103,7 +118,7 @@ def plot_deltaG_length(df: object, path: str, d_set: str)-> None:
     fig, ax = plt.subplots(1, 1, figsize=(10,10), tight_layout=True)
     for s in SEGMENTS:
         s_df = df[df["segment"] == s]
-        ax.scatter(s_df["delta_G"], s_df["length"], label=s)
+        ax.scatter(s_df["delta_G"], s_df["length"], label=s, alpha=0.3)
 
     ax.set_title(f"correlation of delta G to sequence length for {d_set} data set")
     ax.set_xlabel("delta G")
@@ -129,7 +144,7 @@ def plot_deltaG_NGS(df: object, path: str, normalize: bool)-> None:
     for s in SEGMENTS:
         s_df = df[cropped_df["segment"] == s]
         x = s_df["delta_G"]/s_df["length"] if normalize else s_df["delta_G"]
-        ax.scatter(x, s_df["NGS_read_count"], label=s)
+        ax.scatter(x, s_df["NGS_read_count"], label=s, alpha=0.3)
 
     plt.locator_params(axis="y", nbins=10)
     n = "(normalized by sequence length)" if normalize else ""
@@ -139,8 +154,72 @@ def plot_deltaG_NGS(df: object, path: str, normalize: bool)-> None:
     ax.legend()
 
     n = "_normalized" if normalize else ""
-    save_path = os.path.join(path, f"deltaG_NGScount_{n}.pdf")
+    save_path = os.path.join(path, f"deltaG_NGScount{n}.pdf")
     plt.savefig(save_path)
+    plt.close()
+
+
+def plot_delta_G_observed_expected(df: object, path: str, mode: str)-> None:
+    '''
+        Plots delta G against delta G of randomly shuffled or randomly cut
+        sequences.
+        :param df: data frame with the data
+        :param path: path to the results folder
+        :param mode: is either 'shuffled' or 'random'
+
+        :return: None
+
+    '''
+    fig, ax = plt.subplots(1, 1, figsize=(10,10), tight_layout=True)
+    for s in SEGMENTS:
+        s_df = df[cropped_df["segment"] == s]
+        ax.scatter(s_df["delta_G"], s_df[f"delta_G_{mode}"], label=s, alpha=0.3)
+
+    plt.locator_params(axis="y", nbins=10)
+    ax.set_title(f"delta G vs delta G {mode}")
+    ax.set_xlabel("delta G")
+    ax.set_ylabel("delta G {mode}")
+    ax.set_xlim([-650, 0])
+    ax.set_ylim([-650, 0])
+    ax.plot([0,1], [0,1], transform=ax.transAxes, c="grey", linestyle="--")
+    ax.legend()
+
+    save_path = os.path.join(path, f"deltaG_observed_{mode}.pdf")
+    plt.savefig(save_path)
+    plt.close()
+
+
+def create_difference_boxplots(df: object, path: str)-> None:
+    '''
+        Creates boxplots for the difference of the delta G against the expected
+        values. Is done for the random and shuffled approach and saved in one
+        figure. The boxes of the boxplot are split up by the segments.
+        :param df: data frame with the values
+        :param path: path to the results folder
+        
+        :return: None
+    '''
+    # calculate differences of delta G to random/shuffled data
+    df["random_diff"] = df["delta_G"] - df["delta_G_random"]
+    df["shuffled_diff"] = df["delta_G"] - df["delta_G_shuffled"]
+    b1 = list()
+    b2 = list()
+    for s in SEGMENTS:
+        b1.append(df.loc[df["segment"] == s, "random_diff"])
+        b2.append(df.loc[df["segment"] == s, "shuffled_diff"])
+
+    fig, axs = plt.subplots(2, 1, figsize=(15,10), tight_layout=True)
+
+    for i, (mode, d) in enumerate([("random", b1), ("shuffled", b2)]):
+        axs[i].boxplot(d, labels=SEGMENTS)
+        axs[i].set_title(f"{mode} approach")
+        axs[i].set_xlabel("segments")
+        axs[i].set_ylabel("\u0394\u0394G (\u0394G - \u0394G {mode} approach)")
+        axs[i].set_ylim([-70, 50])
+        axs[i].axhline(y=0, c="r", linestyle="--", linewidth=0.5)
+
+    save_path = os.path.join(path, "boxplots_delta_delta_G.pdf")
+    fig.savefig(save_path)
     plt.close()
 
 
@@ -154,12 +233,17 @@ if __name__ == "__main__":
     cropped_df = structure_dataframe(path_cropped)
 
     results_path = os.path.join(RESULTSPATH, "free_energy_estimations")
-
+    
     plot_deltaG_length(full_df, results_path, "full")
     plot_deltaG_length(cropped_df, results_path, "cropped")
 
     plot_deltaG_NGS(cropped_df, results_path, False)
     plot_deltaG_NGS(cropped_df, results_path, True)
+    
+    plot_delta_G_observed_expected(cropped_df, results_path, "shuffled")
+    plot_delta_G_observed_expected(cropped_df, results_path, "random")
+    
+    create_difference_boxplots(cropped_df, results_path)
 
     # This part creates a 3D plot of delta G, length and NGS count.
     # It basically just combines the two plots above.
@@ -172,7 +256,7 @@ if __name__ == "__main__":
         ax.scatter(df["delta_G"], df["length"], df["NGS_read_count"], label=s)
 
     ax.set_xlabel("delta G")
-    ax.set_ylabel("sequence length")
-    ax.set_zlabel("NGS count")
+    ax.set_ylabel("length")
+    ax.set_zlabel("NGS_read_count")
     plt.show()
     '''
