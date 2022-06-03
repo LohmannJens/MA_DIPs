@@ -16,15 +16,18 @@ do
 done
 
 
-if [[ $cropped == "full" ]]
+if [ $cropped == "full" ]
 then
     path="$dir_full/$dataset"
-elif [[ $cropped == "crop" ]]
+elif [ $cropped == "crop" ]
 then
     path="$dir_crop/$dataset"
-elif [[ ${cropped:0:6} == "window" ]]
+elif [ ${cropped:0:6} == "window" ]
 then
     path="$dir/$cropped""_sequences/$dataset"
+elif [ $cropped == "high_ngs" ]
+then
+    path="$dir/$cropped/$dataset"
 else
     echo "use 'full', 'crop' or 'window_{n}' as argument for when calling script."
     echo "Input for -c/--cropped was $cropped"
@@ -34,19 +37,21 @@ fi
 
 echo $path
 
-if [[ $program == "meme" ]]
+if [ $program == "meme" ]
 then
     meme "$path.fasta" -o "$path""_meme" -rna -nmotifs 20 -minw 8 -maxw 15
-elif [[ $program == "streme" ]]
+elif [ $program == "streme" ]
 then
     streme --p "$path.fasta" -o "$path""_streme" -rna -nmotifs 20
-elif [[ $program == "xstreme" ]]
+elif [ $program == "xstreme" ] && [ $cropped == "high_ngs" ]
+then
+    xstreme --p "$path.fasta" --n "$path""_control.fasta" -o "$path""_xstreme" -rna
+elif [ $program == "xstreme" ]
 then
     xstreme --p "$path.fasta" -o "$path""_xstreme" -rna
-elif [[ $program == "glam" ]]
+elif [ $program == "glam" ]
 then
     glam2 n "$path.fasta" -o "$path""_glam"
-
 fi
 
 firefox "$path""_$program/$program.html"
