@@ -243,7 +243,7 @@ def nucleotide_occurrence_analysis(seq_dict: dict, seg: str)-> None:
         s = (int(v.Start.quantile(q)), int(v.Start.quantile(1-q)))
         e = (int(v.End.quantile(q)), int(v.End.quantile(1-q)))
         sampling_data = generate_sampling_data(seq, s, e, n)
-
+        # split sampling data in three cohorts to generate error bars later
         exp_s_1, exp_e_1 = count_nucleotide_occurrence_overall(sampling_data[:n])
         exp_s_2, exp_e_2 = count_nucleotide_occurrence_overall(sampling_data[n:n*2])
         exp_s_3, exp_e_3 = count_nucleotide_occurrence_overall(sampling_data[n*2:])
@@ -264,8 +264,6 @@ def nucleotide_occurrence_analysis(seq_dict: dict, seg: str)-> None:
             exp_e_error =(abs(exp_e_1[nuc]/n - exp_e_full) + \
                           abs(exp_e_2[nuc]/n - exp_e_full) + \
                           abs(exp_e_3[nuc]/n - exp_e_full))/3
-
-
 
             axs[idx, 0].bar(x, height=h_s, width=0.3, label=nuc, color=COLORS[nuc])
             axs[idx, 1].bar(x, height=h_e, width=0.3, label=nuc, color=COLORS[nuc])
@@ -303,9 +301,7 @@ def nucleotide_overlap_analysis(seq_dict: dict, seg: str, mode: int, ngs_thresh:
     '''
     fig, axs = plt.subplots(4, 2, figsize=(10, 10), tight_layout=True, gridspec_kw={"width_ratios": [1, 3]})
     for i, (k, v) in enumerate(seq_dict.items()):
-        print(v)
         v = v.loc[(v["Segment"] == seg) & (v["NGS_read_count"] > ngs_thresh)]
-        
         nuc_overlap_dict, overlap_seq_dict = count_overlapping_nucleotides_overall(v, mode)
         n = len(v.index)
 
@@ -320,15 +316,27 @@ def nucleotide_overlap_analysis(seq_dict: dict, seg: str, mode: int, ngs_thresh:
         e = (int(v.End.quantile(q)), int(v.End.quantile(1-q)))
 
         sampling_data = generate_sampling_data(seq, s, e, n)
-        expected, _ = count_overlapping_nucleotides_overall(sampling_data, mode)
+
+        exp_1, _ = count_overlapping_nucleotides_overall(sampling_data[:n], mode)
+        exp_2, _ = count_overlapping_nucleotides_overall(sampling_data[n:n*2], mode)
+        exp_3, _ = count_overlapping_nucleotides_overall(sampling_data[n*2:], mode)
 
         x = list(nuc_overlap_dict.keys())
         h = np.array(list(nuc_overlap_dict.values()))
-        x_exp = list(expected.keys())
-        y_exp = np.array(list(expected.values()))
-        
-        axs[i, 0].bar(x=x, height=h/h.sum(), width=-0.4, align="edge", label="observed")
-        axs[i, 0].bar(x=x_exp, height=y_exp/y_exp.sum(), width=0.4, align="edge", label="expected")
+        h = h/h.sum()
+
+        # calculate error bars
+        y_exp_1 = np.array(list(exp_1.values()))
+        y_exp_1 = y_exp_1/y_exp_1.sum()
+        y_exp_2 = np.array(list(exp_2.values()))
+        y_exp_2 = y_exp_2/y_exp_2.sum()
+        y_exp_3 = np.array(list(exp_3.values()))
+        y_exp_3 = y_exp_3/y_exp_3.sum()
+        y_exp = (y_exp_1 + y_exp_2 + y_exp_3) / 3
+        y_err = (abs(y_exp_1 - y_exp) + abs(y_exp_2 - y_exp) + abs(y_exp_3 - y_exp)) /3
+
+        axs[i, 0].bar(x=x, height=h, width=-0.4, align="edge", label="observed")
+        axs[i, 0].bar(x=x, height=y_exp, width=0.4, align="edge", label="expected", yerr=y_err)
 
         axs[i, 0].set_xlabel("number of overlapping nucleotides")
         axs[i, 0].set_ylabel("relative occurrence")
@@ -466,8 +474,8 @@ if __name__ == "__main__":
 
     # Loop over the different strains and calculate the occurrence of each
     # nucleotide in the sequences
-    for s in SEGMENTS:
-        nucleotide_occurrence_analysis(sequence_list_dict, s)
+#    for s in SEGMENTS:
+ #       nucleotide_occurrence_analysis(sequence_list_dict, s)
 
     # Check if nucleotides directly before junction site have the same sequence
     # as the ones directly before junction site at the end
