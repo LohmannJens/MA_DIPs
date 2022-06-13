@@ -178,7 +178,7 @@ def plot_delta_G_observed_expected(df: object, path: str, mode: str)-> None:
     plt.locator_params(axis="y", nbins=10)
     ax.set_title(f"delta G vs delta G {mode}")
     ax.set_xlabel("delta G")
-    ax.set_ylabel("delta G {mode}")
+    ax.set_ylabel(f"delta G {mode}")
     ax.set_xlim([-650, 0])
     ax.set_ylim([-650, 0])
     ax.plot([0,1], [0,1], transform=ax.transAxes, c="grey", linestyle="--")
@@ -214,7 +214,7 @@ def create_difference_boxplots(df: object, path: str)-> None:
         axs[i].boxplot(d, labels=SEGMENTS)
         axs[i].set_title(f"{mode} approach")
         axs[i].set_xlabel("segments")
-        axs[i].set_ylabel("\u0394\u0394G (\u0394G - \u0394G {mode} approach)")
+        axs[i].set_ylabel(f"\u0394\u0394G (\u0394G - \u0394G {mode} approach)")
         axs[i].set_ylim([-70, 50])
         axs[i].axhline(y=0, c="r", linestyle="--", linewidth=0.5)
 
