@@ -92,7 +92,7 @@ def map_positions_to_density(data: dict, density_data: dict)-> dict:
             count_dict[r["Segment"]][r["End"]] = r["NGS_read_count"]
 
         # create a subplot for each key, value pair in count_dict
-        fig, axs = plt.subplots(8, 1, figsize=(10, 20), tight_layout=True)
+        fig, axs = plt.subplots(8, 1, figsize=(7, 14), tight_layout=True)
         fig.suptitle(f"position of deletions on sequence for {key}", x=0.3)
         for i, s in enumerate(SEGMENTS):
             l1 = axs[i].bar(count_dict[s].keys(), height=count_dict[s].values(), label="count")
@@ -129,7 +129,7 @@ def correlate_position_with_density(data: dict, density_data: dict)-> None:
         return (v["y"][i] + v["y"][i-1]) / 2
 
     for k, v in data.items():
-        fig, axs = plt.subplots(4, 2, figsize=(5,10), tight_layout=True)
+        fig, axs = plt.subplots(4, 2, figsize=(4, 8), tight_layout=True)
         j = 0
         for i, s in enumerate(SEGMENTS):
             # normalize NGS_read_count
