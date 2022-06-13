@@ -141,7 +141,6 @@ def calculate_overlapping_nucleotides(seq: str, s: int, e: int, w_len: int, m: i
                     Integer giving the number of overlapping nucleotides
                     String of the overlapping nucleotides
     '''
-
     counter = 0
 
     if m == 1:
@@ -234,7 +233,7 @@ def nucleotide_occurrence_analysis(seq_dict: dict, seg: str)-> None:
         count_start_dict, count_end_dict = count_nucleotide_occurrence_overall(v)
         n = len(v.index)
 
-        # only plot results if at least one data points
+        # only plot results if at least one data point is available
         if n <= 1:
             continue
 
@@ -244,20 +243,34 @@ def nucleotide_occurrence_analysis(seq_dict: dict, seg: str)-> None:
         s = (int(v.Start.quantile(q)), int(v.Start.quantile(1-q)))
         e = (int(v.End.quantile(q)), int(v.End.quantile(1-q)))
         sampling_data = generate_sampling_data(seq, s, e, n)
-        expected_start, expected_end = count_nucleotide_occurrence_overall(sampling_data)
 
+        exp_s_1, exp_e_1 = count_nucleotide_occurrence_overall(sampling_data[:n])
+        exp_s_2, exp_e_2 = count_nucleotide_occurrence_overall(sampling_data[n:n*2])
+        exp_s_3, exp_e_3 = count_nucleotide_occurrence_overall(sampling_data[n*2:])
+        
         fig, axs = plt.subplots(4, 2, figsize=(5, 10), tight_layout=True)
         x = np.arange(0.7, 9.7, dtype=np.float64)
 
         for idx, nuc in enumerate(count_start_dict.keys()):
             h_s = count_start_dict[nuc]/n
             h_e = count_end_dict[nuc]/n
-            h_s_exp = height=expected_start[nuc]/(n*3)
-            h_e_exp = height=expected_end[nuc]/(n*3)
+
+            exp_s_full = (exp_s_1[nuc] + exp_s_2[nuc] + exp_s_3[nuc]) / (n * 3)
+            exp_s_error =(abs(exp_s_1[nuc]/n - exp_s_full) + \
+                          abs(exp_s_2[nuc]/n - exp_s_full) + \
+                          abs(exp_s_3[nuc]/n - exp_s_full))/3
+
+            exp_e_full = (exp_e_1[nuc] + exp_e_2[nuc] + exp_e_3[nuc]) / (n * 3)
+            exp_e_error =(abs(exp_e_1[nuc]/n - exp_e_full) + \
+                          abs(exp_e_2[nuc]/n - exp_e_full) + \
+                          abs(exp_e_3[nuc]/n - exp_e_full))/3
+
+
+
             axs[idx, 0].bar(x, height=h_s, width=0.3, label=nuc, color=COLORS[nuc])
             axs[idx, 1].bar(x, height=h_e, width=0.3, label=nuc, color=COLORS[nuc])
-            axs[idx, 0].bar(x+0.4, height=h_s_exp, width=0.3, label=f"{nuc}_exp", color=COLORS[nuc], alpha=0.5)
-            axs[idx, 1].bar(x+0.4, height=h_e_exp, width=0.3, label=f"{nuc}_exp", color=COLORS[nuc], alpha=0.5)
+            axs[idx, 0].bar(x+0.4, height=exp_s_full, width=0.3, label=f"{nuc}_exp", color=COLORS[nuc], alpha=0.5, yerr=exp_s_error)
+            axs[idx, 1].bar(x+0.4, height=exp_e_full, width=0.3, label=f"{nuc}_exp", color=COLORS[nuc], alpha=0.5, yerr=exp_e_error)
 
             for i in range(2):
                 axs[idx, i].legend()
