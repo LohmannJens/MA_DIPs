@@ -108,9 +108,12 @@ if __name__ == "__main__":
                 e = df["End"]
                 if args.weighted:
                     w = df["NGS_read_count"]
+                    x = s.append(e)
+                    y = w.append(w)
+                    line_df = pd.concat({"position": x, "ngs_count": y}, axis=1)
+                    line_df.sort_values(by="position", inplace=True)
                     rect_height = max(w)/10
-                    axs[i].bar(x=s, height=w)
-                    axs[i].bar(x=e, height=w)
+                    axs[i].plot(line_df["position"], line_df["ngs_count"])
                 else:    
                     # plot start and end point of junctions as scatter
                     rect_height = 0.5
