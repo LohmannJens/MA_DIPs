@@ -37,6 +37,23 @@ def load_density_data(path: str)-> dict:
     return density_dict
 
 
+def load_WSN_data(dir: str)-> dict:
+    '''
+        Loads junction sites data for WSN strain from Mendes 2021.
+        Formats it in the same way as the dataset from Alnaji 2019.
+        :param dir: directory to the different .tsv files of the experiments
+
+        :return: dictionary with one key (strain), value (data frame) pair
+    '''
+    dfs = list()
+    for f in os.scandir(dir):
+        df = pd.read_csv(f.path, sep="\t", na_values=["", "None"], keep_default_na=False)
+        dfs.append(df)
+
+    data = dict({"WSN": pd.concat(dfs)})
+    return data
+
+
 def plot_deletion_lengths(data: dict)-> None:
     '''
         creates a histogram for each strain, indicating the length of the
@@ -61,7 +78,6 @@ def plot_deletion_lengths(data: dict)-> None:
         fig, axs = plt.subplots(8, 1, figsize=(10, 20), tight_layout=True)
         fig.suptitle(f"absolute occurrences of deletions for {key}", x=0.3)
         for i, s in enumerate(SEGMENTS):
-            #axs[i].bar(count_dict[s].keys(), height=count_dict[s].values())
             axs[i].hist(count_dict[s].keys(), weights=count_dict[s].values(), bins=100)
             axs[i].set_title(f"{s}")
             axs[i].set_xlim(left=0)
@@ -88,8 +104,14 @@ def map_positions_to_density(data: dict, density_data: dict)-> dict:
         for s in SEGMENTS:
             count_dict[s] = dict()
         for i, r in value.iterrows():
-            count_dict[r["Segment"]][r["Start"]] = r["NGS_read_count"]
-            count_dict[r["Segment"]][r["End"]] = r["NGS_read_count"]
+            if r["Start"] in count_dict[r["Segment"]]:
+                count_dict[r["Segment"]][r["Start"]] += r["NGS_read_count"]
+            else:
+                count_dict[r["Segment"]][r["Start"]] = r["NGS_read_count"]
+            if r["End"] in count_dict[r["Segment"]]:
+                count_dict[r["Segment"]][r["End"]] += r["NGS_read_count"]
+            else:
+                count_dict[r["Segment"]][r["End"]] = r["NGS_read_count"]
 
         # create a subplot for each key, value pair in count_dict
         fig, axs = plt.subplots(8, 1, figsize=(7, 14), tight_layout=True)
@@ -160,16 +182,24 @@ def correlate_position_with_density(data: dict, density_data: dict)-> None:
 
 if __name__ == "__main__":
     filepath = os.path.join(DATAPATH, "alnaji2019", "DI_Influenza_FA_JVI.xlsx")
-    cleaned_data_dict = load_excel(filepath)
     short_reads_filepath = os.path.join(DATAPATH, "alnaji2019", "Small_deletionSize_FA.xlsx")
-    all_reads_dict = load_short_reads(cleaned_data_dict, short_reads_filepath)
+    density_path = os.path.join(DATAPATH, "Lee2017", "csv_NPdensity")
 
+    cleaned_data_dict = load_excel(filepath)
+    all_reads_dict = load_short_reads(cleaned_data_dict, short_reads_filepath)
     plot_deletion_lengths(all_reads_dict)
 
-    density_path = os.path.join(DATAPATH, "Lee2017", "csv_NPdensity")
-    density_data = load_density_data(density_path)
-    NGS_count_dict = map_positions_to_density(all_reads_dict, density_data)
-
+    # Plotting NP density against junction sites
+    #    Cal07 data from Alnaji 2019
+    Cal07_dens_path = os.path.join(density_path, "Cal07")
+    Cal07_density_data = load_density_data(Cal07_dens_path)
+    NGS_count_dict = map_positions_to_density(all_reads_dict, Cal07_density_data)
     correlate_position_with_density(NGS_count_dict, density_data)
-
+    
+    #    WSN data from Mendes 2021
+    WSN_count_path = os.path.join(DATAPATH, "Mendes2021", "beta_sorting_BLASTresults")
+    WSN_reads_dict = load_WSN_data(WSN_count_path)
+    WSN_dens_path = os.path.join(density_path, "WSN")
+    WSN_dens_data = load_density_data(WSN_dens_path)
+    _ = map_positions_to_density(WSN_reads_dict, WSN_dens_data)
 
