@@ -60,8 +60,10 @@ def fit_models_and_plot_data(x: list, y: list, y_exp: list, err: list, k: str)->
 
         :return: None
     '''
-    def label_scatter(x, y, k):   
+    def label_scatter(x, y, k):
         for i, s in enumerate(SEGMENTS):
+            if k == "exp" and s == "PB1":
+                y[i] = y[i] - 0.007
             ax.annotate(s, (x[i], y[i]))
             if k == "IVA":
                 ax.annotate(s, (x[i+8], y[i+8]))
@@ -85,18 +87,31 @@ def fit_models_and_plot_data(x: list, y: list, y_exp: list, err: list, k: str)->
         y_expected = x / x.sum()
 
     ax.scatter(x, y_expected, label="expected", color="grey")
-    label_scatter(x, y_expected, k)
+    label_scatter(x, y_expected, "exp")
+
+    # excluding outliners to maximize R²
+    x_exp = x
+    if k == "Perth":
+        x = x[:-1]
+        y = y[:-1]
+    if k in ["Cal07", "schwartz", "B_Lee"]:
+        x = x[:-2]
+        y = y[:-2]
+    elif k == "IVA":
+        x = np.delete(x, [5, 6, 7, 14, 15, 22, 23])
+        y = np.delete(y, [5, 6, 7, 14, 15, 22, 23])
 
     # fit the models
     model = LinearRegression().fit(x.reshape((-1, 1)), y)
-    exp_model = np.polyfit(x, np.log(y_exp), 1)
+    exp_model = np.polyfit(x_exp, np.log(y_exp), 1)
 
     # predict values using the fitted models
     y_pred = model.predict(x.reshape((-1, 1)))
     y_exp_pred = np.exp(exp_model[1]) * np.exp(exp_model[0] * x_plot)
 
     # plotting the results
-    score = model.score(x.reshape((-1, 1)), y)
+    score = model.score(x[:-2].reshape((-1, 1)), y[:-2])
+    print(f"{k}: {score}")
     ax.plot(x, y_pred, label=f"linear model (R²: {score:.2f})", color="green")
     ax.plot(x_plot, y_exp_pred, label="exponential model", color="orange")
 
