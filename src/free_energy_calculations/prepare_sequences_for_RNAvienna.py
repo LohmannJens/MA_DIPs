@@ -40,12 +40,17 @@ def write_sequence(seq, name: str, folder: str)-> None:
 
 def random_crop_sequence(s: str, n: int)-> str:
     '''
+        Creates a random deletion site by cropping a given sequence at a random
+        point.
+        :param s: Given sequence
+        :param n: length of the resulting sequence
 
+        :return: randomly cropped sequence of length n
     '''
     start = randrange(len(s)-n)
-    seq = s[start:start+n]
-    assert len(seq) == n, "length of random sequence is not same as original"
+    seq = s[:start] + s[start+n:]
     return seq
+
 
 def create_cropped_seq_files(d: dict, shuffle: bool=False, random: bool=False)-> None:
     '''
@@ -82,9 +87,9 @@ def create_cropped_seq_files(d: dict, shuffle: bool=False, random: bool=False)->
                 np.random.shuffle(seq_list)
                 seq = Seq("".join(seq_list))
             elif random:
-                n = len(r["DelSequence"])
+                del_len = len(r["WholeSequence"]) - len(r["DelSequence"])
                 full_seq = r["WholeSequence"]
-                seq = random_crop_sequence(full_seq, n)
+                seq = random_crop_sequence(full_seq, del_len)
             else:
                 seq = r["DelSequence"]
                 
