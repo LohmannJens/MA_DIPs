@@ -10,6 +10,7 @@ import shutil
 import pandas as pd
 import matplotlib.pyplot as plt
 
+from scipy import stats
 from mpl_toolkits.mplot3d import Axes3D
 
 sys.path.insert(0, "..")
@@ -115,12 +116,14 @@ def plot_deltaG_length(df: object, path: str, d_set: str)-> None:
 
         :return: None
     '''
+    r, p = stats.pearsonr(df["delta_G"], df["length"])
+
     fig, ax = plt.subplots(1, 1, figsize=(10,10), tight_layout=True)
     for s in SEGMENTS:
         s_df = df[df["segment"] == s]
         ax.scatter(s_df["delta_G"], s_df["length"], label=s, alpha=0.3)
 
-    ax.set_title(f"correlation of delta G to sequence length for {d_set} data set")
+    ax.set_title(f"correlation of delta G to sequence length for {d_set} data set (r = {r:.2})")
     ax.set_xlabel("delta G")
     ax.set_ylabel("sequence length")
     ax.legend()
@@ -170,19 +173,27 @@ def plot_delta_G_observed_expected(df: object, path: str, mode: str)-> None:
         :return: None
 
     '''
-    fig, ax = plt.subplots(1, 1, figsize=(10,10), tight_layout=True)
-    for s in SEGMENTS:
-        s_df = df[cropped_df["segment"] == s]
-        ax.scatter(s_df["delta_G"], s_df[f"delta_G_{mode}"], label=s, alpha=0.3)
+    fig, axs = plt.subplots(2, 2, figsize=(10,10), tight_layout=True)
+    j = 0
+    for i, strain in enumerate(["Cal07", "NC", "Perth", "BLEE"]):
+        strain_df = df[df["strain"] == strain]
+        if i == 2:
+            j = 1
+        for s in SEGMENTS:
+            seg_df = strain_df[strain_df["segment"] == s]
+            axs[i%2][j].scatter(seg_df["delta_G"], seg_df[f"delta_G_{mode}"], label=s, alpha=0.3)
+
+        r, p = stats.pearsonr(strain_df["delta_G"], strain_df["length"])
+        
+        axs[i%2][j].set_title(f"delta G vs delta G {mode} {strain} (r = {r:.2})")
+        axs[i%2][j].set_xlabel("delta G")
+        axs[i%2][j].set_ylabel(f"delta G {mode}")
+        axs[i%2][j].set_xlim([-650, 0])
+        axs[i%2][j].set_ylim([-650, 0])
+        axs[i%2][j].plot([0,1], [0,1], transform=axs[i%2][j].transAxes, c="grey", linestyle="--")
+        axs[i%2][j].legend()
 
     plt.locator_params(axis="y", nbins=10)
-    ax.set_title(f"delta G vs delta G {mode}")
-    ax.set_xlabel("delta G")
-    ax.set_ylabel(f"delta G {mode}")
-    ax.set_xlim([-650, 0])
-    ax.set_ylim([-650, 0])
-    ax.plot([0,1], [0,1], transform=ax.transAxes, c="grey", linestyle="--")
-    ax.legend()
 
     save_path = os.path.join(path, f"deltaG_observed_{mode}.pdf")
     plt.savefig(save_path)
@@ -199,26 +210,27 @@ def create_difference_boxplots(df: object, path: str)-> None:
         
         :return: None
     '''
-    # calculate differences of delta G to random/shuffled data
+    # calculate differences of delta G to random cropped data
     df["random_diff"] = df["delta_G"] - df["delta_G_random"]
-    df["shuffled_diff"] = df["delta_G"] - df["delta_G_shuffled"]
-    b1 = list()
-    b2 = list()
-    for s in SEGMENTS:
-        b1.append(df.loc[df["segment"] == s, "random_diff"])
-        b2.append(df.loc[df["segment"] == s, "shuffled_diff"])
+ #   data = [df.loc[df["segment"] == s, "random_diff"] for s in SEGMENTS]
 
-    fig, axs = plt.subplots(2, 1, figsize=(15,10), tight_layout=True)
+    fig, axs = plt.subplots(2, 2, figsize=(10,10), tight_layout=True)
+    j = 0
+    for i, strain in enumerate(["Cal07", "NC", "Perth", "BLEE"]):
+        strain_df = df[df["strain"] == strain]
+        data = [strain_df.loc[strain_df["segment"] == s, "random_diff"] for s in SEGMENTS]
 
-    for i, (mode, d) in enumerate([("random", b1), ("shuffled", b2)]):
-        axs[i].boxplot(d, labels=SEGMENTS)
-        axs[i].set_title(f"{mode} approach")
-        axs[i].set_xlabel("segments")
-        axs[i].set_ylabel(f"\u0394\u0394G (\u0394G - \u0394G {mode} approach)")
-        axs[i].set_ylim([-70, 50])
-        axs[i].axhline(y=0, c="r", linestyle="--", linewidth=0.5)
+        if i == 2:
+            j = 1
 
-    save_path = os.path.join(path, "boxplots_delta_delta_G.pdf")
+        axs[i%2][j].boxplot(data, labels=SEGMENTS)
+        axs[i%2][j].set_title(f"random approach {strain}")
+        axs[i%2][j].set_xlabel("segments")
+        axs[i%2][j].set_ylabel("\u0394\u0394G (\u0394G - \u0394G random approach)")
+        axs[i%2][j].set_ylim([-60, 50])
+        axs[i%2][j].axhline(y=0, c="r", linestyle="--", linewidth=0.5)
+
+    save_path = os.path.join(path, "boxplot_delta_delta_G.pdf")
     fig.savefig(save_path)
     plt.close()
 
@@ -240,8 +252,8 @@ if __name__ == "__main__":
     plot_deltaG_NGS(cropped_df, results_path, False)
     plot_deltaG_NGS(cropped_df, results_path, True)
     
-    plot_delta_G_observed_expected(cropped_df, results_path, "shuffled")
     plot_delta_G_observed_expected(cropped_df, results_path, "random")
+    plot_delta_G_observed_expected(cropped_df, results_path, "shuffled")
     
     create_difference_boxplots(cropped_df, results_path)
 
