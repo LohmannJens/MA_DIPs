@@ -13,6 +13,7 @@ RESULTSPATH = os.path.join(REPOPATH, "results")
 
 SEGMENTS = ["PB2", "PB1", "PA", "HA", "NP", "NA", "M", "NS"]
 
+
 def get_sequence(strain: str, seg: str)-> object:
     '''
         loads a DNA sequence by strain and segment.
@@ -120,5 +121,26 @@ def load_short_reads(data_dict: dict, path: str)-> dict:
         short_data_dict[k[:-3]] = pd.concat([short_data_dict[k[:-3]], v])
 
     return short_data_dict
+
+def get_stat_symbol(p: float)-> str:
+    '''
+        Indicates the statistical significance by letters. Is used for plots.
+        :param p: p-value of the test
+
+        :return: letter indicating the significance
+    '''
+    if p == 0.0:
+        return ""
+    elif p < 0.0001:
+        return "D"
+    elif p < 0.001:
+        return "C"
+    elif p < 0.01:
+        return "B"
+    elif p < 0.05:
+        return "A"
+    else:
+        return ""
+
 
 
