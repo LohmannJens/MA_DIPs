@@ -246,12 +246,11 @@ def nucleotide_occurrence_analysis(seq_dict: dict, seg: str)-> None:
         e = (int(v.End.quantile(q)), int(v.End.quantile(1-q)))
         m = 5
 
-        sampling_data = generate_sampling_data(seq, s, e, n)
         rounds_s = dict({n: dict() for n in NUCLEOTIDES})
         rounds_e = dict({n: dict() for n in NUCLEOTIDES})
         for idx in range(m):
             sampling_data = generate_sampling_data(seq, s, e, n)
-            exp_s, exp_e = count_nucleotide_occurrence_overall(sampling_data[:n])
+            exp_s, exp_e = count_nucleotide_occurrence_overall(sampling_data)
             for nuc in exp_s.keys():
                 rounds_s[nuc][f"round_{idx}"] = exp_s[nuc] / n
                 rounds_e[nuc][f"round_{idx}"] = exp_e[nuc] / n
