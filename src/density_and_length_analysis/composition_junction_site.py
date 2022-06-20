@@ -231,10 +231,8 @@ def nucleotide_occurrence_analysis(seq_dict: dict, seg: str)-> None:
     '''
     for k, v in seq_dict.items():
         v = v.loc[v["Segment"] == seg]
-        
         count_start_dict, count_end_dict = count_nucleotide_occurrence_overall(v)
         n = len(v.index)
-
         # only plot results if at least one data point is available
         if n <= 1:
             continue
@@ -244,16 +242,10 @@ def nucleotide_occurrence_analysis(seq_dict: dict, seg: str)-> None:
         q = 0.20
         s = (int(v.Start.quantile(q)), int(v.Start.quantile(1-q)))
         e = (int(v.End.quantile(q)), int(v.End.quantile(1-q)))
-        m = 5
+        m = 10
 
-        rounds_s = dict({n: dict() for n in NUCLEOTIDES})
-        rounds_e = dict({n: dict() for n in NUCLEOTIDES})
-        for idx in range(m):
-            sampling_data = generate_sampling_data(seq, s, e, n)
-            exp_s, exp_e = count_nucleotide_occurrence_overall(sampling_data)
-            for nuc in exp_s.keys():
-                rounds_s[nuc][f"round_{idx}"] = exp_s[nuc] / n
-                rounds_e[nuc][f"round_{idx}"] = exp_e[nuc] / n
+        sampling_data = generate_sampling_data(seq, s, e, n*m)
+        exp_s, exp_e = count_nucleotide_occurrence_overall(sampling_data)
         
         fig, axs = plt.subplots(4, 2, figsize=(5, 10), tight_layout=True)
         x = np.arange(0.8, 9.8, dtype=np.float64)
@@ -261,32 +253,22 @@ def nucleotide_occurrence_analysis(seq_dict: dict, seg: str)-> None:
         for idx, nuc in enumerate(count_start_dict.keys()):
             h_s = count_start_dict[nuc]/n
             h_e = count_end_dict[nuc]/n
-            
-            df_start = pd.DataFrame(rounds_s[nuc])
-            df_end = pd.DataFrame(rounds_e[nuc])
-            y_exp_s = df_start.mean(axis=1)
-            y_exp_e = df_end.mean(axis=1)
-            y_err_s = df_start.std(axis=1)
-            y_err_e = df_end.std(axis=1)
+            y_exp_s = exp_s[nuc] / (n * m)
+            y_exp_e = exp_e[nuc] / (n * m)
 
             axs[idx, 0].bar(x, height=h_s, width=0.3, label=nuc, color=COLORS[nuc])
             axs[idx, 1].bar(x, height=h_e, width=0.3, label=nuc, color=COLORS[nuc])
-            axs[idx, 0].bar(x+0.4, height=y_exp_s, width=0.3, label=f"{nuc}_exp", color=COLORS[nuc], alpha=0.5, yerr=y_err_s)
-            axs[idx, 1].bar(x+0.4, height=y_exp_e, width=0.3, label=f"{nuc}_exp", color=COLORS[nuc], alpha=0.5, yerr=y_err_e)
+            axs[idx, 0].bar(x+0.4, height=y_exp_s, width=0.3, label=f"{nuc}_exp", color=COLORS[nuc], alpha=0.5)
+            axs[idx, 1].bar(x+0.4, height=y_exp_e, width=0.3, label=f"{nuc}_exp", color=COLORS[nuc], alpha=0.5)
 
-            stats_list = list()
-            for j, r in df_start.iterrows():
-                if h_s[j] != 0 and y_exp_s[j] != 0:
-                    stat, p = stats.ttest_1samp(r, h_s[j])
-                    symbol = get_stat_symbol(p)
-                    axs[idx, 0].annotate(symbol, (j+0.8, 0.8))
-
-            stats_list = list()
-            for j, r in df_end.iterrows():
-                if h_e[j] != 0 and y_exp_e[j] != 0:
-                    stat, p = stats.ttest_1samp(r, h_e[j])
-                    symbol = get_stat_symbol(p)
-                    axs[idx, 1].annotate(symbol, (j+0.8, 0.8))
+            for j, p in enumerate(y_exp_s):
+                result = stats.binomtest(int(count_start_dict[nuc][j]), n, p)
+                symbol = get_stat_symbol(result.pvalue)
+                axs[idx, 0].annotate(symbol, (j+0.8, 0.8))
+            for j, p in enumerate(y_exp_e):
+                result = stats.binomtest(int(count_end_dict[nuc][j]), n, p)
+                symbol = get_stat_symbol(result.pvalue)
+                axs[idx, 1].annotate(symbol, (j+0.8, 0.8))
 
             for i in range(2):
                 axs[idx, i].legend()
@@ -317,16 +299,12 @@ def nucleotide_overlap_analysis(seq_dict: dict, seg: str, mode: int, ngs_thresh:
         :param ngs_thresh: gives the threshold on which data to include
         :return: None
     '''
-    fig, axs = plt.subplots(4,
-                            2,
-                            figsize=(10, 10),
-                            tight_layout=True,
+    fig, axs = plt.subplots(4, 2, figsize=(10, 10), tight_layout=True,
                             gridspec_kw={"width_ratios": [1, 3]})
     for i, (k, v) in enumerate(seq_dict.items()):
         v = v.loc[(v["Segment"] == seg) & (v["NGS_read_count"] > ngs_thresh)]
         nuc_overlap_dict, overlap_seq_dict = count_overlapping_nucleotides_overall(v, mode)
         n = len(v.index)
-
         # only plot results if at least one data point
         if n <= 1:
             continue
@@ -336,37 +314,27 @@ def nucleotide_overlap_analysis(seq_dict: dict, seg: str, mode: int, ngs_thresh:
         q = 0.20
         s = (int(v.Start.quantile(q)), int(v.Start.quantile(1-q)))
         e = (int(v.End.quantile(q)), int(v.End.quantile(1-q)))
-        m = 5
+        m = 10
 
-        rounds = dict()
-        for idx in range(m):
-            sampling_data = generate_sampling_data(seq, s, e, n)
-            exp, _ = count_overlapping_nucleotides_overall(sampling_data, mode)
-            rounds[f"sample_{idx}"] = np.array(list(exp.values())) / n
-
-        df = pd.DataFrame(rounds)
-        y_exp = df.mean(axis=1)
-        y_err = df.std(axis=1)
-
+        sampling_data = generate_sampling_data(seq, s, e, n*m)
+        exp, _ = count_overlapping_nucleotides_overall(sampling_data, mode)
+        exp = np.array(list(exp.values()))
+        h_exp = exp/exp.sum()
         x = list(nuc_overlap_dict.keys())
         h = np.array(list(nuc_overlap_dict.values()))
-        h = h/h.sum()
 
-        axs[i, 0].bar(x=x, height=h, width=-0.4, align="edge", label="observed")
-        axs[i, 0].bar(x=x, height=y_exp, width=0.4, align="edge", label="expected", yerr=y_err)
+        axs[i, 0].bar(x=x, height=h/h.sum(), width=-0.4, align="edge", label="observed")
+        axs[i, 0].bar(x=x, height=h_exp, width=0.4, align="edge", label="expected")
         axs[i, 0].set_xlabel("number of overlapping nucleotides")
         axs[i, 0].set_ylabel("relative occurrence")
         axs[i, 0].set_title(f"{k} ({n})")
         axs[i, 0].legend(loc="upper right")
         axs[i, 0].set_ylim(bottom=0.0, top=1.0)
 
-        # do t test for each observation
-        stats_list = list()
-        for j, r in df.iterrows():
-            if h[j] != 0 and y_exp[j] != 0:
-                stat, p = stats.ttest_1samp(r, h[j])
-                symbol = get_stat_symbol(p)
-                axs[i, 0].annotate(symbol, (j-0.5, 1.0))
+        for j, p in enumerate(h_exp):
+            result = stats.binomtest(h[j], n, p)
+            symbol = get_stat_symbol(result.pvalue)
+            axs[i, 0].annotate(symbol, (j-0.5, 1.0))
 
         plot_dict = dict()
         for key, value in overlap_seq_dict.items():
@@ -497,8 +465,8 @@ if __name__ == "__main__":
 
     # Loop over the different strains and calculate the occurrence of each
     # nucleotide in the sequences
-    for s in SEGMENTS:
-        nucleotide_occurrence_analysis(sequence_list_dict, s)
+#    for s in SEGMENTS:
+ #       nucleotide_occurrence_analysis(sequence_list_dict, s)
 
     # Check if nucleotides directly before junction site have the same sequence
     # as the ones directly before junction site at the end
