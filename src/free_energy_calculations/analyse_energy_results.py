@@ -15,16 +15,18 @@ from mpl_toolkits.mplot3d import Axes3D
 
 sys.path.insert(0, "..")
 sys.path.insert(0, "../density_and_length_analysis")
-from utils import DATAPATH, RESULTSPATH, SEGMENTS, get_seq_len
+from utils import DATAPATH, RESULTSPATH, SEGMENTS, get_seq_len, load_excel, load_short_reads, get_stat_symbol
+from composition_junction_site import generate_sampling_data
 
 
-def extract_data_from_file(f: str)-> (int, float):
+def extract_data_from_file(f: str)-> (int, float, str):
     '''
         Opens a .fold file form the free energy calculations and gets the 
         length of the sequence and the delta G
         :param f: filename
 
-        :return: Tuple with length of sequence and delta G
+        :return: Tuple with length of sequence, delta G and secondary structure
+                 in Dot-Bracket notation
     '''
     # open file
     with open(f, "r") as handle:
@@ -35,12 +37,13 @@ def extract_data_from_file(f: str)-> (int, float):
         l2 = handle.readline()
         length = len(l2) - 1
 
-        # get delta G from third line
+        # get delta G and secondary structure from third line
         l3 = handle.readline()
-        match = re.findall("\((\S*)\)$", l3)
-        delta_G = float(match[0])
+        l3_splitted = l3.rstrip().split(" ")
+        sec_structure = l3_splitted[0]
+        delta_G = float(l3_splitted[1][1:-1])
 
-    return length, delta_G
+    return length, delta_G, sec_structure
 
 
 def structure_dataframe(path: str)-> object:
@@ -56,6 +59,7 @@ def structure_dataframe(path: str)-> object:
     segments = list()
     lengths = list()
     delta_Gs = list()
+    sec_structures = list()
     delta_Gs_shuffled = list()
     delta_Gs_random = list()
     starts = list()
@@ -77,18 +81,18 @@ def structure_dataframe(path: str)-> object:
 
                 path_shuffled = os.path.join(f"{path}_shuffled",
                                              f"{f[:-5]}_shuffled.fold")
-                _, delta_G_shuffled = extract_data_from_file(path_shuffled)
+                _, delta_G_shuffled, _ = extract_data_from_file(path_shuffled)
                 delta_Gs_shuffled.append(delta_G_shuffled)
 
                 path_random = os.path.join(f"{path}_randomcrop",
                                            f"{f[:-5]}_randomcrop.fold")
-                _, delta_G_random = extract_data_from_file(path_random)
+                _, delta_G_random, _ = extract_data_from_file(path_random)
                 delta_Gs_random.append(delta_G_random)
 
-            length, delta_G = extract_data_from_file(os.path.join(path, f))
+            length, delta_G, sec_struct = extract_data_from_file(os.path.join(path, f))
             lengths.append(length)
             delta_Gs.append(delta_G)
-
+            sec_structures.append(sec_struct)
 
     # convert dict to data frame
     d = dict()
@@ -96,6 +100,7 @@ def structure_dataframe(path: str)-> object:
     d["segment"] = segments
     d["length"] = lengths
     d["delta_G"] = delta_Gs
+    d["sec_structure"] = sec_structures
     if (len(starts) != 0 and len(ends) != 0):
         d["start"] = starts
         d["end"] = ends
@@ -212,7 +217,6 @@ def create_difference_boxplots(df: object, path: str)-> None:
     '''
     # calculate differences of delta G to random cropped data
     df["random_diff"] = df["delta_G"] - df["delta_G_random"]
- #   data = [df.loc[df["segment"] == s, "random_diff"] for s in SEGMENTS]
 
     fig, axs = plt.subplots(2, 2, figsize=(10,10), tight_layout=True)
     j = 0
@@ -235,16 +239,100 @@ def create_difference_boxplots(df: object, path: str)-> None:
     plt.close()
 
 
+def count_bound_bases(df: object, sec_struct: str)-> int:
+    '''
+        Checks if a nucleotide is bound or not and counts the overall bound
+        bases over the whole data set.
+        :param df: Data frame including the start and end point of the junction
+                   sites
+        :param sec_struct: secondary structure in Dot-Bracket notation
+
+        :return: number of bound bases
+    '''
+    def is_bound_base(sec_struct: str, p: int)-> bool:
+        if sec_struct[p] in ["(", ")"]:
+            return True
+        elif sec_struct[p] == ".":
+            return False
+        else:
+            exit(f"Error: Unknown symbol ({sec_struct[p]}) in 'check_secondary_structures()'!)")
+
+    bound_bases = 0
+    for r in df.iterrows():
+        r = r[1]
+        s = r["Start"]
+        e = r["End"]
+        if is_bound_base(sec_struct, s-1):
+            bound_bases += 1
+        if is_bound_base(sec_struct, e):
+            bound_bases += 1
+
+    return bound_bases
+
+
+def check_secondary_structures(all_reads_dict, df, path)-> None:
+    '''
+        Gets the junction site data and the secondary structures of the
+        segments. Counts the number of bound nucleotides for each strain and
+        segment and plots the results.
+        :param all_reads_dict: Data including Start and End of junction site
+        :param df: Secondary structure of the segments
+        :param path: path to the results folder
+
+        :return: None
+    '''
+    fig, axs = plt.subplots(4, 1, figsize=(10, 5), tight_layout=True)
+
+    for i, (k, v) in enumerate(all_reads_dict.items()):
+        if k == "B_LEE":
+            k = "BLee"
+        for idx, seg in enumerate(SEGMENTS):
+            sec_struct = df.loc[(df["segment"] == seg) & (df["strain"] == k)]["sec_structure"].tolist()[0]
+            seg_df = v[v["Segment"] == seg]
+            n = len(seg_df.index)
+            if n == 0:
+                obs_bound_ratio = 0.0
+                exp_bound_ratio = 0.0
+                symbol = ""
+            else:
+                obs_bound = count_bound_bases(seg_df, sec_struct)
+                obs_bound_ratio = obs_bound/(n*2)
+
+                q = 0.20
+                s = (int(seg_df.Start.quantile(q)), int(seg_df.Start.quantile(1-q)))
+                e = (int(seg_df.End.quantile(q)), int(seg_df.End.quantile(1-q)))
+                m = 20
+
+                sampling_df = generate_sampling_data(sec_struct, s, e, n*m)
+                exp_bound = count_bound_bases(sampling_df, sec_struct)
+                exp_bound_ratio = exp_bound / (n * m * 2)
+
+                # n * 2 because Start and End is counted together
+                result = stats.binomtest(obs_bound, n*2, exp_bound_ratio)
+                symbol = get_stat_symbol(result.pvalue)
+
+            axs[i].bar([f"{seg} obs", f"{seg} exp"], [obs_bound_ratio, exp_bound_ratio])
+            axs[i].annotate(f"{seg} (n={n}) {symbol}", (idx*2+0.5, 1.0), horizontalalignment="center")
+
+        axs[i].set_ylim(top=1.0)
+        axs[i].set_xlabel("segment")
+        axs[i].set_ylabel("Ratio unbound/bound bases")
+        axs[i].set_title(f"normalized bound bases of {k} (n={len(v.index)})", pad=10.0)
+
+    save_path = os.path.join(path, "bound_bases_occurrence.pdf")
+    fig.savefig(save_path)
+    plt.close()
+
+
 if __name__ == "__main__":
     path = os.path.join(DATAPATH, "energy_calculation")
-
     path_full = os.path.join(path, "full_sequences")
     path_cropped = os.path.join(path, "cropped_sequences")
+    results_path = os.path.join(RESULTSPATH, "free_energy_estimations")
 
     full_df = structure_dataframe(path_full)
     cropped_df = structure_dataframe(path_cropped)
 
-    results_path = os.path.join(RESULTSPATH, "free_energy_estimations")
     
     plot_deltaG_length(full_df, results_path, "full")
     plot_deltaG_length(cropped_df, results_path, "cropped")
@@ -256,6 +344,14 @@ if __name__ == "__main__":
     plot_delta_G_observed_expected(cropped_df, results_path, "shuffled")
     
     create_difference_boxplots(cropped_df, results_path)
+
+    # Check junction sites and secondary structure
+    filepath = os.path.join(DATAPATH, "alnaji2019", "DI_Influenza_FA_JVI.xlsx")
+    short_reads_filepath = os.path.join(DATAPATH, "alnaji2019", "Small_deletionSize_FA.xlsx")
+    cleaned_data_dict = load_excel(filepath)
+    all_reads_dict = load_short_reads(cleaned_data_dict, short_reads_filepath)
+
+    check_secondary_structures(all_reads_dict, full_df, results_path)
 
     # This part creates a 3D plot of delta G, length and NGS count.
     # It basically just combines the two plots above.
