@@ -281,7 +281,7 @@ def check_secondary_structures(all_reads_dict, df, path)-> None:
 
         :return: None
     '''
-    fig, axs = plt.subplots(4, 1, figsize=(10, 5), tight_layout=True)
+    fig, axs = plt.subplots(4, 1, figsize=(20, 10), tight_layout=True)
 
     for i, (k, v) in enumerate(all_reads_dict.items()):
         if k == "B_LEE":
