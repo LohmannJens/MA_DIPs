@@ -189,7 +189,7 @@ def plot_delta_G_observed_expected(df: object, path: str, mode: str)-> None:
             seg_df = strain_df[strain_df["segment"] == s]
             axs[i%2][j].scatter(seg_df["delta_G"], seg_df[f"delta_G_{mode}"], label=s, alpha=0.3)
 
-        r, p = stats.pearsonr(strain_df["delta_G"], strain_df["length"])
+        r, p = stats.pearsonr(strain_df["delta_G"], strain_df[f"delta_G_{mode}"])
         
         axs[i%2][j].set_title(f"delta G vs delta G {mode} {strain} (r = {r:.2})")
         axs[i%2][j].set_xlabel("delta G")
@@ -206,36 +206,44 @@ def plot_delta_G_observed_expected(df: object, path: str, mode: str)-> None:
     plt.close()
 
 
-def create_difference_boxplots(df: object, path: str)-> None:
+def create_difference_boxplots(df: object, path: str, mode: str)-> None:
     '''
         Creates boxplots for the difference of the delta G against the expected
         values. Is done for the random and shuffled approach and saved in one
         figure. The boxes of the boxplot are split up by the segments.
         :param df: data frame with the values
         :param path: path to the results folder
+        :param mode: is either 'shuffled' or 'random'
         
         :return: None
     '''
     # calculate differences of delta G to random cropped data
-    df["random_diff"] = df["delta_G"] - df["delta_G_random"]
+    df["delta_G_diff"] = df["delta_G"] - df[f"delta_G_{mode}"]
 
     fig, axs = plt.subplots(2, 2, figsize=(10,10), tight_layout=True)
     j = 0
     for i, strain in enumerate(["Cal07", "NC", "Perth", "BLEE"]):
         strain_df = df[df["strain"] == strain]
-        data = [strain_df.loc[strain_df["segment"] == s, "random_diff"] for s in SEGMENTS]
+        data = [strain_df.loc[strain_df["segment"] == s, "delta_G_diff"] for s in SEGMENTS]
+
 
         if i == 2:
             j = 1
 
         axs[i%2][j].boxplot(data, labels=SEGMENTS)
-        axs[i%2][j].set_title(f"random approach {strain}")
+        axs[i%2][j].set_title(f"{mode} approach {strain}")
         axs[i%2][j].set_xlabel("segments")
-        axs[i%2][j].set_ylabel("\u0394\u0394G (\u0394G - \u0394G random approach)")
+        axs[i%2][j].set_ylabel(f"\u0394\u0394G (\u0394G - \u0394G {mode} approach)")
         axs[i%2][j].set_ylim([-60, 50])
         axs[i%2][j].axhline(y=0, c="r", linestyle="--", linewidth=0.5)
 
-    save_path = os.path.join(path, "boxplot_delta_delta_G.pdf")
+        for k, s in enumerate(SEGMENTS):
+            if len(data[k]) > 1:
+                statistic, p = stats.ttest_1samp(data[k], 0, alternative="less")
+                symbol = get_stat_symbol(p)
+                axs[i%2][j].annotate(symbol, (k+1, max(data[k])), horizontalalignment="center")
+
+    save_path = os.path.join(path, f"boxplot_delta_delta_G_{mode}.pdf")
     fig.savefig(save_path)
     plt.close()
 
@@ -349,7 +357,8 @@ if __name__ == "__main__":
     plot_delta_G_observed_expected(cropped_df, results_path, "random")
     plot_delta_G_observed_expected(cropped_df, results_path, "shuffled")
     
-    create_difference_boxplots(cropped_df, results_path)
+    create_difference_boxplots(cropped_df, results_path, "random")
+    create_difference_boxplots(cropped_df, results_path, "shuffled")
 
     # Check junction sites and secondary structure
     filepath = os.path.join(DATAPATH, "alnaji2019", "DI_Influenza_FA_JVI.xlsx")
