@@ -226,7 +226,6 @@ def create_difference_boxplots(df: object, path: str, mode: str)-> None:
         strain_df = df[df["strain"] == strain]
         data = [strain_df.loc[strain_df["segment"] == s, "delta_G_diff"] for s in SEGMENTS]
 
-
         if i == 2:
             j = 1
 
