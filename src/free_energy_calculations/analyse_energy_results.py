@@ -7,6 +7,7 @@ import re
 import sys
 import shutil
 
+import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
 
@@ -255,7 +256,7 @@ def count_bound_bases(df: object, sec_struct: str)-> int:
         elif sec_struct[p] == ".":
             return False
         else:
-            exit(f"Error: Unknown symbol ({sec_struct[p]}) in 'check_secondary_structures()'!)")
+            exit(f"Error: Unknown symbol ({sec_struct[p]})!")
 
     bound_bases = 0
     for r in df.iterrows():
@@ -312,12 +313,17 @@ def check_secondary_structures(all_reads_dict, df, path)-> None:
                 symbol = get_stat_symbol(result.pvalue)
 
             axs[i].bar([f"{seg} obs", f"{seg} exp"], [obs_bound_ratio, exp_bound_ratio])
-            axs[i].annotate(f"{seg} (n={n}) {symbol}", (idx*2+0.5, 1.0), horizontalalignment="center")
+            axs[i].annotate(f"(n={n}) {symbol}", (idx*2+0.5,
+                            max(obs_bound_ratio, exp_bound_ratio)),
+                            horizontalalignment="center")
 
         axs[i].set_ylim(top=1.0)
-        axs[i].set_xlabel("segment")
+        axs[i].set_xlabel("Segments")
         axs[i].set_ylabel("Ratio unbound/bound bases")
         axs[i].set_title(f"normalized bound bases of {k} (n={len(v.index)})", pad=10.0)
+        axs[i].set_xticks(ticks=np.arange(0,16), labels=["obs", "exp"]*8)
+    
+    plt.legend(SEGMENTS)
 
     save_path = os.path.join(path, "bound_bases_occurrence.pdf")
     fig.savefig(save_path)
