@@ -20,6 +20,7 @@ import matplotlib.pyplot as plt
 
 from Bio.Seq import Seq
 from scipy import stats
+from statsmodels.stats.weightstats import ztest as ztest
 
 sys.path.insert(0, "..")
 from utils import DATAPATH, RESULTSPATH, SEGMENTS
@@ -331,10 +332,16 @@ def nucleotide_overlap_analysis(seq_dict: dict, seg: str, mode: int, ngs_thresh:
         axs[i, 0].legend(loc="upper right")
         axs[i, 0].set_ylim(bottom=0.0, top=1.0)
 
-        for j, p in enumerate(h_exp):
-            result = stats.binomtest(h[j], n, p)
-            symbol = get_stat_symbol(result.pvalue)
-            axs[i, 0].annotate(symbol, (j-0.5, 1.0))
+        f_obs = list()
+        f_exp = list()
+        for k, l in zip(h, exp):
+            if k != 0 and l != 0:
+                f_obs.append(k)
+                f_exp.append(l)
+        f_obs = np.array(f_obs)
+        f_exp = np.array(f_exp)
+        chisq, p = stats.chisquare(f_obs/f_obs.sum(), f_exp/f_exp.sum(), ddof=len(f_obs)-2)
+        axs[i, 0].annotate(get_stat_symbol(p), (10.0, 0.5))
 
         plot_dict = dict()
         for key, value in overlap_seq_dict.items():
