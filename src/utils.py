@@ -132,13 +132,13 @@ def get_stat_symbol(p: float)-> str:
     if p == 0.0:
         return ""
     elif p < 0.0001:
-        return "D"
+        return "****"
     elif p < 0.001:
-        return "C"
+        return "***"
     elif p < 0.01:
-        return "B"
+        return "**"
     elif p < 0.05:
-        return "A"
+        return "*"
     else:
         return ""
 

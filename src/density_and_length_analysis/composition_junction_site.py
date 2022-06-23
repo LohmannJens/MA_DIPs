@@ -265,11 +265,13 @@ def nucleotide_occurrence_analysis(seq_dict: dict, seg: str)-> None:
             for j, p in enumerate(y_exp_s):
                 result = stats.binomtest(int(count_start_dict[nuc][j]), n, p)
                 symbol = get_stat_symbol(result.pvalue)
-                axs[idx, 0].annotate(symbol, (j+0.8, 0.8))
+                axs[idx, 0].annotate(symbol, (j+1, max(h_s[j], p)), fontsize="x-small",
+                                     ha="center", stretch="condensed")
             for j, p in enumerate(y_exp_e):
                 result = stats.binomtest(int(count_end_dict[nuc][j]), n, p)
                 symbol = get_stat_symbol(result.pvalue)
-                axs[idx, 1].annotate(symbol, (j+0.8, 0.8))
+                axs[idx, 1].annotate(symbol, (j+1, max(h_e[j], p)), fontsize="x-small",
+                                     ha="center", stretch="condensed")
 
             for i in range(2):
                 axs[idx, i].legend()
@@ -324,24 +326,26 @@ def nucleotide_overlap_analysis(seq_dict: dict, seg: str, mode: int, ngs_thresh:
         x = list(nuc_overlap_dict.keys())
         h = np.array(list(nuc_overlap_dict.values()))
 
+        # test statistical significance
+        f_obs = list()
+        f_exp = list()
+        for a, b in zip(h, exp):
+            if a != 0 and b != 0:
+                f_obs.append(a)
+                f_exp.append(b)
+        f_obs = np.array(f_obs)
+        f_exp = np.array(f_exp)
+        chisq, p = stats.chisquare(f_obs/f_obs.sum(), f_exp/f_exp.sum(), ddof=len(f_obs)-2)
+        symbol = get_stat_symbol(p)
+
         axs[i, 0].bar(x=x, height=h/h.sum(), width=-0.4, align="edge", label="observed")
         axs[i, 0].bar(x=x, height=h_exp, width=0.4, align="edge", label="expected")
         axs[i, 0].set_xlabel("number of overlapping nucleotides")
         axs[i, 0].set_ylabel("relative occurrence")
-        axs[i, 0].set_title(f"{k} ({n})")
+        axs[i, 0].set_title(f"{k} (n={n}) {symbol}")
         axs[i, 0].legend(loc="upper right")
         axs[i, 0].set_ylim(bottom=0.0, top=1.0)
 
-        f_obs = list()
-        f_exp = list()
-        for k, l in zip(h, exp):
-            if k != 0 and l != 0:
-                f_obs.append(k)
-                f_exp.append(l)
-        f_obs = np.array(f_obs)
-        f_exp = np.array(f_exp)
-        chisq, p = stats.chisquare(f_obs/f_obs.sum(), f_exp/f_exp.sum(), ddof=len(f_obs)-2)
-        axs[i, 0].annotate(get_stat_symbol(p), (10.0, 0.5))
 
         plot_dict = dict()
         for key, value in overlap_seq_dict.items():
@@ -472,8 +476,8 @@ if __name__ == "__main__":
 
     # Loop over the different strains and calculate the occurrence of each
     # nucleotide in the sequences
-#    for s in SEGMENTS:
- #       nucleotide_occurrence_analysis(sequence_list_dict, s)
+    for s in SEGMENTS:
+        nucleotide_occurrence_analysis(sequence_list_dict, s)
 
     # Check if nucleotides directly before junction site have the same sequence
     # as the ones directly before junction site at the end
