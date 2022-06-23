@@ -20,7 +20,6 @@ import matplotlib.pyplot as plt
 
 from Bio.Seq import Seq
 from scipy import stats
-from statsmodels.stats.weightstats import ztest as ztest
 
 sys.path.insert(0, "..")
 from utils import DATAPATH, RESULTSPATH, SEGMENTS
@@ -317,35 +316,33 @@ def nucleotide_overlap_analysis(seq_dict: dict, seg: str, mode: int, ngs_thresh:
         q = 0.20
         s = (int(v.Start.quantile(q)), int(v.Start.quantile(1-q)))
         e = (int(v.End.quantile(q)), int(v.End.quantile(1-q)))
-        m = 10
+        m = 5
 
         sampling_data = generate_sampling_data(seq, s, e, n*m)
         exp, _ = count_overlapping_nucleotides_overall(sampling_data, mode)
-        exp = np.array(list(exp.values()))
-        h_exp = exp/exp.sum()
         x = list(nuc_overlap_dict.keys())
         h = np.array(list(nuc_overlap_dict.values()))
+        h_exp = np.array(list(exp.values()))
 
         # test statistical significance
         f_obs = list()
         f_exp = list()
-        for a, b in zip(h, exp):
-            if a != 0 and b != 0:
-                f_obs.append(a)
-                f_exp.append(b)
+        for a in x:
+            f_obs.extend([a]*nuc_overlap_dict[a])
+            f_exp.extend([a]*exp[a])
         f_obs = np.array(f_obs)
         f_exp = np.array(f_exp)
-        chisq, p = stats.chisquare(f_obs/f_obs.sum(), f_exp/f_exp.sum(), ddof=len(f_obs)-2)
-        symbol = get_stat_symbol(p)
+
+        res = stats.mannwhitneyu(f_obs, f_exp)
+        symbol = get_stat_symbol(res.pvalue)
 
         axs[i, 0].bar(x=x, height=h/h.sum(), width=-0.4, align="edge", label="observed")
-        axs[i, 0].bar(x=x, height=h_exp, width=0.4, align="edge", label="expected")
+        axs[i, 0].bar(x=x, height=h_exp/h_exp.sum(), width=0.4, align="edge", label="expected")
         axs[i, 0].set_xlabel("number of overlapping nucleotides")
         axs[i, 0].set_ylabel("relative occurrence")
         axs[i, 0].set_title(f"{k} (n={n}) {symbol}")
         axs[i, 0].legend(loc="upper right")
         axs[i, 0].set_ylim(bottom=0.0, top=1.0)
-
 
         plot_dict = dict()
         for key, value in overlap_seq_dict.items():
@@ -476,8 +473,8 @@ if __name__ == "__main__":
 
     # Loop over the different strains and calculate the occurrence of each
     # nucleotide in the sequences
-    for s in SEGMENTS:
-        nucleotide_occurrence_analysis(sequence_list_dict, s)
+#    for s in SEGMENTS:
+ #       nucleotide_occurrence_analysis(sequence_list_dict, s)
 
     # Check if nucleotides directly before junction site have the same sequence
     # as the ones directly before junction site at the end
