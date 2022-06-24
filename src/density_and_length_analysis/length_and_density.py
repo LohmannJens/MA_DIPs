@@ -119,12 +119,14 @@ def map_positions_to_density(data: dict, density_data: dict)-> dict:
         fig, axs = plt.subplots(8, 1, figsize=(7, 14), tight_layout=True)
         fig.suptitle(f"position of deletions on sequence for {key}", x=0.3)
         for i, s in enumerate(SEGMENTS):
-            l1 = axs[i].bar(count_dict[s].keys(), height=count_dict[s].values(), label="count")
-            axs[i].set_ylabel("number of occurrences")
-            l2, = axs[i].twinx().plot(density_data[s]["x"], density_data[s]["y"], label="NP density", alpha=0.5, color="red", fillstyle="full")
+            l1 = axs[i].twinx().bar(count_dict[s].keys(), height=count_dict[s].values(), label="count")
+            l2, = axs[i].plot(density_data[s]["x"], density_data[s]["y"], label="NP density", alpha=0.5, color="green", fillstyle="full")
             axs[i].set_title(f"{s}")
             axs[i].set_xlim(left=0)
+            axs[i].set_ylim(bottom=0, top=100)
             axs[i].set_xlabel("sequence position")
+            axs[i].set_ylabel("normalized NP density")
+            axs[i].axhline(y=5.0, color="red", linestyle="--")
 
         fig.legend([l1, l2], ["count", "NP density"])        
         save_path = os.path.join(RESULTSPATH, "deletion_length_and_position", f"{key}_del_position.pdf")
