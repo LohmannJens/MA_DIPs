@@ -19,8 +19,10 @@ import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
 
+from scipy import stats
+
 sys.path.insert(0, "..")
-from utils import DATAPATH, RESULTSPATH, SEGMENTS, load_excel, load_short_reads
+from utils import DATAPATH, RESULTSPATH, SEGMENTS, load_excel, load_short_reads, get_sequence, get_stat_symbol
 
 
 def load_density_data(path: str)-> dict:
@@ -134,50 +136,68 @@ def map_positions_to_density(data: dict, density_data: dict)-> dict:
     return NGS_dict
 
 
-def correlate_position_with_density(data: dict, density_data: dict)-> None:
+def compare_position_with_density(data: dict, density_data: dict, all_reads: dict)-> None:
     '''
-        Does a correlation analysis for the NP density data and the NGS count
-        of the DI RNA. normalizes the count of start and end points before
-        doing it.
+        Checks how many of the junction sites are at a position of low NP
+        density.
         :param data: NGS count data
         :param density_data: NP density data
+        :param all_reads: dictionary with all start and end points
 
         :return: None
     '''
-    def get_expected_density(p, v):
+    def get_density_at_position(p, v):
         i = 0
-        while v["x"][i] < p:
+        while v["x"][i] < p and len(v["x"])-1 != i:
             i += 1
-        return (v["y"][i] + v["y"][i-1]) / 2
+        if i == 0:
+            return v["y"][i]
+        elif i == len(v["y"]):
+            return v["y"].iloc[-1]
+        return (v["y"].iloc[i] + v["y"].iloc[i-1]) / 2
 
     for k, v in data.items():
-        fig, axs = plt.subplots(4, 2, figsize=(4, 8), tight_layout=True)
-        j = 0
+        fig, ax = plt.subplots(1, 1, figsize=(10, 5), tight_layout=True)
+        if k != "Cal07":
+            continue
+
         for i, s in enumerate(SEGMENTS):
-            # normalize NGS_read_count
             count_dict = v[s]
-            if len(count_dict) != 0:
-                x = np.array(list(count_dict.values())) / max(count_dict.values()) * 100
-                y = list()
-                for p in count_dict.keys():
-                    try:
-                        y.append(get_expected_density(p, density_data[s]))
-                    except:
-                        y.append(-1)
-            axs[i%4][j].scatter(x, y, label=s)
-            axs[i%4][j].set_title(s)
-            axs[i%4][j].set_xlabel("normalized NGS count")
-            axs[i%4][j].set_ylabel("NP density")
-            axs[i%4][j].set_xlim(0, 100)
-            axs[i%4][j].set_ylim(0, 100)
+            n = len(count_dict)
+            if len(count_dict) == 0:
+                continue
 
-            if i == 3:
-                j = 1
+            y = list()
+            for p in count_dict.keys():
+                y.append(get_density_at_position(p, density_data[s]))
 
+            # take every possible nucleotide to calculate expected ratio
+            seq = get_sequence(k, s)
+            y_exp = [get_density_at_position(p, density_data[s]) for p in np.arange(0, len(seq)+1)]
+            
+            threshold = 5
+            below = sum(map(lambda x : x < threshold, y))
+            obs_ratio = below/len(y)
+            below_exp = sum(map(lambda x : x < threshold, y_exp))
+            exp_ratio = below_exp/len(y_exp)
+
+            result = stats.binomtest(below, n, exp_ratio)
+            symbol = get_stat_symbol(result.pvalue)
+
+            ax.bar([f"{s} obs", f"{s} exp"], [obs_ratio, exp_ratio])
+            ax.annotate(f"(n={n}) {symbol}", (i*2+0.5,
+                        max(obs_ratio, exp_ratio)),
+                        horizontalalignment="center")
+            ax.set_xlabel("Segments")
+            ax.set_ylabel("Ratio: sites below threshold/all sites")
+            ax.set_xticks(ticks=np.arange(0,16), labels=["obs", "exp"]*8)
+
+        plt.legend(SEGMENTS)
         fig.suptitle(k)
 
-        savepath = os.path.join(RESULTSPATH, "deletion_length_and_position", f"{k}_count_density_correlation.pdf")
+        savepath = os.path.join(RESULTSPATH, "deletion_length_and_position", f"{k}_high_low_NP_areas.pdf")
         fig.savefig(savepath)
+        plt.close()
 
 
 if __name__ == "__main__":
@@ -194,7 +214,7 @@ if __name__ == "__main__":
     Cal07_dens_path = os.path.join(density_path, "Cal07")
     Cal07_density_data = load_density_data(Cal07_dens_path)
     NGS_count_dict = map_positions_to_density(all_reads_dict, Cal07_density_data)
-    correlate_position_with_density(NGS_count_dict, density_data)
+    compare_position_with_density(NGS_count_dict, Cal07_density_data, all_reads_dict)
     
     #    WSN data from Mendes 2021
     WSN_count_path = os.path.join(DATAPATH, "Mendes2021", "beta_sorting_BLASTresults")
