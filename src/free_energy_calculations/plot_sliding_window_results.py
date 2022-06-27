@@ -10,8 +10,10 @@ import sys
 import pandas as pd
 import matplotlib.pyplot as plt
 
+from scipy import stats
+
 sys.path.insert(0, "..")
-from utils import DATAPATH, RESULTSPATH, SEGMENTS, load_excel, load_short_reads
+from utils import DATAPATH, RESULTSPATH, SEGMENTS, load_excel, load_short_reads, get_stat_symbol
 
 
 def plot_deletions_with_delta_G(d: dict, w_s: int, s_s: int)-> None:
@@ -39,7 +41,7 @@ def plot_deletions_with_delta_G(d: dict, w_s: int, s_s: int)-> None:
             end_seg_df.rename(columns={"End": "Position"}, inplace=True)
             concat_seg_df = pd.concat([start_seg_df, end_seg_df])
             concat_seg_df = concat_seg_df.groupby("Position").sum()
-
+            
             energy_file = os.path.join(energy_path, f"{k}_{s}_{w_s}_{s_s}.csv")
             energy_df = pd.read_csv(energy_file)
 
@@ -62,14 +64,74 @@ def plot_deletions_with_delta_G(d: dict, w_s: int, s_s: int)-> None:
         plt.close()
 
 
+def create_boxplots(d: dict, w_s: int, s_s: int)-> None:
+    '''
+        Loads the deletion start and end points and the estimated delta G and
+        Plots them together in one plot.
+        :param d: dictionary with the start and end point data split by strains
+        :param w_s: size of the window in the sliding window approach
+        :param s_s: step size of the sliding window approach
+
+        :return: None
+    '''
+    energy_path = os.path.join(DATAPATH, "energy_calculation", "sliding_window")
+    fig, axs = plt.subplots(4, 1, figsize=(10, 15), tight_layout=True)
+    for i, (k, v) in enumerate(d.items()):
+        data = list()
+        annotations = list()
+        y_min = 0.0
+
+        for idx, s in enumerate(SEGMENTS):
+            seg_df = v.loc[v["Segment"] == s]
+            start_seg_df = seg_df.loc[:, ["Start", "NGS_read_count"]]
+            start_seg_df.rename(columns={"Start": "Position"}, inplace=True)
+            end_seg_df = seg_df.loc[:, ["End", "NGS_read_count"]]
+            end_seg_df.rename(columns={"End": "Position"}, inplace=True)
+            concat_seg_df = pd.concat([start_seg_df, end_seg_df])
+            concat_seg_df = concat_seg_df.groupby("Position").sum()
+
+            energy_file = os.path.join(energy_path, f"{k}_{s}_{w_s}_{s_s}.csv")
+            energy_df = pd.read_csv(energy_file)
+            if y_min > min(energy_df["delta_G"]):
+                y_min = min(energy_df["delta_G"])
+
+            df1 = energy_df[energy_df["position"].isin(list(concat_seg_df.index))]
+            df2 = energy_df[~energy_df["position"].isin(list(concat_seg_df.index))]
+            data.extend([list(df1["delta_G"]), list(df2["delta_G"])])
+
+            if seg_df.size != 0:
+                # do statistics
+                # t-test is not suitable, because no normal deviation is given
+                res = stats.mannwhitneyu(df1["delta_G"], df2["delta_G"])
+                symbol = get_stat_symbol(res.pvalue)
+            else:
+                symbol = ""
+
+            annotations.append(axs[i].annotate(f"{s} {symbol}", (idx*2 +1.5, 0.0), ha="center", size="small"))
+
+        for idx, text in enumerate(annotations):
+            text.set_position((idx*2+1.5, y_min))
+
+        box = axs[i].boxplot(data, labels=["has del.", "no del."]*8)
+        axs[i].set_title(k)
+        axs[i].set_xlabel("Segments")
+        axs[i].set_ylabel("\u0394 G")
+        axs[i].set_ylim(bottom=y_min)
+
+    save_path = os.path.join(RESULTSPATH, "free_energy_estimations")
+    save_file = os.path.join(save_path, f"boxplot_sliding_window_{w_s}_{s_s}.pdf")
+    fig.savefig(save_file)
+    plt.close()
+
+
 if __name__ == "__main__":
     filepath = os.path.join(DATAPATH, "alnaji2019", "DI_Influenza_FA_JVI.xlsx")
     short_reads_filepath = os.path.join(DATAPATH, "alnaji2019", "Small_deletionSize_FA.xlsx")    
     cleaned_data_dict = load_excel(filepath)
     all_reads_dict = load_short_reads(cleaned_data_dict, short_reads_filepath)
 
-
     window_size = 20
     step_size = 1
-    plot_deletions_with_delta_G(all_reads_dict, window_size, step_size)
+#    plot_deletions_with_delta_G(all_reads_dict, window_size, step_size)
+    create_boxplots(all_reads_dict, window_size, step_size)
 
