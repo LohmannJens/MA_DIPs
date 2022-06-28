@@ -1,7 +1,7 @@
-"""
+'''
 This script analyses the results that were created by Vienna RNA package.
 It loads the .fold files and analyses the delta G in different ways.
-"""
+'''
 import os
 import re
 import sys
@@ -15,7 +15,8 @@ from scipy import stats
 
 sys.path.insert(0, "..")
 sys.path.insert(0, "../density_and_length_analysis")
-from utils import DATAPATH, RESULTSPATH, SEGMENTS, get_seq_len, load_excel, load_short_reads, get_stat_symbol
+from utils import DATAPATH, RESULTSPATH, SEGMENTS
+from utils import get_seq_len, load_alnaji_excel, load_short_reads, get_stat_symbol
 from composition_junction_site import generate_sampling_data
 
 
@@ -344,7 +345,6 @@ if __name__ == "__main__":
     full_df = structure_dataframe(path_full)
     cropped_df = structure_dataframe(path_cropped)
 
-    
     plot_deltaG_length(full_df, results_path, "full")
     plot_deltaG_length(cropped_df, results_path, "cropped")
 
@@ -356,12 +356,10 @@ if __name__ == "__main__":
     
     create_difference_boxplots(cropped_df, results_path, "random")
     create_difference_boxplots(cropped_df, results_path, "shuffled")
-
+    
     # Check junction sites and secondary structure
-    filepath = os.path.join(DATAPATH, "alnaji2019", "DI_Influenza_FA_JVI.xlsx")
-    short_reads_filepath = os.path.join(DATAPATH, "alnaji2019", "Small_deletionSize_FA.xlsx")
-    cleaned_data_dict = load_excel(filepath)
-    all_reads_dict = load_short_reads(cleaned_data_dict, short_reads_filepath)
-
+    cleaned_data_dict = load_alnaji_excel()
+    all_reads_dict = load_short_reads(cleaned_data_dict)
+    
     check_secondary_structures(all_reads_dict, full_df, results_path)
 

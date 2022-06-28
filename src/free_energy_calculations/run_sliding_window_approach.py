@@ -10,7 +10,8 @@ import RNA
 import pandas as pd
 
 sys.path.insert(0, "..")
-from utils import DATAPATH, RESULTSPATH, SEGMENTS, get_sequence
+from utils import DATAPATH, RESULTSPATH, SEGMENTS
+from utils import get_sequence
 
 
 def delta_G_calculation(seq: str, p: int, w_s: int)-> float:

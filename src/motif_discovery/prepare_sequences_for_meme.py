@@ -11,7 +11,8 @@ from Bio.SeqRecord import SeqRecord
 
 sys.path.insert(0, "..")
 sys.path.insert(0, "../density_and_length_analysis")
-from utils import DATAPATH, SEGMENTS, load_excel, load_short_reads, get_sequence
+from utils import DATAPATH, SEGMENTS
+from utils import load_alnaji_excel, load_short_reads, get_sequence
 from composition_junction_site import create_sequence_library
 
 
@@ -184,12 +185,8 @@ def create_high_NGS_dataset(d: dict, thresh: int)-> None:
 
 
 if __name__ == "__main__":
-    filepath = os.path.join(DATAPATH, "alnaji2019", "DI_Influenza_FA_JVI.xlsx")
-    cleaned_data_dict = load_excel(filepath)
-    short_reads_filepath = os.path.join(DATAPATH,
-                                        "alnaji2019",
-                                        "Small_deletionSize_FA.xlsx")
-    all_reads_dict = load_short_reads(cleaned_data_dict, short_reads_filepath)
+    cleaned_data_dict = load_alnaji_excel()
+    all_reads_dict = load_short_reads(cleaned_data_dict)
     create_full_seq_files(list(all_reads_dict.keys()))
 
     seq_library = create_sequence_library(all_reads_dict)

@@ -34,17 +34,17 @@ def get_seq_len(strain: str, seg: str)-> int:
     '''
     return len(get_sequence(strain, seg))
 
-def load_excel(path: str)-> dict:
+def load_alnaji_excel()-> dict:
     '''
         loads the excel file containing the start and end positions of 
         the deletion sides.
         Cleans up nan data fields and splits up the strains and the lines.
         Also calculates the length of each deletion and adds it as new column.
-        :param path: path to the file location
 
         :return: dictionary with 8 key, value pairs (4 strains * 2 lines each)
     '''
-    data_dict = pd.read_excel(io=path,
+    file_path = os.path.join(DATAPATH, "alnaji2019", "DI_Influenza_FA_JVI.xlsx")
+    data_dict = pd.read_excel(io=file_path,
                               sheet_name=None,
                               header=1,
                               na_values=["", "None"],
@@ -91,17 +91,16 @@ def join_lineages(data: dict)-> dict:
             merged_dict[k[:-3]] = v
     return merged_dict
 
-def load_short_reads(data_dict: dict, path: str)-> dict:
+def load_short_reads(data_dict: dict)-> dict:
     '''
         loads the short reads from extra excel file and adds them to an
         existing dictionary.
         :param data_dict: dictionary with longer deletions
-        :param path: path to the excel file with the short deletions
 
         :return: gives a combined dictionary of both sources
     '''
-    # load short read excel as dict of dataframes
-    short_data_dict = pd.read_excel(io=path,
+    file_path = os.path.join(DATAPATH, "alnaji2019", "Small_deletionSize_FA.xlsx")
+    short_data_dict = pd.read_excel(io=file_path,
                                     sheet_name=None,
                                     header=0,
                                     na_values=["", "None"],
@@ -142,5 +141,9 @@ def get_stat_symbol(p: float)-> str:
     else:
         return ""
 
+def load_pelz_dataset()-> object:
+    '''
 
+    '''
+    data_path = os.path.join(DATAPATH, "Pelz2021", "ShortDeletions_AbsoluteValues.xslx")
 

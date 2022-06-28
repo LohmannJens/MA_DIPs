@@ -22,7 +22,8 @@ import matplotlib.pyplot as plt
 from scipy import stats
 
 sys.path.insert(0, "..")
-from utils import DATAPATH, RESULTSPATH, SEGMENTS, load_excel, load_short_reads, get_sequence, get_stat_symbol
+from utils import DATAPATH, RESULTSPATH, SEGMENTS
+from utils import load_alnaji_excel, load_short_reads, get_sequence, get_stat_symbol
 
 
 def load_density_data(path: str)-> dict:
@@ -203,12 +204,10 @@ def compare_position_with_density(data: dict, density_data: dict, all_reads: dic
 
 
 if __name__ == "__main__":
-    filepath = os.path.join(DATAPATH, "alnaji2019", "DI_Influenza_FA_JVI.xlsx")
-    short_reads_filepath = os.path.join(DATAPATH, "alnaji2019", "Small_deletionSize_FA.xlsx")
     density_path = os.path.join(DATAPATH, "Lee2017", "csv_NPdensity")
 
-    cleaned_data_dict = load_excel(filepath)
-    all_reads_dict = load_short_reads(cleaned_data_dict, short_reads_filepath)
+    cleaned_data_dict = load_alnaji_excel()
+    all_reads_dict = load_short_reads(cleaned_data_dict)
     plot_deletion_lengths(all_reads_dict)
 
     # Plotting NP density against junction sites

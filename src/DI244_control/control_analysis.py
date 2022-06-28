@@ -7,8 +7,9 @@ import sys
 from Bio import SeqIO
 
 sys.path.insert(0, "..")
-from utils import DATAPATH, RESULTSPATH, SEGMENTS, load_excel, get_sequence
 sys.path.insert(0, "../density_and_length_analysis")
+from utils import DATAPATH, RESULTSPATH, SEGMENTS
+from utils import load_alnaji_excel, get_sequence
 from composition_junction_site import count_nucleotide_occurrence, calculate_overlapping_nucleotides
 
 ### parameters of DI244 (from Dimmock 2008) ###
@@ -56,13 +57,10 @@ def check_deletion_site(seq, s, e)-> None:
 
 
 if __name__ == "__main__":
-    # load sequence
-    # save as dict
     fasta_file = os.path.join(DATAPATH, "Dimmock2008", "PB2.fasta")
     DI244_dict = load_sequence_as_dict(fasta_file)
 
-    excel_file = os.path.join(DATAPATH, "alnaji2019", "DI_Influenza_FA_JVI.xlsx")
-    alnaji_dict = load_excel(excel_file)
+    alnaji_dict = load_alnaji_excel()
 
     # do analysis for DI244 (control DI RNA)
     seq = DI244_dict["WholeSequence"]
@@ -79,8 +77,4 @@ if __name__ == "__main__":
                 record = get_sequence(k[:-3], r["Segment"])
                 RNA_seq = record.seq.transcribe()
                 check_deletion_site(str(RNA_seq), r["Start"], r["End"])
-
-
-
-
 

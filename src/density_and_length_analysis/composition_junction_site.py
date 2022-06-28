@@ -22,8 +22,8 @@ from Bio.Seq import Seq
 from scipy import stats
 
 sys.path.insert(0, "..")
-from utils import DATAPATH, RESULTSPATH, SEGMENTS
-from utils import load_excel, load_short_reads, get_sequence, get_stat_symbol
+from utils import RESULTSPATH, SEGMENTS
+from utils import load_alnaji_excel, load_short_reads, get_sequence, get_stat_symbol
 
 
 COLORS = dict({"A": "blue", "C": "orange", "G": "green", "U": "red"})
@@ -371,11 +371,8 @@ def nucleotide_overlap_analysis(seq_dict: dict, seg: str, mode: int, ngs_thresh:
 
 
 if __name__ == "__main__":
-    filepath = os.path.join(DATAPATH, "alnaji2019", "DI_Influenza_FA_JVI.xlsx")
-    cleaned_data_dict = load_excel(filepath)
-
-    short_reads_filepath = os.path.join(DATAPATH, "alnaji2019", "Small_deletionSize_FA.xlsx")
-    all_reads_dict = load_short_reads(cleaned_data_dict, short_reads_filepath)
+    cleaned_data_dict = load_alnaji_excel()
+    all_reads_dict = load_short_reads(cleaned_data_dict)
 
     # Create a sequence library for each strain
     sequence_list_dict = create_sequence_library(all_reads_dict)

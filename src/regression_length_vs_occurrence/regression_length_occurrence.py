@@ -17,7 +17,8 @@ from Bio import SeqIO
 from sklearn.linear_model import LinearRegression
 
 sys.path.insert(0, "..")
-from utils import DATAPATH, RESULTSPATH, SEGMENTS, get_seq_len, load_excel, load_short_reads
+from utils import DATAPATH, RESULTSPATH, SEGMENTS
+from utils import get_seq_len, load_alnaji_excel, load_short_reads
 
 
 def format_dataset_for_plotting(df, dataset_name: str)-> (list, list, list):
@@ -172,11 +173,9 @@ def perform_regression_analysis(data: dict)-> None:
 
 
 if __name__ == "__main__":
-    filepath = os.path.join(DATAPATH, "alnaji2019", "DI_Influenza_FA_JVI.xlsx")
-    cleaned_data_dict = load_excel(filepath)
-    short_reads_filepath = os.path.join(DATAPATH, "alnaji2019", "Small_deletionSize_FA.xlsx")
-    all_reads_dict = load_short_reads(cleaned_data_dict, short_reads_filepath)
-
+    cleaned_data_dict = load_alnaji_excel()
+    all_reads_dict = load_short_reads(cleaned_data_dict)
+    
     xlsx_path = os.path.join(DATAPATH, "schwartz2016", "SchwartzLowen_Fig3a_MdckP3.xlsx")
     schwartz_data = pd.read_excel(xlsx_path, skiprows=[9,10,11,12])
     all_reads_dict["schwartz"] = schwartz_data

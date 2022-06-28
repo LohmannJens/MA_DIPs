@@ -13,7 +13,8 @@ import matplotlib.pyplot as plt
 from scipy import stats
 
 sys.path.insert(0, "..")
-from utils import DATAPATH, RESULTSPATH, SEGMENTS, load_excel, load_short_reads, get_stat_symbol
+from utils import DATAPATH, RESULTSPATH, SEGMENTS
+from utils import load_alnaji_excel, load_short_reads, get_stat_symbol
 
 
 def plot_deletions_with_delta_G(d: dict, w_s: int, s_s: int)-> None:
@@ -125,10 +126,8 @@ def create_boxplots(d: dict, w_s: int, s_s: int)-> None:
 
 
 if __name__ == "__main__":
-    filepath = os.path.join(DATAPATH, "alnaji2019", "DI_Influenza_FA_JVI.xlsx")
-    short_reads_filepath = os.path.join(DATAPATH, "alnaji2019", "Small_deletionSize_FA.xlsx")    
-    cleaned_data_dict = load_excel(filepath)
-    all_reads_dict = load_short_reads(cleaned_data_dict, short_reads_filepath)
+    cleaned_data_dict = load_alnaji_excel()
+    all_reads_dict = load_short_reads(cleaned_data_dict)
 
     window_size = 100
     step_size = 1
