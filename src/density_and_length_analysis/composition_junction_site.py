@@ -370,97 +370,6 @@ def nucleotide_overlap_analysis(seq_dict: dict, seg: str, mode: int, ngs_thresh:
     plt.close()
 
 
-def motif_analysis(df, segments: list)-> None:
-    '''
-        Searches occurrences of 'UG' substring in sequences of given strain and
-        segments. Plots all hits together with the start and end positions of
-        the deletion sites. The shading of the start and end positions is
-        related to the number of NGS counts of the corresponding position.
-        :param df: data frame of the sequences, including start and end
-                   position
-        :param segments: list of segments to include in the search
-
-        :return: None
-    '''
-    start_dict = dict()
-    end_dict = dict()
-    s_count_dict = dict()
-    e_count_dict = dict()
-    for r in df.iterrows():
-        r = r[1]
-        if r["Segment"] not in segments:
-            continue
-        seq = r["WholeSequence"]
-        s = r["Start"]
-        e = r["End"]
-        c = r["NGS_read_count"]
-        _, overlap_seq = calculate_overlapping_nucleotides(seq, s, e, w_len=20, m=1)
-        if overlap_seq == "UG":
-            if s in start_dict:
-                start_dict[s] += 1
-            else:
-                start_dict[s] = 1
-            if e in end_dict:
-                end_dict[e] += 1
-            else:
-                end_dict[e] = 1
-            
-            if s in s_count_dict:
-                s_count_dict[s] += c
-            else:
-                s_count_dict[s] = c
-            if e in e_count_dict:
-                e_count_dict[e] += c
-            else:
-                e_count_dict[s] = c
-
-    full_seq_list = list()
-    for i, c in enumerate(seq):
-        if c == "A" and seq[i+1] == "U":
-            full_seq_list.append(i)
-    
-    start = np.array(sorted(start_dict.items())).T
-    end = np.array(sorted(end_dict.items())).T
-    s_count = np.array(sorted(s_count_dict.items())).T
-    e_count = np.array(sorted(e_count_dict.items())).T
-    
-    r_min = 0.3
-    r_max = 1.0
-
-    def normalize(l: list, l_min: int, l_max: int, b_min: float, b_max: float)-> list:
-        return (l - l_min)/(l_max - l_min) * (b_max - b_min) + b_min
-
-    s_alpha = normalize(s_count[1], min(s_count[1]), max(s_count[1]), r_max, r_min)
-    s_rgba = np.zeros((len(s_alpha),4))
-    s_rgba[:,0] = 0.9
-    s_rgba[:,1] = 0.1
-    s_rgba[:,2] = 0
-    s_rgba[:,-1] = s_alpha.reshape(1,len(s_alpha)).flatten()
-
-    e_alpha = normalize(e_count[1], min(e_count[1]), max(e_count[1]), r_max, r_min)
-    e_rgba = np.zeros((len(e_alpha),4))
-    e_rgba[:,0] = 0
-    e_rgba[:,1] = 0.1
-    e_rgba[:,2] = 0.9
-    e_rgba[:,-1] = s_alpha.reshape(1,len(e_alpha)).flatten()
-
-    fig, ax = plt.subplots(figsize=(15, 5), tight_layout=True)
-    ax.scatter(x=full_seq_list, y=np.zeros(len(full_seq_list)), marker="|", label="'AU' occurrence")
-    ax.bar(x=start[0], height=start[1], color=s_rgba, label="start positions")
-    ax.bar(x=end[0], height=end[1], color=e_rgba, label="end positions")
-
-    ax.set_xlim(left=0)
-    ax.set_ylim(bottom=0)
-    ax.set_xlabel("nucleotide position")
-    ax.set_ylabel("absolute occurrence")
-    ax.set_title(f"start and end positions of sequences with 'AU' overlap")
-    plt.legend()
-    
-    savepath = os.path.join(RESULTSPATH, "overlapping_nucleotides", f"UG_occurrence.pdf")
-    plt.savefig(savepath)
-    plt.close()
-
-
 if __name__ == "__main__":
     filepath = os.path.join(DATAPATH, "alnaji2019", "DI_Influenza_FA_JVI.xlsx")
     cleaned_data_dict = load_excel(filepath)
@@ -473,8 +382,8 @@ if __name__ == "__main__":
 
     # Loop over the different strains and calculate the occurrence of each
     # nucleotide in the sequences
-#    for s in SEGMENTS:
- #       nucleotide_occurrence_analysis(sequence_list_dict, s)
+    for s in SEGMENTS:
+        nucleotide_occurrence_analysis(sequence_list_dict, s)
 
     # Check if nucleotides directly before junction site have the same sequence
     # as the ones directly before junction site at the end
@@ -482,9 +391,6 @@ if __name__ == "__main__":
         nucleotide_overlap_analysis(sequence_list_dict, s, mode=1)
         nucleotide_overlap_analysis(sequence_list_dict, s, mode=2)
 
-#        nucleotide_overlap_analysis(sequence_list_dict, s, mode=1, ngs_thresh=1000)
- #       nucleotide_overlap_analysis(sequence_list_dict, s, mode=2, ngs_thresh=1000)
-
-    # investigate sequences with AU overlap in NC segment PB1 and PB2
-#    motif_analysis(sequence_list_dict["NC"], ["PB2", "PB1"])
+        nucleotide_overlap_analysis(sequence_list_dict, s, mode=1, ngs_thresh=1000)
+        nucleotide_overlap_analysis(sequence_list_dict, s, mode=2, ngs_thresh=1000)
 
