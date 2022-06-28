@@ -107,7 +107,7 @@ def create_boxplots(d: dict, w_s: int, s_s: int)-> None:
             else:
                 symbol = ""
 
-            annotations.append(axs[i].annotate(f"{s} {symbol}", (idx*2 +1.5, 0.0), ha="center", size="small"))
+            annotations.append(axs[i].annotate(f"{s} {symbol}", (idx*2 +1.5, -5.0), ha="center", size="small"))
 
         for idx, text in enumerate(annotations):
             text.set_position((idx*2+1.5, y_min))
@@ -130,8 +130,8 @@ if __name__ == "__main__":
     cleaned_data_dict = load_excel(filepath)
     all_reads_dict = load_short_reads(cleaned_data_dict, short_reads_filepath)
 
-    window_size = 20
+    window_size = 100
     step_size = 1
-#    plot_deletions_with_delta_G(all_reads_dict, window_size, step_size)
+    plot_deletions_with_delta_G(all_reads_dict, window_size, step_size)
     create_boxplots(all_reads_dict, window_size, step_size)
 

@@ -58,7 +58,7 @@ def sliding_window_approach(w_s: int, step: int, seq: str)-> object:
 
 
 if __name__ == "__main__":
-    window_size = 20
+    window_size = 100
     step_size = 1
     for strain in ["Cal07", "NC", "Perth", "B_LEE"]:
         for s in SEGMENTS:
