@@ -6,7 +6,6 @@ the length of all segements.
 
 Also creates a model for all three IV A strains together.
 '''
-
 import os
 import sys
 

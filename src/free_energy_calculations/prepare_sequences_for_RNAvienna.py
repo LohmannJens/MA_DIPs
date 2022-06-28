@@ -8,7 +8,6 @@ import shutil
 
 import numpy as np
 
-
 from Bio import SeqIO
 from Bio.Seq import Seq
 from Bio.SeqRecord import SeqRecord
@@ -117,7 +116,6 @@ if __name__ == "__main__":
 
     seq_library = create_sequence_library(all_reads_dict)
     create_cropped_seq_files(seq_library)
-
     create_cropped_seq_files(seq_library, shuffle=True)
-
     create_cropped_seq_files(seq_library, random=True)
+

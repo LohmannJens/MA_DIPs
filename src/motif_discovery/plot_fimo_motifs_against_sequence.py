@@ -1,7 +1,7 @@
-"""
+'''
     Takes the fimo results from xstreme run and plots the found motifs together
     with the start and end positions of the junction sites.
-"""
+'''
 import os
 import sys
 import argparse
@@ -88,7 +88,6 @@ if __name__ == "__main__":
 
     if args.data == "IVA":
         del all_reads_dict["B_LEE"]
-
 
     # have 4 figures (for each strain) including 8 subplots (for each segment)    
     for k, v in all_reads_dict.items(): 

@@ -1,7 +1,7 @@
-"""
+'''
 This script creates FASTA files that will be used for motif discovery by MEME
 suite
-"""
+'''
 import os
 import sys
 import shutil
@@ -13,6 +13,20 @@ sys.path.insert(0, "..")
 sys.path.insert(0, "../density_and_length_analysis")
 from utils import DATAPATH, SEGMENTS, load_excel, load_short_reads, get_sequence
 from composition_junction_site import create_sequence_library
+
+
+def delete_folder(folder: str)-> bool:
+    '''
+        Asks the user if a given folder should be overwritten.
+        :param folder: folder which will be overwritten
+
+        :return: True if folder should be deleted; False otherwise
+    '''
+    print(f"{folder} already exists! Should it be overwritten?")
+    if input("[Y/n]: ") == "Y":
+        return True
+    else:
+        return False
 
 
 def write_sequence(seq, strain: str, segment: str, folder: str, control: bool=False)-> None:
@@ -27,15 +41,15 @@ def write_sequence(seq, strain: str, segment: str, folder: str, control: bool=Fa
 
         :return: None
     '''
-    all_file = os.path.join(folder, "all.fasta")
-    strain_file = os.path.join(folder, f"{strain}.fasta")
-    seg_file = os.path.join(folder, f"{segment}.fasta")
 
     if control:
         all_file = os.path.join(folder, "all_control.fasta")
         strain_file = os.path.join(folder, f"{strain}_control.fasta")
         seg_file = os.path.join(folder, f"{segment}_control.fasta")
-
+    else:
+        all_file = os.path.join(folder, "all.fasta")
+        strain_file = os.path.join(folder, f"{strain}.fasta")
+        seg_file = os.path.join(folder, f"{segment}.fasta")
 
     with open(all_file, "a") as f:
         SeqIO.write(seq, f, "fasta")
@@ -54,8 +68,7 @@ def create_full_seq_files(strains: list)-> None:
     '''
     root_folder = os.path.join(DATAPATH, "meme_suite", "alnaji2019", "full_sequences")
     if os.path.exists(root_folder):
-        print(f"{root_folder} already exists! Should it be overwritten?")
-        if input("[Y/n]: ") == "Y":
+        if delete_folder(root_folder):
             shutil.rmtree(root_folder)
         else:
             return
@@ -78,8 +91,7 @@ def create_cropped_seq_files(d: dict)-> None:
     '''
     root_folder = os.path.join(DATAPATH, "meme_suite", "alnaji2019", "cropped_sequences")
     if os.path.exists(root_folder):
-        print(f"{root_folder} already exists! Should it be overwritten?")
-        if input("[Y/n]: ") == "Y":
+        if delete_folder(root_folder):
             shutil.rmtree(root_folder)
         else:
             return
@@ -109,8 +121,7 @@ def create_windows_del_site_files(d: dict, n: int, combine: bool)-> None:
     '''
     root_folder = os.path.join(DATAPATH, "meme_suite", "alnaji2019", f"window_{n}_sequences")
     if os.path.exists(root_folder):
-        print(f"{root_folder} already exists! Should it be overwritten?")
-        if input("[Y/n]: ") == "Y":
+        if delete_folder(root_folder):
             shutil.rmtree(root_folder)
         else:
             return
@@ -152,8 +163,7 @@ def create_high_NGS_dataset(d: dict, thresh: int)-> None:
     '''
     root_folder = os.path.join(DATAPATH, "meme_suite", "alnaji2019", "high_ngs")
     if os.path.exists(root_folder):
-        print(f"{root_folder} already exists! Should it be overwritten?")
-        if input("[Y/n]: ") == "Y":
+        if delete_folder(root_folder):
             shutil.rmtree(root_folder)
         else:
             return

@@ -12,7 +12,6 @@ import pandas as pd
 import matplotlib.pyplot as plt
 
 from scipy import stats
-from mpl_toolkits.mplot3d import Axes3D
 
 sys.path.insert(0, "..")
 sys.path.insert(0, "../density_and_length_analysis")
@@ -177,7 +176,6 @@ def plot_delta_G_observed_expected(df: object, path: str, mode: str)-> None:
         :param mode: is either 'shuffled' or 'random'
 
         :return: None
-
     '''
     fig, axs = plt.subplots(2, 2, figsize=(10,10), tight_layout=True)
     j = 0
@@ -367,18 +365,3 @@ if __name__ == "__main__":
 
     check_secondary_structures(all_reads_dict, full_df, results_path)
 
-    # This part creates a 3D plot of delta G, length and NGS count.
-    # It basically just combines the two plots above.
-    # Not sure if I will use it, but it will stay here for the moment
-    '''
-    fig = plt.figure()
-    ax = fig.add_subplot(111, projection="3d")
-    for s in SEGMENTS:
-        df = cropped_df[cropped_df["segment"] == s]
-        ax.scatter(df["delta_G"], df["length"], df["NGS_read_count"], label=s)
-
-    ax.set_xlabel("delta G")
-    ax.set_ylabel("length")
-    ax.set_zlabel("NGS_read_count")
-    plt.show()
-    '''
