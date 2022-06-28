@@ -20,7 +20,7 @@ def get_sequence(strain: str, seg: str)-> object:
         :param strain: name of the strain
         :param seg: name of the segment of the strain
     '''
-    fasta_file = os.path.join(DATAPATH, "alnaji2019", strain, f"{seg}.fasta")
+    fasta_file = os.path.join(DATAPATH, "strain_segment_fastas", strain, f"{seg}.fasta")
     return SeqIO.read(fasta_file, "fasta")
 
 def get_seq_len(strain: str, seg: str)-> int:
@@ -152,7 +152,8 @@ def load_pelz_dataset()-> object:
     data_dict = pd.read_excel(io=file_path,
                               sheet_name=None,
                               header=0,
-                              na_values=["", "None"])
+                              na_values=["", "None"],
+                              keep_default_na=False)
 
     return data_dict
 
