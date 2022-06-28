@@ -143,7 +143,16 @@ def get_stat_symbol(p: float)-> str:
 
 def load_pelz_dataset()-> object:
     '''
+        Loads the data from Pelz et al 2019 publication.
+        Returns a dictionary with eight key, value pairs one for each segment.
+        The data is stored in a data frame with columns: 'DIs', 'overall_count'
 
+        :return: dictionary with 'segment': 'DataFrame' pairs
     '''
-    data_path = os.path.join(DATAPATH, "Pelz2021", "ShortDeletions_AbsoluteValues.xslx")
+    file_path = os.path.join(DATAPATH, "Pelz2021", "ShortDeletions_AbsoluteValues.xlsx")
+    data_dict = pd.read_excel(io=file_path,
+                              sheet_name=None,
+                              header=0,
+                              na_values=["", "None"])
+    return data_dict
 
