@@ -128,9 +128,7 @@ def get_stat_symbol(p: float)-> str:
 
         :return: letter indicating the significance
     '''
-    if p == 0.0:
-        return ""
-    elif p < 0.0001:
+    if p < 0.0001:
         return "****"
     elif p < 0.001:
         return "***"
