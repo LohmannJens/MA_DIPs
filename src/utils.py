@@ -19,6 +19,9 @@ def get_sequence(strain: str, seg: str)-> object:
         loads a DNA sequence by strain and segment.
         :param strain: name of the strain
         :param seg: name of the segment of the strain
+
+        :return: Biopython Seq Object including the sequence. To get raw string
+                 use: str(RETURN.seq)
     '''
     fasta_file = os.path.join(DATAPATH, "strain_segment_fastas", strain, f"{seg}.fasta")
     return SeqIO.read(fasta_file, "fasta")
