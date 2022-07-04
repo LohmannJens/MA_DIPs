@@ -41,10 +41,16 @@ def format_dataset_for_plotting(df, dataset_name: str)-> (list, list, list):
     else:
         x = list()
         y = list()
-        err = np.empty(8)
+        err = list()
         for s in SEGMENTS:
-            y.append(df.loc[df["Segment"] == s]["NGS_read_count"].sum())
+            df_s = df.loc[df["Segment"] == s]
+            df_s_sum = df_s["NGS_read_count"].sum()
+            y.append(df_s_sum)
             x.append(get_seq_len(dataset_name, s))
+            if df_s_sum == 0:
+                err.append(0)
+            else:
+                err.append(np.std(df_s["NGS_read_count"]) / df_s_sum)
     return np.array(x), np.array(y) / np.array(y).sum(), err
 
 
@@ -74,8 +80,7 @@ def fit_models_and_plot_data(x: list, y: list, y_exp: list, err: list, k: str)->
  
     ax.scatter(x, y, label="observation")
     label_scatter(x, y, k)
-    if k == "schwartz":
-        ax.errorbar(x, y, yerr=err, fmt="o", capsize=5.0)
+    ax.errorbar(x, y, yerr=err, fmt="o", capsize=5.0)
 
     # include expected values (perfect correlation DI count and length)
     if k == "IVA":
@@ -160,16 +165,18 @@ def perform_regression_analysis(data: dict)-> None:
                 y_IVA = np.concatenate((y_IVA, y))
                 y_IVA_exp = np.concatenate((y_IVA_exp, y_exp))
                 y_IVA_expected = np.concatenate((y_IVA_expected, x / x.sum()))
+                IVA_err = np.concatenate((IVA_err, err))
             else:
                 x_IVA = x
                 y_IVA = y
                 y_IVA_exp = y_exp
                 y_IVA_expected = x / x.sum()
+                IVA_err = err
 
         fit_models_and_plot_data(x, y, y_exp, err, k)
 
     # do regression for all three IV A strains together
-    fit_models_and_plot_data(x_IVA, y_IVA, y_IVA_exp, err, "IVA")
+    fit_models_and_plot_data(x_IVA, y_IVA, y_IVA_exp, IVA_err, "IVA")
 
 
 if __name__ == "__main__":
