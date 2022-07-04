@@ -1,38 +1,54 @@
 """
-
+    Repeats the analyses on the dataset by Pelz et al. 2021. This is done to
+    check if the findings are generalizeable.
 """
 import os
 import sys
 
 import numpy as np
+import pandas as pd
 import matplotlib.pyplot as plt
 
 from scipy import stats
 
 sys.path.insert(0, "..")
 sys.path.insert(0, "../density_and_length_analysis")
-from utils import RESULTSPATH, SEGMENTS
+sys.path.insert(0, "../regression_length_vs_occurrence")
+from utils import DATAPATH, RESULTSPATH, SEGMENTS
 from utils import load_pelz_dataset, get_stat_symbol
 from composition_junction_site import create_sequence_library, nucleotide_occurrence_analysis, count_overlapping_nucleotides_overall, generate_sampling_data
+from regression_length_occurrence import format_dataset_for_plotting, fit_models_and_plot_data
 
 
-def nuc_overlap_analysis(seq_dict: dict, mode: int)-> None:
+def load_top_gain_de_novo()-> dict:
+    '''
+        Loads the top gain DI RNAs and top de novo DI RNAs
+        
+        :return: dictionary with strain as key and data frame as value
+    '''
+    path = os.path.join(DATAPATH, "Pelz2021", "Top_DI_RNA.xlsx")
+    data = pd.read_excel(path)
+    data_dict = dict({"PR": data})
+    return data_dict
+
+
+def nuc_overlap_analysis(seq_dict: dict, mode: int, top: bool=False)-> None:
     '''
         Calculates the overlapping nucleotides of all sequences of the Pelz
         dataset.
         :param seq_dict: dictionary with the sequences
         :param mode: states which calculation mode is used. Check
                      composition_junction_site.py for more info.
+        :param top: states if the whole dataset or just the top DI RNA are used
 
         :return: None
     '''
-    print(f"{mode=}")
     fig, axs = plt.subplots(4, 2, figsize=(5, 10), tight_layout=True)
     for k, v in seq_dict.items():
         j = 0
         for i, s in enumerate(SEGMENTS):
             v_s = v.loc[(v["Segment"] == s)]
-            nuc_overlap_dict, _ = count_overlapping_nucleotides_overall(v_s, mode)
+            nuc_overlap_dict, _ = count_overlapping_nucleotides_overall(v_s, mode)  
             n = len(v_s.index)
             if n <= 1:
                 continue
@@ -60,7 +76,6 @@ def nuc_overlap_analysis(seq_dict: dict, mode: int)-> None:
 
             res = stats.mannwhitneyu(f_obs, f_exp)
             symbol = get_stat_symbol(res.pvalue)
-            print(res.pvalue)
 
             axs[i%4, j].bar(x=x, height=h/h.sum(), width=-0.4, align="edge", label="observed")
             axs[i%4, j].bar(x=x, height=h_exp/h_exp.sum(), width=0.4, align="edge", label="expected")
@@ -72,17 +87,25 @@ def nuc_overlap_analysis(seq_dict: dict, mode: int)-> None:
 
             if i == 3:
                 j = 1
-
-    fname = f"overlapping_nucleotides_{k}_mode{mode}.pdf"
+    if top:
+        fname = f"overlapping_nucleotides_{k}_top_mode{mode}.pdf"
+    else:
+        fname = f"overlapping_nucleotides_{k}_mode{mode}.pdf"
     savepath = os.path.join(RESULTSPATH, "control_analysis", fname)
     plt.savefig(savepath)
     plt.close()
 
 
 if __name__ == "__main__":
+    # analysis for top gain and top de novo DI RNAs
+    top_di_rna = load_top_gain_de_novo()  
+    top_seq_dict = create_sequence_library(top_di_rna)
+    nuc_overlap_analysis(top_seq_dict, 1, True)
+    nuc_overlap_analysis(top_seq_dict, 2, True)
+
+    # analysis for the whole Pelz dataset
     data_dict = load_pelz_dataset()
     seq_list_dict = create_sequence_library(data_dict)
-
     for s in SEGMENTS:
         nucleotide_occurrence_analysis(seq_list_dict, s)
         src = os.path.join(RESULTSPATH, "relative_occurrence_nucleotides", f"PR_{s}.pdf")
@@ -91,5 +114,13 @@ if __name__ == "__main__":
 
     nuc_overlap_analysis(seq_list_dict, 1)
     nuc_overlap_analysis(seq_list_dict, 2)
-
+    
+    # do the linear regression analysis (length vs NGS count)
+    strain = "PR"
+    x, y, err = format_dataset_for_plotting(data_dict["PR"], strain)
+    y_exp = y
+    fit_models_and_plot_data(x, y, y_exp, err, strain)
+    src = os.path.join(RESULTSPATH, "regression_length_count", f"PR_regression_analysis.pdf")
+    dst = os.path.join(RESULTSPATH, "control_analysis", f"PR_regression_analysis.pdf")
+    os.rename(src, dst)
 
