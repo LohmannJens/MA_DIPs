@@ -42,15 +42,15 @@ def format_dataset_for_plotting(df, dataset_name: str)-> (list, list, list):
         x = list()
         y = list()
         err = list()
+        all_sum = df["NGS_read_count"].sum()
         for s in SEGMENTS:
             df_s = df.loc[df["Segment"] == s]
-            df_s_sum = df_s["NGS_read_count"].sum()
-            y.append(df_s_sum)
+            y.append(df_s["NGS_read_count"].sum())
             x.append(get_seq_len(dataset_name, s))
-            if df_s_sum == 0:
+            if df_s.size == 0:
                 err.append(0)
             else:
-                err.append(np.std(df_s["NGS_read_count"]) / df_s_sum)
+                err.append(np.std(df_s["NGS_read_count"]) / all_sum)
     return np.array(x), np.array(y) / np.array(y).sum(), err
 
 
@@ -116,7 +116,6 @@ def fit_models_and_plot_data(x: list, y: list, y_exp: list, err: list, k: str)->
 
     # plotting the results
     score = model.score(x[:-2].reshape((-1, 1)), y[:-2])
-    print(f"{k}: {score}")
     ax.plot(x, y_pred, label=f"linear model (R²: {score:.2f})", color="green")
     ax.plot(x_plot, y_exp_pred, label="exponential model", color="orange")
 
@@ -133,7 +132,7 @@ def fit_models_and_plot_data(x: list, y: list, y_exp: list, err: list, k: str)->
     ax.set_ylabel("relative DI occurrence")
 
     # save final figure
-    save_path = os.path.join(RESULTSPATH, "regression_length_count", f"{k}_regression_analysis.pdf")
+    save_path = os.path.join(RESULTSPATH, "regression_length_count", f"{k}_regression_analysis.png")
     plt.savefig(save_path)
     plt.close()
 
