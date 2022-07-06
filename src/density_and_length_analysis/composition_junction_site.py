@@ -284,7 +284,7 @@ def nucleotide_occurrence_analysis(seq_dict: dict, seg: str)-> None:
             axs[idx, 1].add_patch(plt.Rectangle((0.5, 0), 4, 1, color="grey", alpha=0.3))
   
         plt.suptitle(f"start (left) and end (right) of {seg} of {k} ({n})")
-        savepath = os.path.join(RESULTSPATH, "relative_occurrence_nucleotides", f"{k}_{seg}.pdf")
+        savepath = os.path.join(RESULTSPATH, "relative_occurrence_nucleotides", f"{k}_{seg}.png")
         plt.savefig(savepath)
         plt.close()
 
