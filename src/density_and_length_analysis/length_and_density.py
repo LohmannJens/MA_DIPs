@@ -40,6 +40,31 @@ def load_density_data(path: str)-> dict:
     return density_dict
 
 
+def load_my_density_data(path: str)-> dict:
+    '''
+        Loads the density data for all eight segments.
+        :param path: path to the location where the tsv files are stored
+
+        :return: dictionary with segment name as key and data frame as value
+    '''
+    seg_mapper = dict({"PB2": "CY121687.1", "PB1": "CY121686.1",
+                       "PA": "CY121685.1", "HA": "CY121680.1",
+                       "M": "CY121681.1", "NA": "CY121682.1",
+                       "NP":"CY121683.1", "NS": "CY121684.1"})
+
+    density_dict = dict()
+    filepath = os.path.join(path, "peaks.tsv")
+    df = pd.read_csv(filepath, sep="\t", names=["Segment", "Start", "End", "Peak", "Number", "Sign"])
+    for s in SEGMENTS:
+        s_df = df.loc(df["Segment"] == seg_mapper[s])
+
+        s_con_df = pd.concatenate([s_df["Start"], s_df["End"]])
+        print(s_con_df)
+        exit()
+ #       density_dict[s] = 
+    return density_dict
+
+
 def load_WSN_data(dir: str)-> dict:
     '''
         Loads junction sites data for WSN strain from Mendes 2021.
@@ -206,21 +231,22 @@ def compare_position_with_density(data: dict, density_data: dict, all_reads: dic
 if __name__ == "__main__":
     density_path = os.path.join(DATAPATH, "Lee2017", "csv_NPdensity")
 
+    
     cleaned_data_dict = load_alnaji_excel()
     all_reads_dict = load_short_reads(cleaned_data_dict)
     plot_deletion_lengths(all_reads_dict)
-
+    
     # Plotting NP density against junction sites
     #    Cal07 data from Alnaji 2019
     Cal07_dens_path = os.path.join(density_path, "Cal07")
     Cal07_density_data = load_density_data(Cal07_dens_path)
     NGS_count_dict = map_positions_to_density(all_reads_dict, Cal07_density_data)
     compare_position_with_density(NGS_count_dict, Cal07_density_data, all_reads_dict)
-    
+    '''    
     #    WSN data from Mendes 2021
     WSN_count_path = os.path.join(DATAPATH, "Mendes2021", "beta_sorting_BLASTresults")
     WSN_reads_dict = load_WSN_data(WSN_count_path)
     WSN_dens_path = os.path.join(density_path, "WSN")
     WSN_dens_data = load_density_data(WSN_dens_path)
     _ = map_positions_to_density(WSN_reads_dict, WSN_dens_data)
-
+    '''
