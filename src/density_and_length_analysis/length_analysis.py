@@ -19,8 +19,8 @@ import matplotlib.pyplot as plt
 from scipy import stats
 
 sys.path.insert(0, "..")
-from utils import DATAPATH, RESULTSPATH, SEGMENTS
-from utils import load_alnaji_excel, load_short_reads, get_sequence, get_stat_symbol
+from utils import RESULTSPATH, SEGMENTS
+from utils import load_alnaji_excel, load_short_reads
 
 
 def plot_deletion_lengths(data: dict)-> None:
@@ -57,15 +57,49 @@ def plot_deletion_lengths(data: dict)-> None:
         plt.close()
 
 
-def start_vs_end_lengths()-> None:
+def start_vs_end_lengths(data: dict)-> None:
     '''
+        Plots the length of the start against the length of the end of the DI
+        RNA sequences as a scatter plot.
+        :param data: dictionary with a data frame (value)  for each strain (key)
 
+        :return: None
     '''
+    for k, v in data.items():
+        fig, axs = plt.subplots(4, 2, figsize=(5, 10), tight_layout=True)
+        j = 0
+        for i, s in enumerate(SEGMENTS):
+            v_s = v[v["Segment"] == s]
+            if v_s.size != 0:
+                start = v_s["Start"]
+                end = v_s["Length"] - v_s["Start"]
+
+                axs[i%4,j].scatter(start, end, s=1.0)
+                axs[i%4,j].plot([0, 1], [0, 1], transform=axs[i%4,j].transAxes, c="r", linewidth=0.5, linestyle="--")
+
+                max_p = max(start.max(), end.max())
+                axs[i%4,j].set_xlim(left=0, right=max_p)
+                axs[i%4,j].set_xticks([0,max_p])
+                axs[i%4,j].set_yticks([0,max_p])
+                axs[i%4,j].set_aspect("equal", "box")
+                
+            axs[i%4,j].set_title(f"{s} (n={v_s.shape[0]})")
+            axs[i%4,j].set_xlabel("start")
+            axs[i%4,j].set_ylabel("end")
+
+            if i == 3:
+                j = 1
+
+        fig.suptitle(f"relation of length of start and end site {k}", x=0.3)
+
+        save_path = os.path.join(RESULTSPATH, "deletion_length_and_position", f"{k}_length_start_end.pdf")
+        plt.savefig(save_path)
+        plt.close()
 
 
 if __name__ == "__main__":
     cleaned_data_dict = load_alnaji_excel()
     all_reads_dict = load_short_reads(cleaned_data_dict)
     plot_deletion_lengths(all_reads_dict)
-    
+    start_vs_end_lengths(all_reads_dict)   
 
