@@ -102,14 +102,14 @@ if __name__ == "__main__":
     top_seq_dict = create_sequence_library(top_di_rna)
     nuc_overlap_analysis(top_seq_dict, 1, True)
     nuc_overlap_analysis(top_seq_dict, 2, True)
-
+    
     # analysis for the whole Pelz dataset
     data_dict = load_pelz_dataset()
     seq_list_dict = create_sequence_library(data_dict)
     for s in SEGMENTS:
         nucleotide_occurrence_analysis(seq_list_dict, s)
-        src = os.path.join(RESULTSPATH, "relative_occurrence_nucleotides", f"PR_{s}.pdf")
-        dst = os.path.join(RESULTSPATH, "control_analysis", f"PR_{s}_nucleotide_occurrence.pdf")
+        src = os.path.join(RESULTSPATH, "relative_occurrence_nucleotides", f"PR_{s}.png")
+        dst = os.path.join(RESULTSPATH, "control_analysis", f"PR_{s}_nucleotide_occurrence.png")
         os.rename(src, dst)
 
     nuc_overlap_analysis(seq_list_dict, 1)
@@ -120,7 +120,7 @@ if __name__ == "__main__":
     x, y, err = format_dataset_for_plotting(data_dict["PR"], strain)
     y_exp = y
     fit_models_and_plot_data(x, y, y_exp, err, strain)
-    src = os.path.join(RESULTSPATH, "regression_length_count", f"PR_regression_analysis.pdf")
-    dst = os.path.join(RESULTSPATH, "control_analysis", f"PR_regression_analysis.pdf")
+    src = os.path.join(RESULTSPATH, "regression_length_count", f"PR_regression_analysis.png")
+    dst = os.path.join(RESULTSPATH, "control_analysis", f"PR_regression_analysis.png")
     os.rename(src, dst)
 
