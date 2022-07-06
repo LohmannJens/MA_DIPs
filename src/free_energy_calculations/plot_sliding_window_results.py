@@ -47,18 +47,20 @@ def plot_deletions_with_delta_G(d: dict, w_s: int, s_s: int)-> None:
             energy_file = os.path.join(energy_path, f"{k}_{s}_{w_s}_{s_s}.csv")
             energy_df = pd.read_csv(energy_file)
             
-            l1 = axs[i].twinx().bar(concat_seg_df.index, np.log(concat_seg_df["NGS_read_count"]))
+            l1 = axs[i].twinx().bar(concat_seg_df.index, concat_seg_df["NGS_read_count"])
             l2, = axs[i].plot(energy_df["position"], energy_df["delta_G"], color="green")
             l3 = axs[i].axhline(y=energy_df["delta_G"].mean(), c="r", linestyle="--")
 
             axs[i].set_title(s)
             axs[i].set_xlim(left=0.0, right=max(energy_df["position"]))
-            axs[i].set_ylim(bottom=0.0, top=min(energy_df["delta_G"]))
-     #       axs[i].set_ylim(bottom=0.0, top=20.0)
+            if w_s == 1:
+                axs[i].set_ylim(bottom=0.0, top=20.0)
+            else:
+                axs[i].set_ylim(bottom=0.0, top=min(energy_df["delta_G"]))
             axs[i].set_xlabel("Sequence position")
             axs[i].set_ylabel("\u0394 G")
 
-        fig.legend([l1, l2, l3], ["log(NGS count)", "\u0394 G", "mean of \u0394 G"])
+        fig.legend([l1, l2, l3], ["NGS count", "\u0394 G", "mean of \u0394 G"])
         fig.suptitle(k, ha="left")
 
         save_path = os.path.join(RESULTSPATH, "free_energy_estimations")
