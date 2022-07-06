@@ -75,9 +75,9 @@ def run_tloop_analysis(rna: str, filename: str)-> None:
         (ss, mfe_dimer) = RNA.cofold(Other)
         DDeltaG = duplex.energy - mfe_dimer
 
-        f.write(f"{i},{duplex.energy}\n")
+     #   f.write(f"{i},{duplex.energy}\n")
      #   f.write(f"{i},{mfe_dimer}\n")
-     #   f.write(f"{i},{DDeltaG}\n")
+        f.write(f"{i},{DDeltaG}\n")
 
     # close .txt file that deltaG values were written to
     f.close()
