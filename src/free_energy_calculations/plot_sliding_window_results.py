@@ -88,29 +88,30 @@ def create_boxplots(d: dict, w_s: int, s_s: int)-> None:
 
         for idx, s in enumerate(SEGMENTS):
             seg_df = v.loc[v["Segment"] == s]
-            start_seg_df = seg_df.loc[:, ["Start", "NGS_read_count"]]
-            start_seg_df.rename(columns={"Start": "Position"}, inplace=True)
-            end_seg_df = seg_df.loc[:, ["End", "NGS_read_count"]]
-            end_seg_df.rename(columns={"End": "Position"}, inplace=True)
-            concat_seg_df = pd.concat([start_seg_df, end_seg_df])
-            concat_seg_df = concat_seg_df.groupby("Position").sum()
-
-            energy_file = os.path.join(energy_path, f"{k}_{s}_{w_s}_{s_s}.csv")
-            energy_df = pd.read_csv(energy_file)
-            if y_min > min(energy_df["delta_G"]):
-                y_min = min(energy_df["delta_G"])
-
-            df1 = energy_df[energy_df["position"].isin(list(concat_seg_df.index))]
-            df2 = energy_df[~energy_df["position"].isin(list(concat_seg_df.index))]
-            data.extend([list(df1["delta_G"]), list(df2["delta_G"])])
-
             if seg_df.size != 0:
+                start_seg_df = seg_df.loc[:, ["Start", "NGS_read_count"]]
+                start_seg_df.rename(columns={"Start": "Position"}, inplace=True)
+                end_seg_df = seg_df.loc[:, ["End", "NGS_read_count"]]
+                end_seg_df.rename(columns={"End": "Position"}, inplace=True)
+                concat_seg_df = pd.concat([start_seg_df, end_seg_df])
+                concat_seg_df = concat_seg_df.groupby("Position").sum()
+
+                energy_file = os.path.join(energy_path, f"{k}_{s}_{w_s}_{s_s}.csv")
+                energy_df = pd.read_csv(energy_file)
+                if y_min > min(energy_df["delta_G"]):
+                    y_min = min(energy_df["delta_G"])
+                
+                df1 = energy_df[energy_df["position"].isin(list(concat_seg_df.index))]
+                df2 = energy_df[~energy_df["position"].isin(list(concat_seg_df.index))]
+                data.extend([list(df1["delta_G"]), list(df2["delta_G"])])
+
                 # do statistics
                 # t-test is not suitable, because no normal deviation is given
                 res = stats.mannwhitneyu(df1["delta_G"], df2["delta_G"])
                 symbol = get_stat_symbol(res.pvalue)
             else:
                 symbol = ""
+                data.extend([0, 0])
 
             annotations.append(axs[i].annotate(f"{s} {symbol}", (idx*2 +1.5, 0.0), ha="center", size="small"))
 
