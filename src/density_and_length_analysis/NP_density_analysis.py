@@ -20,7 +20,7 @@ from scipy import stats
 
 sys.path.insert(0, "..")
 from utils import DATAPATH, RESULTSPATH, SEGMENTS
-from utils import load_alnaji_excel, load_short_reads, get_sequence, get_stat_symbol
+from utils import load_alnaji_excel, load_short_reads, get_sequence, get_seq_len, get_stat_symbol
 
 
 def load_density_data(path: str)-> dict:
@@ -51,14 +51,26 @@ def load_my_density_data(path: str)-> dict:
 
     density_dict = dict()
     filepath = os.path.join(path, "peaks.tsv")
-    df = pd.read_csv(filepath, sep="\t", names=["Segment", "Start", "End", "Peak", "Number", "Sign"])
+    df = pd.read_csv(filepath, sep="\t", names=["Segment", "Start", "End", "Peak", "Height", "Sign"])
     for s in SEGMENTS:
-        s_df = df.loc(df["Segment"] == seg_mapper[s])
+        s_df = df.loc[df["Segment"] == seg_mapper[s]]
 
-        s_con_df = pd.concatenate([s_df["Start"], s_df["End"]])
-        print(s_con_df)
-        exit()
- #       density_dict[s] = 
+        start_df = pd.concat([s_df[["Start", "Height"]],
+                              (s_df["Start"] - 1).to_frame()],
+                             ignore_index=True)
+        end_df = pd.concat([s_df[["End", "Height"]],
+                            (s_df["End"] + 1).to_frame()],
+                           ignore_index=True)
+        start_df.rename(columns={"Start": "x", "Height": "y"}, inplace=True)
+        end_df.rename(columns={"End": "x", "Height": "y"}, inplace=True)
+
+        final_df = pd.concat([start_df, end_df], ignore_index=True, sort=True)
+        extra_points_df = pd.DataFrame({"x": [0, get_seq_len("Cal07", s)], "y": [0, 0]})
+        final_df = pd.concat([final_df, extra_points_df], ignore_index=True)
+        final_df = final_df.fillna(0)
+        final_df.sort_values(by=["x"], inplace=True)
+
+        density_dict[s] = final_df
     return density_dict
 
 
@@ -112,10 +124,10 @@ def map_positions_to_density(data: dict, density_data: dict)-> dict:
             l2, = axs[i].plot(density_data[s]["x"], density_data[s]["y"], label="NP density", alpha=0.5, color="green", fillstyle="full")
             axs[i].set_title(f"{s}")
             axs[i].set_xlim(left=0)
-            axs[i].set_ylim(bottom=0, top=100)
+#            axs[i].set_ylim(bottom=0, top=100)
             axs[i].set_xlabel("sequence position")
             axs[i].set_ylabel("normalized NP density")
-            axs[i].axhline(y=5.0, color="red", linestyle="--")
+ #           axs[i].axhline(y=5.0, color="red", linestyle="--")
 
         fig.legend([l1, l2], ["count", "NP density"])        
         save_path = os.path.join(RESULTSPATH, "NP_density", f"{key}_del_position_NP_density.pdf")
@@ -199,9 +211,9 @@ if __name__ == "__main__":
     # Plotting NP density against junction sites
     #    Cal07 data from Alnaji 2019
     Cal07_dens_path = os.path.join(density_path, "Cal07")
-    Cal07_density_data = load_density_data(Cal07_dens_path)
+    Cal07_density_data = load_my_density_data(Cal07_dens_path)
     NGS_count_dict = map_positions_to_density(all_reads_dict, Cal07_density_data)
-    compare_position_with_density(NGS_count_dict, Cal07_density_data, all_reads_dict)
+ #   compare_position_with_density(NGS_count_dict, Cal07_density_data, all_reads_dict)
     '''    
     #    WSN data from Mendes 2021
     WSN_count_path = os.path.join(DATAPATH, "Mendes2021", "beta_sorting_BLASTresults")
