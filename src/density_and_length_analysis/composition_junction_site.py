@@ -82,6 +82,28 @@ def create_sequence_library(data_dict: dict)-> dict:
     return data_dict
 
 
+def generate_sampling_data(seq: str, s: (int, int), e: (int, int),  n: int) -> object:
+    '''
+        generates sampling data by creating random start and end points for
+        artificial junction sites. Generated data is used to calculate the
+        expected values. Sample set is 3 times the size of the observation set.
+        :param seq: sequence of the segment
+        :param s: tuple with start and end point of the range for the artifical
+                  start point of the junction
+        :param e: tuple with start and end point of the range for the artifical
+                  end point of the junction
+        :param n: size of the observation data set
+
+        :return: dataframe with the artifical data set
+    '''
+    sampling = dict({"WholeSequence": [], "Start": [], "End": []})
+    for _ in range(n):
+        sampling["WholeSequence"].append(seq)
+        sampling["Start"].append(random.randint(s[0], s[1]))
+        sampling["End"].append(random.randint(e[0], e[1]))
+    return pd.DataFrame(data=sampling)
+
+
 def count_nucleotide_occurrence(seq: str, p: int)-> dict:
     '''
         Counts the number of nucleotides next to a given point.
@@ -124,6 +146,75 @@ def count_nucleotide_occurrence_overall(df)-> (dict, dict):
             count_end_dict[nuc] += seq_end_dict[nuc]
 
     return count_start_dict, count_end_dict
+
+
+def nucleotide_occurrence_analysis(seq_dict: dict, seg: str)-> None:
+    '''
+        gets the sequences for all four strains and calculates the occurrence
+        of each nucleotide at the start and end deletion site.
+        :param seq_dict: dictionary with the sequences
+        :param seg: name of the segment that is analyzed; 'all' if all 8 are used
+
+        :return: None
+    '''
+    for k, v in seq_dict.items():
+        v = v.loc[v["Segment"] == seg]
+        count_start_dict, count_end_dict = count_nucleotide_occurrence_overall(v)
+        n = len(v.index)
+        # only plot results if at least one data point is available
+        if n <= 1:
+            continue
+
+        # get expected values
+        seq = v.iloc[0]["WholeSequence"]
+        q = 0.20
+        s = (int(v.Start.quantile(q)), int(v.Start.quantile(1-q)))
+        e = (int(v.End.quantile(q)), int(v.End.quantile(1-q)))
+        m = 10
+
+        sampling_data = generate_sampling_data(seq, s, e, n*m)
+        exp_s, exp_e = count_nucleotide_occurrence_overall(sampling_data)
+        
+        fig, axs = plt.subplots(4, 2, figsize=(5, 10), tight_layout=True)
+        x = np.arange(0.8, 9.8, dtype=np.float64)
+
+        for idx, nuc in enumerate(count_start_dict.keys()):
+            h_s = count_start_dict[nuc]/n
+            h_e = count_end_dict[nuc]/n
+            y_exp_s = exp_s[nuc] / (n * m)
+            y_exp_e = exp_e[nuc] / (n * m)
+
+            axs[idx, 0].bar(x, height=h_s, width=0.3, label=nuc, color=COLORS[nuc])
+            axs[idx, 1].bar(x, height=h_e, width=0.3, label=nuc, color=COLORS[nuc])
+            axs[idx, 0].bar(x+0.4, height=y_exp_s, width=0.3, label=f"{nuc}_exp", color=COLORS[nuc], alpha=0.5)
+            axs[idx, 1].bar(x+0.4, height=y_exp_e, width=0.3, label=f"{nuc}_exp", color=COLORS[nuc], alpha=0.5)
+
+            for j, p in enumerate(y_exp_s):
+                result = stats.binomtest(int(count_start_dict[nuc][j]), n, p)
+                symbol = get_stat_symbol(result.pvalue)
+                axs[idx, 0].annotate(symbol, (j+1, max(h_s[j], p)), fontsize="x-small",
+                                     ha="center", stretch="condensed")
+            for j, p in enumerate(y_exp_e):
+                result = stats.binomtest(int(count_end_dict[nuc][j]), n, p)
+                symbol = get_stat_symbol(result.pvalue)
+                axs[idx, 1].annotate(symbol, (j+1, max(h_e[j], p)), fontsize="x-small",
+                                     ha="center", stretch="condensed")
+
+            for i in range(2):
+                axs[idx, i].legend()
+                axs[idx, i].margins(x=0)
+                axs[idx, i].set_xlim(left=0.5, right=9.5)
+                axs[idx, i].set_ylim(top=0.8, bottom=0.0)
+                axs[idx, i].set_xticks([1,2,3,4,5,6,7,8,9])
+                axs[idx, i].set_xlabel("position at junction side")
+                axs[idx, i].set_ylabel("relative occurrence")
+            axs[idx, 0].add_patch(plt.Rectangle((5.5, 0), 4, 1, color="grey", alpha=0.3))
+            axs[idx, 1].add_patch(plt.Rectangle((0.5, 0), 4, 1, color="grey", alpha=0.3))
+  
+        plt.suptitle(f"start (left) and end (right) of {seg} of {k} ({n})")
+        savepath = os.path.join(RESULTSPATH, "relative_occurrence_nucleotides", f"{k}_{seg}.png")
+        plt.savefig(savepath)
+        plt.close()
 
 
 def calculate_overlapping_nucleotides(seq: str, s: int, e: int, w_len: int, m: int)-> (int, str):
@@ -198,95 +289,37 @@ def count_overlapping_nucleotides_overall(df, mode: int)-> (dict, dict):
     return nuc_overlap_dict, overlap_seq_dict
 
 
-def generate_sampling_data(seq: str, s: (int, int), e: (int, int),  n: int) -> object:
+def count_nucleotide_freq_overlap_seq(seq_dict: dict, strain: str, seg: str)-> object:
     '''
-        generates sampling data by creating random start and end points for
-        artificial junction sites. Generated data is used to calculate the
-        expected values. Sample set is 3 times the size of the observation set.
-        :param seq: sequence of the segment
-        :param s: tuple with start and end point of the range for the artifical
-                  start point of the junction
-        :param e: tuple with start and end point of the range for the artifical
-                  end point of the junction
-        :param n: size of the observation data set
-
-        :return: dataframe with the artifical data set
+        Counts the number of nucleotides of the overlapping sequences and
+        normalizes them. Also gets the expected values, which is the occurrence
+        of each nucleotide over the whole seuqence.
+        :param seq_dict: dict with overlapping sequences and number of counts
+        :param strain: name of strain that is analyzed
+        :param seg: name of the segment that is analyzed
+    
+        :return: Data Frame with one column for each nucleotide
     '''
-    sampling = dict({"WholeSequence": [], "Start": [], "End": []})
-    for _ in range(n):
-        sampling["WholeSequence"].append(seq)
-        sampling["Start"].append(random.randint(s[0], s[1]))
-        sampling["End"].append(random.randint(e[0], e[1]))
-    return pd.DataFrame(data=sampling)
-
-
-def nucleotide_occurrence_analysis(seq_dict: dict, seg: str)-> None:
-    '''
-        gets the sequences for all four strains and calculates the occurrence
-        of each nucleotide at the start and end deletion site.
-        :param seq_dict: dictionary with the sequences
-        :param seg: name of the segment that is analyzed; 'all' if all 8 are used
-
-        :return: None
-    '''
+    w_len = 15
+    count_dict = dict({n: np.zeros(w_len) for n in NUCLEOTIDES})
     for k, v in seq_dict.items():
-        v = v.loc[v["Segment"] == seg]
-        count_start_dict, count_end_dict = count_nucleotide_occurrence_overall(v)
-        n = len(v.index)
-        # only plot results if at least one data point is available
-        if n <= 1:
-            continue
+        seq = k
+        seq_len = len(seq)
+        for n in NUCLEOTIDES:
+            count_dict[n][seq_len] += seq.count(n) * v
+    df = pd.DataFrame(count_dict)
 
-        # get expected values
-        seq = v.iloc[0]["WholeSequence"]
-        q = 0.20
-        s = (int(v.Start.quantile(q)), int(v.Start.quantile(1-q)))
-        e = (int(v.End.quantile(q)), int(v.End.quantile(1-q)))
-        m = 10
-
-        sampling_data = generate_sampling_data(seq, s, e, n*m)
-        exp_s, exp_e = count_nucleotide_occurrence_overall(sampling_data)
-        
-        fig, axs = plt.subplots(4, 2, figsize=(5, 10), tight_layout=True)
-        x = np.arange(0.8, 9.8, dtype=np.float64)
-
-        for idx, nuc in enumerate(count_start_dict.keys()):
-            h_s = count_start_dict[nuc]/n
-            h_e = count_end_dict[nuc]/n
-            y_exp_s = exp_s[nuc] / (n * m)
-            y_exp_e = exp_e[nuc] / (n * m)
-
-            axs[idx, 0].bar(x, height=h_s, width=0.3, label=nuc, color=COLORS[nuc])
-            axs[idx, 1].bar(x, height=h_e, width=0.3, label=nuc, color=COLORS[nuc])
-            axs[idx, 0].bar(x+0.4, height=y_exp_s, width=0.3, label=f"{nuc}_exp", color=COLORS[nuc], alpha=0.5)
-            axs[idx, 1].bar(x+0.4, height=y_exp_e, width=0.3, label=f"{nuc}_exp", color=COLORS[nuc], alpha=0.5)
-
-            for j, p in enumerate(y_exp_s):
-                result = stats.binomtest(int(count_start_dict[nuc][j]), n, p)
-                symbol = get_stat_symbol(result.pvalue)
-                axs[idx, 0].annotate(symbol, (j+1, max(h_s[j], p)), fontsize="x-small",
-                                     ha="center", stretch="condensed")
-            for j, p in enumerate(y_exp_e):
-                result = stats.binomtest(int(count_end_dict[nuc][j]), n, p)
-                symbol = get_stat_symbol(result.pvalue)
-                axs[idx, 1].annotate(symbol, (j+1, max(h_e[j], p)), fontsize="x-small",
-                                     ha="center", stretch="condensed")
-
-            for i in range(2):
-                axs[idx, i].legend()
-                axs[idx, i].margins(x=0)
-                axs[idx, i].set_xlim(left=0.5, right=9.5)
-                axs[idx, i].set_ylim(top=0.8, bottom=0.0)
-                axs[idx, i].set_xticks([1,2,3,4,5,6,7,8,9])
-                axs[idx, i].set_xlabel("position at junction side")
-                axs[idx, i].set_ylabel("relative occurrence")
-            axs[idx, 0].add_patch(plt.Rectangle((5.5, 0), 4, 1, color="grey", alpha=0.3))
-            axs[idx, 1].add_patch(plt.Rectangle((0.5, 0), 4, 1, color="grey", alpha=0.3))
-  
-        plt.suptitle(f"start (left) and end (right) of {seg} of {k} ({n})")
-        savepath = os.path.join(RESULTSPATH, "relative_occurrence_nucleotides", f"{k}_{seg}.png")
-        plt.savefig(savepath)
-        plt.close()
+    full_seq = str(get_sequence(strain, seg).seq.transcribe())
+    labels = dict()
+    for n in NUCLEOTIDES:
+        labels[n] = full_seq.count(n)
+    exp_df = pd.DataFrame(labels, index=["exp"])
+    df.iloc[0] = exp_df.iloc[0]
+    n_df = df.div(df.sum(axis=1), axis=0)
+    n_df = n_df.fillna(0)
+    n_df["label"] = n_df.index
+    n_df["label"] = n_df["label"].replace([0], "exp").astype(str)
+    return n_df
 
 
 def nucleotide_overlap_analysis(seq_dict: dict, seg: str, mode: int, ngs_thresh: int=0)-> None:
@@ -344,24 +377,13 @@ def nucleotide_overlap_analysis(seq_dict: dict, seg: str, mode: int, ngs_thresh:
         axs[i, 0].legend(loc="upper right")
         axs[i, 0].set_ylim(bottom=0.0, top=1.0)
 
-        plot_dict = dict()
-        for key, value in overlap_seq_dict.items():
-            if value >= 1:
-                plot_dict[key] = value
+        plot_df = count_nucleotide_freq_overlap_seq(overlap_seq_dict, k, seg)
+        bottom = np.zeros(15)
+        for n in NUCLEOTIDES:
+            axs[i, 1].bar(x=plot_df["label"], height=plot_df[n], bottom=bottom, label=n)
+            bottom += plot_df[n]
 
-        # order elements by decreasing value
-        plot_dict = {k: v for k, v in sorted(plot_dict.items(), key=lambda item: item[1], reverse=True)}
-
-        x = list(plot_dict.keys())
-        h = list(plot_dict.values())
-        if len(x) > 15:
-            x = x[:15]
-            h = h[:15]
-
-        axs[i, 1].bar(x=x, height=h, width=0.5)
-        axs[i, 1].set_xlabel("nucleotide sequence")
-        axs[i, 1].set_ylabel("absolute occurrence")
-        axs[i, 1].set_title(f"occurrence of sequences that overlap at start and end")
+        axs[i, 1].legend()
 
     ngs_thresh = "" if ngs_thresh == 0 else f"NGS{ngs_thresh}_"
     fname = f"{seg}_mode{mode}_{ngs_thresh}sequence_distribution.pdf"
