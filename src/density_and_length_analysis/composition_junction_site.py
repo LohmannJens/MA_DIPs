@@ -315,7 +315,9 @@ def count_nucleotide_freq_overlap_seq(seq_dict: dict, strain: str, seg: str)-> o
         labels[n] = full_seq.count(n)
     exp_df = pd.DataFrame(labels, index=["exp"])
     df.iloc[0] = exp_df.iloc[0]
+    sum_df = df.sum(axis=1).astype(int)
     n_df = df.div(df.sum(axis=1), axis=0)
+    n_df["Sum"] = sum_df
     n_df = n_df.fillna(0)
     n_df["label"] = n_df.index
     n_df["label"] = n_df["label"].replace([0], "exp").astype(str)
@@ -383,7 +385,23 @@ def nucleotide_overlap_analysis(seq_dict: dict, seg: str, mode: int, ngs_thresh:
             axs[i, 1].bar(x=plot_df["label"], height=plot_df[n], bottom=bottom, label=n)
             bottom += plot_df[n]
 
+        f_exp = plot_df.iloc[0][NUCLEOTIDES]
+        for pos in plot_df["label"]:
+            symbol = ""
+            if pos == "exp":
+                pos = 0
+            else:
+                f_obs = plot_df.iloc[int(pos)][NUCLEOTIDES]
+                if f_obs.sum() != 0:
+                    res = stats.chisquare(f_exp, f_obs)
+                    symbol = get_stat_symbol(res.pvalue)
+            text = f"n={str(int(plot_df['Sum'].iloc[int(pos)]))}\n{symbol}"
+            axs[i, 1].annotate(text, (pos, 0.0), fontsize="xx-small", ha="center")
+
         axs[i, 1].legend()
+        axs[i, 1].set_title("nucleotide occurrence in overlapping sequence")
+        axs[i, 1].set_xlabel("length of overlapping sequence")
+        axs[i, 1].set_ylabel("relative nuc. occurrence")
 
     ngs_thresh = "" if ngs_thresh == 0 else f"NGS{ngs_thresh}_"
     fname = f"{seg}_mode{mode}_{ngs_thresh}sequence_distribution.pdf"
