@@ -76,18 +76,16 @@ def load_my_density_data(path: str)-> dict:
 
 def load_WSN_data(dir: str)-> dict:
     '''
-        Loads junction sites data for WSN strain from Mendes 2021.
+        Loads junction sites data for WSN strain from Boussier 2020.
         Formats it in the same way as the dataset from Alnaji 2019.
-        :param dir: directory to the different .tsv files of the experiments
+        :param dir: directory to excel file with the data set
 
         :return: dictionary with one key (strain), value (data frame) pair
     '''
-    dfs = list()
-    for f in os.scandir(dir):
-        df = pd.read_csv(f.path, sep="\t", na_values=["", "None"], keep_default_na=False)
-        dfs.append(df)
 
-    data = dict({"WSN": pd.concat(dfs)})
+    df = pd.read_excel(dir, sheet_name=3, na_values=["", "None"], keep_default_na=False)
+    df = df[df["Virus"] == "WT"].reset_index(drop=True)
+    data = dict({"WSN": df})
     return data
 
 
@@ -213,12 +211,12 @@ if __name__ == "__main__":
     Cal07_dens_path = os.path.join(density_path, "Cal07")
     Cal07_density_data = load_my_density_data(Cal07_dens_path)
     NGS_count_dict = map_positions_to_density(all_reads_dict, Cal07_density_data)
- #   compare_position_with_density(NGS_count_dict, Cal07_density_data, all_reads_dict)
-    '''    
+    compare_position_with_density(NGS_count_dict, Cal07_density_data, all_reads_dict)
+     
     #    WSN data from Mendes 2021
-    WSN_count_path = os.path.join(DATAPATH, "Mendes2021", "beta_sorting_BLASTresults")
-    WSN_reads_dict = load_WSN_data(WSN_count_path)
+    WSN_count_file = os.path.join(DATAPATH, "Boussier2020", "Supplemental_Table_S2.xlsx")
+    WSN_reads_dict = load_WSN_data(WSN_count_file)
     WSN_dens_path = os.path.join(density_path, "WSN")
     WSN_dens_data = load_density_data(WSN_dens_path)
     _ = map_positions_to_density(WSN_reads_dict, WSN_dens_data)
-    '''
+    
