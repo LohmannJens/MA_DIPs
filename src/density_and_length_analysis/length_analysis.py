@@ -11,6 +11,7 @@ insights about the data distribution.
 
 import os
 import sys
+import json
 
 import numpy as np
 import pandas as pd
@@ -19,7 +20,7 @@ import matplotlib.pyplot as plt
 from scipy import stats
 
 sys.path.insert(0, "..")
-from utils import RESULTSPATH, SEGMENTS
+from utils import DATAPATH, RESULTSPATH, SEGMENTS
 from utils import load_alnaji_excel, load_short_reads
 
 
@@ -65,6 +66,9 @@ def start_vs_end_lengths(data: dict)-> None:
 
         :return: None
     '''
+    with open(os.path.join(DATAPATH, "Pelz2021", "packaging_signal.json"), "r") as f:
+        packaging_signals = json.load(f)
+
     for k, v in data.items():
         fig, axs = plt.subplots(4, 2, figsize=(5, 10), tight_layout=True)
         j = 0
@@ -82,7 +86,13 @@ def start_vs_end_lengths(data: dict)-> None:
                 axs[i%4,j].set_xticks([0,max_p])
                 axs[i%4,j].set_yticks([0,max_p])
                 axs[i%4,j].set_aspect("equal", "box")
-                
+
+                signals = packaging_signals[s]
+                axs[i%4,j].add_patch(plt.Rectangle((0, 0), max_p, signals["incorporation_start"], color="grey", alpha = 0.5, ls="None"))
+                axs[i%4,j].add_patch(plt.Rectangle((0, 0), signals["incorporation_end"], max_p, color="grey", alpha = 0.5, ls="None"))
+                axs[i%4,j].add_patch(plt.Rectangle((0, 0), max_p, signals["bundling_start"], color="lightgrey", alpha = 0.5, ls="None"))
+                axs[i%4,j].add_patch(plt.Rectangle((0, 0), signals["bundling_end"], max_p, color="lightgrey", alpha = 0.5, ls="None"))
+
             axs[i%4,j].set_title(f"{s} (n={v_s.shape[0]})")
             axs[i%4,j].set_xlabel("start")
             axs[i%4,j].set_ylabel("end")
@@ -100,6 +110,6 @@ def start_vs_end_lengths(data: dict)-> None:
 if __name__ == "__main__":
     cleaned_data_dict = load_alnaji_excel()
     all_reads_dict = load_short_reads(cleaned_data_dict)
-    plot_deletion_lengths(all_reads_dict)
+#    plot_deletion_lengths(all_reads_dict)
     start_vs_end_lengths(all_reads_dict)   
 
