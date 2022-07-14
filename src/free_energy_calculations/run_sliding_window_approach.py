@@ -25,7 +25,7 @@ def delta_G_calculation(seq: str, p: int, w_s: int)-> float:
         :return: delta G of the cropped sequence
     '''
     c_seq = seq[p-int(w_s/2): p+int(w_s/2)]
-    _, mfe = RNA.fold(str(c_seq.seq))
+    _, mfe = RNA.fold(c_seq)
     return mfe
 
 

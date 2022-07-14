@@ -110,6 +110,6 @@ def start_vs_end_lengths(data: dict)-> None:
 if __name__ == "__main__":
     cleaned_data_dict = load_alnaji_excel()
     all_reads_dict = load_short_reads(cleaned_data_dict)
-#    plot_deletion_lengths(all_reads_dict)
+    plot_deletion_lengths(all_reads_dict)
     start_vs_end_lengths(all_reads_dict)   
 

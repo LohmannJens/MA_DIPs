@@ -1,6 +1,6 @@
 """
-This script creates FASTA files that will be used for motif discovery by MEME
-suite
+    This script creates FASTA files that will be used for motif discovery by
+    MEME suite
 """
 import os
 import sys
@@ -82,17 +82,6 @@ def create_cropped_seq_files(d: dict, shuffle: bool=False, random: bool=False)->
     for k, v in d.items():
         for r in v.iterrows():
             r = r[1]
-            if shuffle:
-                seq_list = list(r["DelSequence"])
-                np.random.shuffle(seq_list)
-                seq = Seq("".join(seq_list))
-            elif random:
-                del_len = len(r["WholeSequence"]) - len(r["DelSequence"])
-                full_seq = r["WholeSequence"]
-                seq = random_crop_sequence(full_seq, del_len)
-            else:
-                seq = r["DelSequence"]
-                
             seg = r["Segment"]
             s = r["Start"]
             e = r["End"]
@@ -100,10 +89,20 @@ def create_cropped_seq_files(d: dict, shuffle: bool=False, random: bool=False)->
             if k == "B_LEE":
                 k = "BLEE"
             id = f"{k}_{seg}_{s}_{e}_{NGS}"
+
             if shuffle:
+                seq_list = list(r["DelSequence"])
+                np.random.shuffle(seq_list)
+                seq = Seq("".join(seq_list))
                 id = f"{id}_shuffled"
             elif random:
+                full_seq = get_sequence(k, seg)
+                del_len = len(full_seq) - len(r["DelSequence"])
+                seq = random_crop_sequence(full_seq, del_len)
                 id = f"{id}_randomcrop"
+            else:
+                seq = r["DelSequence"]
+                
             record = SeqRecord(seq, id=id)
             write_sequence(record, id, root_folder)
 

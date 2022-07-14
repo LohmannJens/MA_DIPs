@@ -30,7 +30,7 @@ def get_sequence_id(strain: str, seg: str)-> str:
 
         :return: ID of the segement of the strain
     '''
-    record = get_sequence(strain, seg)
+    record = get_sequence(strain, seg, full=True)
     return record.id
 
 

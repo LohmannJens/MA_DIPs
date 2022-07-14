@@ -15,7 +15,7 @@ sys.path.insert(0, "..")
 sys.path.insert(0, "../density_and_length_analysis")
 sys.path.insert(0, "../regression_length_vs_occurrence")
 from utils import DATAPATH, RESULTSPATH, SEGMENTS
-from utils import load_pelz_dataset, get_stat_symbol
+from utils import load_pelz_dataset, get_stat_symbol, get_sequence
 from composition_junction_site import create_sequence_library, nucleotide_occurrence_analysis, count_overlapping_nucleotides_overall, generate_sampling_data
 from regression_length_occurrence import format_dataset_for_plotting, fit_models_and_plot_data
 
@@ -48,19 +48,19 @@ def nuc_overlap_analysis(seq_dict: dict, mode: int, top: bool=False)-> None:
         j = 0
         for i, s in enumerate(SEGMENTS):
             v_s = v.loc[(v["Segment"] == s)]
-            nuc_overlap_dict, _ = count_overlapping_nucleotides_overall(v_s, mode)  
+            seq = get_sequence(k, s)
+            nuc_overlap_dict, _ = count_overlapping_nucleotides_overall(v_s, seq, mode)  
             n = len(v_s.index)
             if n <= 1:
                 continue
     
-            seq = v_s.iloc[0]["WholeSequence"]
-            q = 0.20
+            q = 0.10
             start = (int(v_s.Start.quantile(q)), int(v_s.Start.quantile(1-q)))
             end = (int(v_s.End.quantile(q)), int(v_s.End.quantile(1-q)))
             m = 5
 
             sampling_data = generate_sampling_data(seq, start, end, n*m)
-            exp, _ = count_overlapping_nucleotides_overall(sampling_data, mode)
+            exp, _ = count_overlapping_nucleotides_overall(sampling_data, seq, mode)
             x = list(nuc_overlap_dict.keys())
             h = np.array(list(nuc_overlap_dict.values()))
             h_exp = np.array(list(exp.values()))

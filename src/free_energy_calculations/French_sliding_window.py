@@ -89,7 +89,7 @@ if __name__ == "__main__":
     strains = ["Cal07", "NC", "Perth", "B_LEE"]
     for strain in strains:
         for s in SEGMENTS:
-            rna = str(get_sequence(strain, s).seq)
+            rna = get_sequence(strain, s)
             filename = f"{strain}_{s}_1_1.csv"
             run_tloop_analysis(rna, filename)
 

@@ -14,17 +14,24 @@ RESULTSPATH = os.path.join(REPOPATH, "results")
 SEGMENTS = ["PB2", "PB1", "PA", "HA", "NP", "NA", "M", "NS"]
 
 
-def get_sequence(strain: str, seg: str)-> object:
+def get_sequence(strain: str, seg: str, full: bool=False)-> object:
     '''
         loads a DNA sequence by strain and segment.
         :param strain: name of the strain
         :param seg: name of the segment of the strain
+        :param full: if true the whole Biopython Seq Object is returned
 
         :return: Biopython Seq Object including the sequence. To get raw string
                  use: str(RETURN.seq)
     '''
     fasta_file = os.path.join(DATAPATH, "strain_segment_fastas", strain, f"{seg}.fasta")
-    return SeqIO.read(fasta_file, "fasta")
+    seq_obj = SeqIO.read(fasta_file, "fasta")
+    if full:
+        return seq_obj
+    else:
+        return str(seq_obj.seq.transcribe())
+
+    return
 
 def get_seq_len(strain: str, seg: str)-> int:
     '''

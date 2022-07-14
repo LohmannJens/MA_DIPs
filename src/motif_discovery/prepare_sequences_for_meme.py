@@ -77,7 +77,7 @@ def create_full_seq_files(strains: list)-> None:
 
     for st in strains:
         for s in SEGMENTS:
-            seq = get_sequence(st, s)
+            seq = get_sequence(st, s, full=True)
             write_sequence(seq, st, s, root_folder)
 
 
@@ -131,8 +131,8 @@ def create_windows_del_site_files(d: dict, n: int, combine: bool)-> None:
     for k, v in d.items():
         for row in v.iterrows():
             r = row[1]
-            seq = r["WholeSequence"]
             seg = r["Segment"]
+            seq = get_sequence(k, seg)
             s = r["Start"]
             e = r["End"]
             # cropping the two windows at the deletion site and concatenating

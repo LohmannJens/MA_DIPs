@@ -23,14 +23,12 @@ def load_sequence_as_dict(path: str)-> object:
 
     '''
     record = SeqIO.read(path, "fasta")
-    dna_seq = record.seq
-    rna_seq = dna_seq.transcribe()
+    rna_seq = str(record.seq.transcribe())
 
     data = dict({"ID": record.id,
                  "Length": LENGTH,
                  "Start": START,
                  "End": END,
-                 "WholeSequence": rna_seq,
                  "DelSequence": rna_seq[:START] + rna_seq[END-1:]})
 
     return data
@@ -63,7 +61,7 @@ if __name__ == "__main__":
     alnaji_dict = load_alnaji_excel()
 
     # do analysis for DI244 (control DI RNA)
-    seq = DI244_dict["WholeSequence"]
+    seq = str(SeqIO.read(fasta_file, "fasta").seq.transcribe())
     s = DI244_dict["Start"]
     e = DI244_dict["End"]
     check_deletion_site(seq, s, e)
@@ -74,7 +72,6 @@ if __name__ == "__main__":
         for row in v.iterrows():
             r = row[1]
             if r.loc["NGS_read_count"] > 1000:
-                record = get_sequence(k[:-3], r["Segment"])
-                RNA_seq = record.seq.transcribe()
+                RNA_seq = get_sequence(k[:-3], r["Segment"])
                 check_deletion_site(str(RNA_seq), r["Start"], r["End"])
 

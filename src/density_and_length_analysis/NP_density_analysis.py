@@ -84,7 +84,6 @@ def load_WSN_data(dir: str)-> dict:
 
         :return: dictionary with one key (strain), value (data frame) pair
     '''
-
     df = pd.read_excel(dir, sheet_name=3, na_values=["", "None"], keep_default_na=False)
     df = df[df["Virus"] == "WT"].reset_index(drop=True)
     data = dict({"WSN": df})

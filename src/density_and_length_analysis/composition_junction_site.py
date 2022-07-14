@@ -30,7 +30,7 @@ COLORS = dict({"A": "blue", "C": "orange", "G": "green", "U": "red"})
 NUCLEOTIDES = list(["A", "C", "G", "U"])
 
 
-def create_sequence(s: int, e: int, strain: str, seg: str, crop: bool = False)-> str:
+def create_sequence(s: int, e: int, strain: str, seg: str)-> str:
     '''
         Loads a DNA sequence and removes a part of it. The deletion is given by
         a start and an end. Those positions are part of the remaining sequence.
@@ -38,18 +38,11 @@ def create_sequence(s: int, e: int, strain: str, seg: str, crop: bool = False)->
         :param e: end of the deletion (included in the remaining sequence)
         :param strain: name of the virus strain
         :param seg: segment where the sequence is coming from
-        :param crop: Indicates if the sequence should be cropped (True) to
-                     exclude the deletion side or take whole sequence (False)
 
         :return: RNA sequence with or without deletion side
     '''
-    full_dna_record = get_sequence(strain, seg)
-    full_dna_seq = full_dna_record.seq
-    full_rna_seq = full_dna_seq.transcribe()
-    if crop:
-        return full_rna_seq[:s] + full_rna_seq[e-1:]
-    else:
-        return full_rna_seq
+    full_rna_seq = get_sequence(strain, seg)
+    return full_rna_seq[:s] + full_rna_seq[e-1:]
 
 
 def create_sequence_library(data_dict: dict)-> dict:
@@ -65,19 +58,15 @@ def create_sequence_library(data_dict: dict)-> dict:
     '''
     for k, v in data_dict.items():
         del_sequence_list = list()
-        whole_sequence_list = list()
         # loop over rows of value dataframe
         for i, row in v.iterrows():
             start = row["Start"]
             end = row["End"]
             segment = row["Segment"]
-            del_sequence = create_sequence(start, end, k, segment, crop=True)
-            whole_sequence = create_sequence(start, end, k, segment, crop=False)
+            del_sequence = create_sequence(start, end, k, segment)
             del_sequence_list.append(del_sequence)
-            whole_sequence_list.append(whole_sequence)
 
         data_dict[k]["DelSequence"] = del_sequence_list
-        data_dict[k]["WholeSequence"] = whole_sequence_list
 
     return data_dict
 
@@ -96,9 +85,8 @@ def generate_sampling_data(seq: str, s: (int, int), e: (int, int),  n: int) -> o
 
         :return: dataframe with the artifical data set
     '''
-    sampling = dict({"WholeSequence": [], "Start": [], "End": []})
+    sampling = dict({"Start": [], "End": []})
     for _ in range(n):
-        sampling["WholeSequence"].append(seq)
         sampling["Start"].append(random.randint(s[0], s[1]))
         sampling["End"].append(random.randint(e[0], e[1]))
     return pd.DataFrame(data=sampling)
@@ -122,11 +110,12 @@ def count_nucleotide_occurrence(seq: str, p: int)-> dict:
     return r_dict
 
 
-def count_nucleotide_occurrence_overall(df)-> (dict, dict):
+def count_nucleotide_occurrence_overall(df: object, seq: str)-> (dict, dict):
     '''
         Counts the occurrence of each nucleotide at different positions around
         the junction site
         :param df: dataframe with sequence and junction site data
+        :param seq: rna sequence where to count the occurrence
 
         :return: tupel with two entries:
                     dict with nucleotide count for start site
@@ -138,8 +127,8 @@ def count_nucleotide_occurrence_overall(df)-> (dict, dict):
     normalize = 0
 
     for i, row in df.iterrows():
-        seq_start_dict = count_nucleotide_occurrence(row["WholeSequence"], row["Start"]) 
-        seq_end_dict = count_nucleotide_occurrence(row["WholeSequence"], row["End"])
+        seq_start_dict = count_nucleotide_occurrence(seq, row["Start"]) 
+        seq_end_dict = count_nucleotide_occurrence(seq, row["End"])
         normalize += 1
         for nuc in count_start_dict.keys():
             count_start_dict[nuc] += seq_start_dict[nuc]
@@ -153,27 +142,27 @@ def nucleotide_occurrence_analysis(seq_dict: dict, seg: str)-> None:
         gets the sequences for all four strains and calculates the occurrence
         of each nucleotide at the start and end deletion site.
         :param seq_dict: dictionary with the sequences
-        :param seg: name of the segment that is analyzed; 'all' if all 8 are used
+        :param seg: name of the segment taht is analyzed
 
         :return: None
     '''
     for k, v in seq_dict.items():
         v = v.loc[v["Segment"] == seg]
-        count_start_dict, count_end_dict = count_nucleotide_occurrence_overall(v)
+        seq = get_sequence(k, seg)
+        count_start_dict, count_end_dict = count_nucleotide_occurrence_overall(v, seq)
         n = len(v.index)
         # only plot results if at least one data point is available
-        if n <= 1:
+        if n == 0:
             continue
 
         # get expected values
-        seq = v.iloc[0]["WholeSequence"]
-        q = 0.20
+        q = 0.10
         s = (int(v.Start.quantile(q)), int(v.Start.quantile(1-q)))
         e = (int(v.End.quantile(q)), int(v.End.quantile(1-q)))
         m = 10
 
         sampling_data = generate_sampling_data(seq, s, e, n*m)
-        exp_s, exp_e = count_nucleotide_occurrence_overall(sampling_data)
+        exp_s, exp_e = count_nucleotide_occurrence_overall(sampling_data, seq)
         
         fig, axs = plt.subplots(4, 2, figsize=(5, 10), tight_layout=True)
         x = np.arange(0.8, 9.8, dtype=np.float64)
@@ -252,18 +241,19 @@ def calculate_overlapping_nucleotides(seq: str, s: int, e: int, w_len: int, m: i
                 counter = i
                 overlap_seq = str(seq[s-i:s])
 
-    assert counter == len(overlap_seq)
+    assert counter == len(overlap_seq), f"{counter=}, {len(overlap_seq)}"
     if len(overlap_seq) == 0:
         overlap_seq = "_"
 
     return counter, overlap_seq
 
 
-def count_overlapping_nucleotides_overall(df, mode: int)-> (dict, dict):
+def count_overlapping_nucleotides_overall(df: object, seq: str ,mode: int)-> (dict, dict):
     '''
         calculates the number of overlapping nucleotides directly before start
         and end of junction site for each data point.
         :param df: dataframe with sequence and junction site data
+        :param seq: RNA sequence of the given segement and strain
         :param mode: states which calculation mode is used in 
                      calculate_overlapping_nucleotides() check there for info
 
@@ -276,7 +266,6 @@ def count_overlapping_nucleotides_overall(df, mode: int)-> (dict, dict):
     overlap_seq_dict = dict()
  
     for i, row in df.iterrows():
-        seq = row["WholeSequence"]
         s = row["Start"]
         e = row["End"]
         idx, overlap_seq = calculate_overlapping_nucleotides(seq, s, e, w_len, mode)
@@ -309,7 +298,7 @@ def count_nucleotide_freq_overlap_seq(seq_dict: dict, strain: str, seg: str)-> o
             count_dict[n][seq_len] += seq.count(n) * v
     df = pd.DataFrame(count_dict)
 
-    full_seq = str(get_sequence(strain, seg).seq.transcribe())
+    full_seq = get_sequence(strain, seg)
     labels = dict()
     for n in NUCLEOTIDES:
         labels[n] = full_seq.count(n)
@@ -340,21 +329,21 @@ def nucleotide_overlap_analysis(seq_dict: dict, seg: str, mode: int, ngs_thresh:
                             gridspec_kw={"width_ratios": [1, 3]})
     for i, (k, v) in enumerate(seq_dict.items()):
         v = v.loc[(v["Segment"] == seg) & (v["NGS_read_count"] > ngs_thresh)]
-        nuc_overlap_dict, overlap_seq_dict = count_overlapping_nucleotides_overall(v, mode)
+        seq = get_sequence(k, seg)
+        nuc_overlap_dict, overlap_seq_dict = count_overlapping_nucleotides_overall(v, seq, mode)
         n = len(v.index)
         # only plot results if at least one data point
-        if n <= 1:
+        if n == 0:
             continue
         
         # get expected values
-        seq = v.iloc[0]["WholeSequence"]
-        q = 0.20
+        q = 0.10
         s = (int(v.Start.quantile(q)), int(v.Start.quantile(1-q)))
         e = (int(v.End.quantile(q)), int(v.End.quantile(1-q)))
         m = 5
 
         sampling_data = generate_sampling_data(seq, s, e, n*m)
-        exp, _ = count_overlapping_nucleotides_overall(sampling_data, mode)
+        exp, _ = count_overlapping_nucleotides_overall(sampling_data, seq, mode)
         x = list(nuc_overlap_dict.keys())
         h = np.array(list(nuc_overlap_dict.values()))
         h_exp = np.array(list(exp.values()))
