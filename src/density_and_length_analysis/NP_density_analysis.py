@@ -8,7 +8,6 @@ compares their position to NP density data.
 2. Correlates occurrence of the position of the start and end points to the NP
    density.
 '''
-
 import os
 import sys
 
@@ -19,10 +18,8 @@ import matplotlib.pyplot as plt
 from scipy import stats
 
 sys.path.insert(0, "..")
-sys.path.insert(0, "../density_and_length_analysis")
 from utils import DATAPATH, RESULTSPATH, SEGMENTS
-from utils import load_alnaji_excel, load_short_reads, get_sequence, get_seq_len, get_stat_symbol
-from composition_junction_site import generate_sampling_data
+from utils import load_alnaji_excel, load_short_reads, get_sequence, get_seq_len, get_stat_symbol, generate_sampling_data
 
 
 def load_density_data(path: str)-> dict:

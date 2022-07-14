@@ -14,10 +14,8 @@ import matplotlib.pyplot as plt
 from scipy import stats
 
 sys.path.insert(0, "..")
-sys.path.insert(0, "../density_and_length_analysis")
 from utils import DATAPATH, RESULTSPATH, SEGMENTS
-from utils import get_seq_len, load_alnaji_excel, load_short_reads, get_stat_symbol
-from composition_junction_site import generate_sampling_data
+from utils import get_seq_len, load_alnaji_excel, load_short_reads, get_stat_symbol, generate_sampling_data
 
 
 def extract_data_from_file(f: str)-> (int, float, str):

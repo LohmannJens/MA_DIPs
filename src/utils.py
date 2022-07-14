@@ -165,3 +165,22 @@ def load_pelz_dataset()-> object:
 
     return data_dict
 
+def generate_sampling_data(seq: str, s: (int, int), e: (int, int),  n: int) -> object:
+    '''
+        generates sampling data by creating random start and end points for
+        artificial junction sites. Generated data is used to calculate the
+        expected values. Sample set is 3 times the size of the observation set.
+        :param seq: sequence of the segment
+        :param s: tuple with start and end point of the range for the artifical
+                  start point of the junction
+        :param e: tuple with start and end point of the range for the artifical
+                  end point of the junction
+        :param n: size of the observation data set
+        :return: dataframe with the artifical data set
+    '''
+    sampling = dict({"Start": [], "End": []})
+    for _ in range(n):
+        sampling["Start"].append(random.randint(s[0], s[1]))
+        sampling["End"].append(random.randint(e[0], e[1]))
+    return pd.DataFrame(data=sampling)
+
