@@ -8,16 +8,11 @@ insights about the data distribution.
 2. Plots length of Start and End part of DI RNA as a scatter plot. Shows if
    they are equally distributed.
 '''
-
 import os
 import sys
 import json
 
-import numpy as np
-import pandas as pd
 import matplotlib.pyplot as plt
-
-from scipy import stats
 
 sys.path.insert(0, "..")
 from utils import DATAPATH, RESULTSPATH, SEGMENTS

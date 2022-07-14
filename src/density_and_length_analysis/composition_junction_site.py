@@ -12,13 +12,11 @@ the junction end site. Counts the number of nucleotides, that are the same.
 '''
 import os
 import sys
-import random
 
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
 
-from Bio.Seq import Seq
 from scipy import stats
 
 sys.path.insert(0, "..")

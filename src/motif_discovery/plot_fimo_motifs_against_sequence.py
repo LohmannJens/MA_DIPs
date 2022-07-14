@@ -11,9 +11,7 @@ import pandas as pd
 import matplotlib.pyplot as plt
 import matplotlib.patches as patches
 
-from Bio import SeqIO
 from matplotlib import cm
-from Bio.SeqRecord import SeqRecord
 
 sys.path.insert(0, "..")
 sys.path.insert(0, "../density_and_length_analysis")

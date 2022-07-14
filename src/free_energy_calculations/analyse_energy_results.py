@@ -3,9 +3,7 @@
     It loads the .fold files and analyses the delta G in different ways.
 """
 import os
-import re
 import sys
-import shutil
 
 import numpy as np
 import pandas as pd
@@ -14,7 +12,7 @@ import matplotlib.pyplot as plt
 from scipy import stats
 
 sys.path.insert(0, "..")
-from utils import DATAPATH, RESULTSPATH, SEGMENTS, QUANT, N_ROUNDS
+from utils import DATAPATH, RESULTSPATH, SEGMENTS, QUANT, S_ROUNDS
 from utils import get_seq_len, load_alnaji_excel, load_short_reads, get_stat_symbol, generate_sampling_data
 
 
