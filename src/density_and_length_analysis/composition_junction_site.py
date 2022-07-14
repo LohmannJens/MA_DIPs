@@ -22,12 +22,8 @@ from Bio.Seq import Seq
 from scipy import stats
 
 sys.path.insert(0, "..")
-from utils import RESULTSPATH, SEGMENTS
-from utils import load_alnaji_excel, load_short_reads, get_sequence, get_stat_symbol
-
-
-COLORS = dict({"A": "blue", "C": "orange", "G": "green", "U": "red"})
-NUCLEOTIDES = list(["A", "C", "G", "U"])
+from utils import RESULTSPATH, SEGMENTS, COLORS, NUCLEOTIDES, QUANT, S_ROUNDS
+from utils import load_alnaji_excel, load_short_reads, get_sequence, get_stat_symbol, generate_sampling_data
 
 
 def create_sequence(s: int, e: int, strain: str, seg: str)-> str:
@@ -69,27 +65,6 @@ def create_sequence_library(data_dict: dict)-> dict:
         data_dict[k]["DelSequence"] = del_sequence_list
 
     return data_dict
-
-
-def generate_sampling_data(seq: str, s: (int, int), e: (int, int),  n: int) -> object:
-    '''
-        generates sampling data by creating random start and end points for
-        artificial junction sites. Generated data is used to calculate the
-        expected values. Sample set is 3 times the size of the observation set.
-        :param seq: sequence of the segment
-        :param s: tuple with start and end point of the range for the artifical
-                  start point of the junction
-        :param e: tuple with start and end point of the range for the artifical
-                  end point of the junction
-        :param n: size of the observation data set
-
-        :return: dataframe with the artifical data set
-    '''
-    sampling = dict({"Start": [], "End": []})
-    for _ in range(n):
-        sampling["Start"].append(random.randint(s[0], s[1]))
-        sampling["End"].append(random.randint(e[0], e[1]))
-    return pd.DataFrame(data=sampling)
 
 
 def count_nucleotide_occurrence(seq: str, p: int)-> dict:
@@ -156,12 +131,11 @@ def nucleotide_occurrence_analysis(seq_dict: dict, seg: str)-> None:
             continue
 
         # get expected values
-        q = 0.10
-        s = (int(v.Start.quantile(q)), int(v.Start.quantile(1-q)))
-        e = (int(v.End.quantile(q)), int(v.End.quantile(1-q)))
-        m = 10
+        s = (int(v.Start.quantile(QUANT)), int(v.Start.quantile(1-QUANT)))
+        e = (int(v.End.quantile(QUANT)), int(v.End.quantile(1-QUANT)))
+        n_sampling = n * S_ROUNDS
 
-        sampling_data = generate_sampling_data(seq, s, e, n*m)
+        sampling_data = generate_sampling_data(seq, s, e, n_sampling)
         exp_s, exp_e = count_nucleotide_occurrence_overall(sampling_data, seq)
         
         fig, axs = plt.subplots(4, 2, figsize=(5, 10), tight_layout=True)
@@ -170,8 +144,8 @@ def nucleotide_occurrence_analysis(seq_dict: dict, seg: str)-> None:
         for idx, nuc in enumerate(count_start_dict.keys()):
             h_s = count_start_dict[nuc]/n
             h_e = count_end_dict[nuc]/n
-            y_exp_s = exp_s[nuc] / (n * m)
-            y_exp_e = exp_e[nuc] / (n * m)
+            y_exp_s = exp_s[nuc] / (n_sampling)
+            y_exp_e = exp_e[nuc] / (n_sampling)
 
             axs[idx, 0].bar(x, height=h_s, width=0.3, label=nuc, color=COLORS[nuc])
             axs[idx, 1].bar(x, height=h_e, width=0.3, label=nuc, color=COLORS[nuc])
@@ -337,12 +311,11 @@ def nucleotide_overlap_analysis(seq_dict: dict, seg: str, mode: int, ngs_thresh:
             continue
         
         # get expected values
-        q = 0.10
-        s = (int(v.Start.quantile(q)), int(v.Start.quantile(1-q)))
-        e = (int(v.End.quantile(q)), int(v.End.quantile(1-q)))
-        m = 5
+        s = (int(v.Start.quantile(QUANT)), int(v.Start.quantile(1-QUANT)))
+        e = (int(v.End.quantile(QUANT)), int(v.End.quantile(1-QUANT)))
+        n_sampling = n * S_ROUNDS
 
-        sampling_data = generate_sampling_data(seq, s, e, n*m)
+        sampling_data = generate_sampling_data(seq, s, e, n_sampling)
         exp, _ = count_overlapping_nucleotides_overall(sampling_data, seq, mode)
         x = list(nuc_overlap_dict.keys())
         h = np.array(list(nuc_overlap_dict.values()))
@@ -371,7 +344,7 @@ def nucleotide_overlap_analysis(seq_dict: dict, seg: str, mode: int, ngs_thresh:
         plot_df = count_nucleotide_freq_overlap_seq(overlap_seq_dict, k, seg)
         bottom = np.zeros(15)
         for n in NUCLEOTIDES:
-            axs[i, 1].bar(x=plot_df["label"], height=plot_df[n], bottom=bottom, label=n)
+            axs[i, 1].bar(x=plot_df["label"], height=plot_df[n], bottom=bottom, label=n, color=COLORS[n])
             bottom += plot_df[n]
 
         f_exp = plot_df.iloc[0][NUCLEOTIDES]

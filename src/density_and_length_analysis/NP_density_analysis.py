@@ -18,7 +18,7 @@ import matplotlib.pyplot as plt
 from scipy import stats
 
 sys.path.insert(0, "..")
-from utils import DATAPATH, RESULTSPATH, SEGMENTS
+from utils import DATAPATH, RESULTSPATH, SEGMENTS, QUANT, S_ROUNDS
 from utils import load_alnaji_excel, load_short_reads, get_sequence, get_seq_len, get_stat_symbol, generate_sampling_data
 
 
@@ -164,12 +164,11 @@ def compare_position_with_density(data: dict, density_data: dict, all_reads: dic
 
             # get expected values by sampling approach
             seq = get_sequence(k, s)
-            q = 0.10
             seg_reads = all_reads[k].loc[all_reads[k]["Segment"] == s]
-            start = (int(seg_reads.Start.quantile(q)), int(seg_reads.Start.quantile(1-q)))
-            end = (int(seg_reads.End.quantile(q)), int(seg_reads.End.quantile(1-q)))
-            m = 5
-            sampling_data = generate_sampling_data(seq, start, end, n*m)
+            start = (int(seg_reads.Start.quantile(QUANT)), int(seg_reads.Start.quantile(1-QUANT)))
+            end = (int(seg_reads.End.quantile(QUANT)), int(seg_reads.End.quantile(1-QUANT)))
+            n_sampling = n * S_ROUNDS
+            sampling_data = generate_sampling_data(seq, start, end, n_sampling)
             samp_pos = sampling_data["Start"].tolist() + sampling_data["End"].tolist()
 
             # grouping by NP high/low

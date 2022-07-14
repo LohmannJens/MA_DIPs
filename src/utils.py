@@ -1,4 +1,5 @@
 import os
+import random
 
 import numpy as np
 import pandas as pd
@@ -8,11 +9,17 @@ from Bio import SeqIO
 # needs to be changed when cloning the repo
 REPOPATH = "/home/jens/Masterarbeit/MA_DIPs"
 
+# paths to the data and results folder
 DATAPATH = os.path.join(REPOPATH, "data")
 RESULTSPATH = os.path.join(REPOPATH, "results")
 
-SEGMENTS = ["PB2", "PB1", "PA", "HA", "NP", "NA", "M", "NS"]
+SEGMENTS = list(["PB2", "PB1", "PA", "HA", "NP", "NA", "M", "NS"])
+COLORS = dict({"A": "blue", "C": "orange", "G": "green", "U": "red"})
+NUCLEOTIDES = list(["A", "C", "G", "U"])
 
+# parameters for the sampling
+QUANT = 0.1
+S_ROUNDS = 5
 
 def get_sequence(strain: str, seg: str, full: bool=False)-> object:
     '''

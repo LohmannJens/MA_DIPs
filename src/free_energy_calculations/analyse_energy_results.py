@@ -1,7 +1,7 @@
-'''
-This script analyses the results that were created by Vienna RNA package.
-It loads the .fold files and analyses the delta G in different ways.
-'''
+"""
+    This script analyses the results that were created by Vienna RNA package.
+    It loads the .fold files and analyses the delta G in different ways.
+"""
 import os
 import re
 import sys
@@ -14,7 +14,7 @@ import matplotlib.pyplot as plt
 from scipy import stats
 
 sys.path.insert(0, "..")
-from utils import DATAPATH, RESULTSPATH, SEGMENTS
+from utils import DATAPATH, RESULTSPATH, SEGMENTS, QUANT, N_ROUNDS
 from utils import get_seq_len, load_alnaji_excel, load_short_reads, get_stat_symbol, generate_sampling_data
 
 
@@ -303,14 +303,13 @@ def check_secondary_structures(all_reads_dict, df, path)-> None:
                 obs_bound = count_bound_bases(seg_df, sec_struct)
                 obs_bound_ratio = obs_bound/(n*2)
 
-                q = 0.20
-                s = (int(seg_df.Start.quantile(q)), int(seg_df.Start.quantile(1-q)))
-                e = (int(seg_df.End.quantile(q)), int(seg_df.End.quantile(1-q)))
-                m = 20
+                s = (int(seg_df.Start.quantile(QUANT)), int(seg_df.Start.quantile(1-QUANT)))
+                e = (int(seg_df.End.quantile(QUANT)), int(seg_df.End.quantile(1-QUANT)))
+                n_sampling = n * S_ROUNDS
 
-                sampling_df = generate_sampling_data(sec_struct, s, e, n*m)
+                sampling_df = generate_sampling_data(sec_struct, s, e, n_sampling)
                 exp_bound = count_bound_bases(sampling_df, sec_struct)
-                exp_bound_ratio = exp_bound / (n * m * 2)
+                exp_bound_ratio = exp_bound / (n_sampling*2)
 
                 # n * 2 because Start and End is counted together
                 result = stats.binomtest(obs_bound, n*2, exp_bound_ratio)
