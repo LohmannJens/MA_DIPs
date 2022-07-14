@@ -19,8 +19,10 @@ import matplotlib.pyplot as plt
 from scipy import stats
 
 sys.path.insert(0, "..")
+sys.path.insert(0, "../density_and_length_analysis")
 from utils import DATAPATH, RESULTSPATH, SEGMENTS
 from utils import load_alnaji_excel, load_short_reads, get_sequence, get_seq_len, get_stat_symbol
+from composition_junction_site import generate_sampling_data
 
 
 def load_density_data(path: str)-> dict:
@@ -50,7 +52,7 @@ def load_my_density_data(path: str)-> dict:
                        "NP":"CY121683.1", "NS": "CY121684.1"})
 
     density_dict = dict()
-    filepath = os.path.join(path, "peaks.tsv")
+    filepath = os.path.join(path, "peaks_Sage2019.tsv")
     df = pd.read_csv(filepath, sep="\t", names=["Segment", "Start", "End", "Peak", "Height", "Sign"])
     for s in SEGMENTS:
         s_df = df.loc[df["Segment"] == seg_mapper[s]]
@@ -147,20 +149,16 @@ def compare_position_with_density(data: dict, density_data: dict, all_reads: dic
 
         :return: None
     '''
-    def get_density_at_position(p, v):
-        i = 0
-        while v["x"][i] < p and len(v["x"])-1 != i:
-            i += 1
-        if i == 0:
-            return v["y"][i]
-        elif i == len(v["y"]):
-            return v["y"].iloc[-1]
-        return (v["y"].iloc[i] + v["y"].iloc[i-1]) / 2
+    def get_dens_at_pos(p, v):
+        for _, (x, y) in v.iterrows():
+            if x == p:
+                return y
+            elif x > p:
+                return y
+        return 0
 
     for k, v in data.items():
         fig, ax = plt.subplots(1, 1, figsize=(10, 5), tight_layout=True)
-        if k != "Cal07":
-            continue
 
         for i, s in enumerate(SEGMENTS):
             count_dict = v[s]
@@ -168,23 +166,29 @@ def compare_position_with_density(data: dict, density_data: dict, all_reads: dic
             if len(count_dict) == 0:
                 continue
 
-            y = list()
-            for p in count_dict.keys():
-                y.append(get_density_at_position(p, density_data[s]))
-
-            # take every possible nucleotide to calculate expected ratio
+            # get expected values by sampling approach
             seq = get_sequence(k, s)
-            y_exp = [get_density_at_position(p, density_data[s]) for p in np.arange(0, len(seq)+1)]
-            
-            threshold = 5
-            below = sum(map(lambda x : x < threshold, y))
+            q = 0.10
+            seg_reads = all_reads[k].loc[all_reads[k]["Segment"] == s]
+            start = (int(seg_reads.Start.quantile(q)), int(seg_reads.Start.quantile(1-q)))
+            end = (int(seg_reads.End.quantile(q)), int(seg_reads.End.quantile(1-q)))
+            m = 5
+            sampling_data = generate_sampling_data(seq, start, end, n*m)
+            samp_pos = sampling_data["Start"].tolist() + sampling_data["End"].tolist()
+
+            # grouping by NP high/low
+            y = [get_dens_at_pos(p, density_data[s]) for p in count_dict.keys()]
+            y_exp = [get_dens_at_pos(p, density_data[s]) for p in samp_pos]
+            below = y.count(0)
+            below_exp = y_exp.count(0)
             obs_ratio = below/len(y)
-            below_exp = sum(map(lambda x : x < threshold, y_exp))
             exp_ratio = below_exp/len(y_exp)
 
+            # statistical testing
             result = stats.binomtest(below, n, exp_ratio)
             symbol = get_stat_symbol(result.pvalue)
 
+            # plotting of the results
             ax.bar([f"{s} obs", f"{s} exp"], [obs_ratio, exp_ratio])
             ax.annotate(f"(n={n}) {symbol}", (i*2+0.5,
                         max(obs_ratio, exp_ratio)),
@@ -205,18 +209,22 @@ if __name__ == "__main__":
     density_path = os.path.join(DATAPATH, "Lee2017", "csv_NPdensity")
     cleaned_data_dict = load_alnaji_excel()
     all_reads_dict = load_short_reads(cleaned_data_dict)
-    
-    # Plotting NP density against junction sites
+    del all_reads_dict["NC"]
+    del all_reads_dict["Perth"]
+    del all_reads_dict["B_LEE"]
+
+    # Plotting NP data (from Sage 2019) against junction sites
     #    Cal07 data from Alnaji 2019
     Cal07_dens_path = os.path.join(density_path, "Cal07")
-    Cal07_density_data = load_my_density_data(Cal07_dens_path)
-    NGS_count_dict = map_positions_to_density(all_reads_dict, Cal07_density_data)
-    compare_position_with_density(NGS_count_dict, Cal07_density_data, all_reads_dict)
-     
+    Cal07_dens_data = load_my_density_data(Cal07_dens_path)
+    NGS_count_dict = map_positions_to_density(all_reads_dict, Cal07_dens_data)
+    compare_position_with_density(NGS_count_dict, Cal07_dens_data, all_reads_dict)
+        
     #    WSN data from Mendes 2021
     WSN_count_file = os.path.join(DATAPATH, "Boussier2020", "Supplemental_Table_S2.xlsx")
     WSN_reads_dict = load_WSN_data(WSN_count_file)
     WSN_dens_path = os.path.join(density_path, "WSN")
-    WSN_dens_data = load_density_data(WSN_dens_path)
-    _ = map_positions_to_density(WSN_reads_dict, WSN_dens_data)
+    WSN_dens_data = load_my_density_data(WSN_dens_path)
+    WSN_NGS_count_dict = map_positions_to_density(WSN_reads_dict, WSN_dens_data)
+    compare_position_with_density(WSN_NGS_count_dict, WSN_dens_data, WSN_reads_dict)
     
