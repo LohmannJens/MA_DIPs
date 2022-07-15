@@ -1,10 +1,10 @@
 '''
-Does a linear and exponential regression for data from Schwartz 2016 and 
-Alnaji 2019. Data is normalized by sum of y values for all data sets.
-Expected value is calculated by dividing length of each segment with sum of
-the length of all segements.
+    Does a linear and exponential regression for data from Schwartz 2016 and 
+    Alnaji 2019. Data is normalized by sum of y values for all data sets.
+    Expected value is calculated by dividing length of each segment with sum of
+    the length of all segements.
 
-Also creates a model for all three IV A strains together.
+    Also creates a model for all three IV A strains together.
 '''
 import os
 import sys

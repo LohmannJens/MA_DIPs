@@ -1,7 +1,7 @@
-"""
+'''
     Repeats the analyses on the dataset by Pelz et al. 2021. This is done to
     check if the findings are generalizeable.
-"""
+'''
 import os
 import sys
 

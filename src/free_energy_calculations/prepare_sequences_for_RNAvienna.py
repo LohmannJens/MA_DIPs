@@ -1,7 +1,7 @@
-"""
-    This script creates FASTA files that will be used for motif discovery by
-    MEME suite
-"""
+'''
+    This script creates FASTA files that will be used for free energy
+    estimations by RNAvienna.
+'''
 import os
 import sys
 import shutil

@@ -1,12 +1,14 @@
 '''
-Loads the Start and End points of the deletion sides from Alnaji 2019 and gives
-insights about the data distribution.
+    Loads the Start and End points of the deletion sides from Alnaji 2019 and
+    gives insights about the data distribution.
 
-1. Creates a histogram for each line in each strain containing the length of
-   the deletion sides multiplied by their occurence.
-
-2. Plots length of Start and End part of DI RNA as a scatter plot. Shows if
-   they are equally distributed.
+    1.
+    Creates a histogram for each line in each strain containing the length of
+    the deletion sides multiplied by their occurence.
+    
+    2.
+    Plots length of Start and End part of DI RNA as a scatter plot. Shows if
+    they are equally distributed.
 '''
 import os
 import sys

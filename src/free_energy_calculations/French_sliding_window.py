@@ -1,8 +1,10 @@
-# Influenza virus RNA polymerase simulation script that searches for t-loops
-# and checks up/down stream for intermol bp.
-# run_tloop_analysis() inspired by AJ te Velthuis, Sept 2020 from French et al. 2021
-# used their main function and adapted it to automize it for alnajis dataset
-
+'''
+    Influenza virus RNA polymerase simulation script that searches for t-loops
+    and checks up/down stream for intermol bp.
+    run_tloop_analysis() inspired by AJ te Velthuis, Sept 2020 from French
+    et al. 2021
+    used their main function and adapted it to automize it for alnajis dataset
+'''
 import os
 import sys
 import RNA

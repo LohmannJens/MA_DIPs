@@ -1,7 +1,7 @@
-"""
+'''
     This script analyses the results that were created by Vienna RNA package.
     It loads the .fold files and analyses the delta G in different ways.
-"""
+'''
 import os
 import sys
 

@@ -1,12 +1,14 @@
 '''
-Loads the Start and End points of the deletion sides from Alnaji 2019 and
-compares their position to NP density data.
+    Loads the Start and End points of the deletion sides from Alnaji 2019 and
+    compares their position to NP density data.
 
-1. Creates a plot where the start and end point of the deletion sides are
-   plotted onto the sequence together with the NP density data.
+    1.
+    Creates a plot where the start and end point of the deletion sides are
+    plotted onto the sequence together with the NP density data.
 
-2. Correlates occurrence of the position of the start and end points to the NP
-   density.
+    2.
+    Correlates occurrence of the position of the start and end points to the NP
+    density.
 '''
 import os
 import sys

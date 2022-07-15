@@ -1,6 +1,6 @@
 '''
-This script creates FASTA files that will be used for motif discovery by MEME
-suite
+    This script creates FASTA files that will be used for motif discovery by
+    MEME suite.
 '''
 import os
 import sys

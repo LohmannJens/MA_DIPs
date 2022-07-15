@@ -1,14 +1,14 @@
 '''
-Loads the data for the deletion sides (start/end point) from Alnaji 2019.
-Does different analysis with the data.
+    Loads the data for the deletion sides (start/end point) from Alnaji 2019.
+    Does different analysis with the data.
 
-1.
-Takes a look at the nucleotide distribution around these points.
-Goal is to see if any of the four nucleotides occure more/less often.
+    1.
+    Takes a look at the nucleotide distribution around these points.
+    Goal is to see if any of the four nucleotides occure more/less often.
 
-2.
-Compares the nucleotides before the junction start with the ones before
-the junction end site. Counts the number of nucleotides, that are the same.
+    2.
+    Compares the nucleotides before the junction start with the ones before
+    the junction end site. Counts the number of nucleotides, that are the same.
 '''
 import os
 import sys
@@ -24,21 +24,6 @@ from utils import RESULTSPATH, SEGMENTS, COLORS, NUCLEOTIDES, QUANT, S_ROUNDS
 from utils import load_alnaji_excel, load_short_reads, get_sequence, get_stat_symbol, generate_sampling_data
 
 
-def create_sequence(s: int, e: int, strain: str, seg: str)-> str:
-    '''
-        Loads a DNA sequence and removes a part of it. The deletion is given by
-        a start and an end. Those positions are part of the remaining sequence.
-        :param s: start of the deletion (included in the remaining sequence)
-        :param e: end of the deletion (included in the remaining sequence)
-        :param strain: name of the virus strain
-        :param seg: segment where the sequence is coming from
-
-        :return: RNA sequence with or without deletion side
-    '''
-    full_rna_seq = get_sequence(strain, seg)
-    return full_rna_seq[:s] + full_rna_seq[e-1:]
-
-
 def create_sequence_library(data_dict: dict)-> dict:
     '''
         gets the raw loaded sequence data, which is a dict over all strains.
@@ -51,16 +36,13 @@ def create_sequence_library(data_dict: dict)-> dict:
         :return: dictionary with key for each strain. Value is a pandas df.
     '''
     for k, v in data_dict.items():
-        del_sequence_list = list()
-        # loop over rows of value dataframe
+        del_seq_list = list()
         for i, row in v.iterrows():
-            start = row["Start"]
-            end = row["End"]
-            segment = row["Segment"]
-            del_sequence = create_sequence(start, end, k, segment)
-            del_sequence_list.append(del_sequence)
+            full_seq = get_sequence(k, row["Segment"])
+            del_seq = full_seq[:row["Start"] + full_seq[row["End"]-1:]
+            del_seq_list.append(del_seq)
 
-        data_dict[k]["DelSequence"] = del_sequence_list
+        data_dict[k]["DelSequence"] = del_seq_list
 
     return data_dict
 

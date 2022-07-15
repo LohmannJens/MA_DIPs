@@ -1,3 +1,8 @@
+'''
+    General functions and global parameters, that are used in different scripts
+    Functions include: loading of sequences, loading of datasets, ...
+    Parameters include: paths to results and data, Segments names, ...
+'''
 import os
 import random
 
