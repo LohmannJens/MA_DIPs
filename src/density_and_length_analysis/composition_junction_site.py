@@ -353,7 +353,7 @@ def nucleotide_overlap_analysis(seq_dict: dict, seg: str, mode: int, ngs_thresh:
             else:
                 f_obs = plot_df.iloc[int(pos)][NUCLEOTIDES]
                 if f_obs.sum() != 0:
-                    res = stats.chisquare(f_exp, f_obs)
+                    res = stats.chisquare(f_obs, f_exp)
                     symbol = get_stat_symbol(res.pvalue)
             text = f"n={str(int(plot_df['Sum'].iloc[int(pos)]))}\n{symbol}"
             axs[i, 1].annotate(text, (pos, 0.0), fontsize="xx-small", ha="center")
