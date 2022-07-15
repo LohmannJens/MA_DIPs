@@ -21,30 +21,7 @@ from scipy import stats
 
 sys.path.insert(0, "..")
 from utils import RESULTSPATH, SEGMENTS, COLORS, NUCLEOTIDES, QUANT, S_ROUNDS
-from utils import load_alnaji_excel, load_short_reads, get_sequence, get_stat_symbol, generate_sampling_data
-
-
-def create_sequence_library(data_dict: dict)-> dict:
-    '''
-        gets the raw loaded sequence data, which is a dict over all strains.
-        In each dict the value is a data frame with the rows and columns from
-        the loaded excel file.
-        Creates the deletion sequence and saves it with other features as 
-        sequence length, ... in a pandas data frame.
-        :param data_dict: dictionary of the loaded excel
-
-        :return: dictionary with key for each strain. Value is a pandas df.
-    '''
-    for k, v in data_dict.items():
-        del_seq_list = list()
-        for i, row in v.iterrows():
-            full_seq = get_sequence(k, row["Segment"])
-            del_seq = full_seq[:row["Start"] + full_seq[row["End"]-1:]
-            del_seq_list.append(del_seq)
-
-        data_dict[k]["DelSequence"] = del_seq_list
-
-    return data_dict
+from utils import load_alnaji_excel, load_short_reads, get_sequence, get_stat_symbol, generate_sampling_data, create_sequence_library
 
 
 def count_nucleotide_occurrence(seq: str, p: int)-> dict:

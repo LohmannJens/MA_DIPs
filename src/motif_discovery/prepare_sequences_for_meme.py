@@ -12,8 +12,7 @@ from Bio.SeqRecord import SeqRecord
 sys.path.insert(0, "..")
 sys.path.insert(0, "../density_and_length_analysis")
 from utils import DATAPATH, SEGMENTS
-from utils import load_alnaji_excel, load_short_reads, get_sequence
-from composition_junction_site import create_sequence_library
+from utils import load_alnaji_excel, load_short_reads, get_sequence, create_sequence_library
 
 
 def delete_folder(folder: str)-> bool:

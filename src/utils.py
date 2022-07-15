@@ -196,3 +196,24 @@ def generate_sampling_data(seq: str, s: (int, int), e: (int, int),  n: int) -> o
         sampling["End"].append(random.randint(e[0], e[1]))
     return pd.DataFrame(data=sampling)
 
+def create_sequence_library(data_dict: dict)-> dict:
+    '''
+        gets the raw loaded sequence data, which is a dict over all strains.
+        In each dict the value is a data frame with the rows and columns from
+        the loaded excel file.
+        Creates the deletion sequence and saves it with other features as 
+        sequence length, ... in a pandas data frame.
+        :param data_dict: dictionary of the loaded excel
+        :return: dictionary with key for each strain. Value is a pandas df.
+    '''
+    for k, v in data_dict.items():
+        del_seq_list = list()
+        for i, row in v.iterrows():
+            full_seq = get_sequence(k, row["Segment"])
+            del_seq = full_seq[:row["Start"]] + full_seq[row["End"]-1:]
+            del_seq_list.append(del_seq)
+
+        data_dict[k]["DelSequence"] = del_seq_list
+
+    return data_dict
+

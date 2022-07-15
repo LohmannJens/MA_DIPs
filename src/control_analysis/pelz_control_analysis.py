@@ -15,8 +15,8 @@ sys.path.insert(0, "..")
 sys.path.insert(0, "../density_and_length_analysis")
 sys.path.insert(0, "../regression_length_vs_occurrence")
 from utils import DATAPATH, RESULTSPATH, SEGMENTS, QUANT, N_SAMPLING
-from utils import load_pelz_dataset, get_stat_symbol, get_sequence, generate_sampling_data
-from composition_junction_site import create_sequence_library, nucleotide_occurrence_analysis, count_overlapping_nucleotides_overall
+from utils import load_pelz_dataset, get_stat_symbol, get_sequence, generate_sampling_data, create_sequence_library
+from composition_junction_site import nucleotide_occurrence_analysis, count_overlapping_nucleotides_overall
 from regression_length_occurrence import format_dataset_for_plotting, fit_models_and_plot_data
 
 
