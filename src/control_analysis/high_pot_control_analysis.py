@@ -1,7 +1,7 @@
-"""
+'''
     Checks my overall findings by comparing to high potential DI RNA. They are
     taken from Pelz et al. 2021 and the DI244 DI RNA is used.
-"""
+'''
 import os
 import sys
 
@@ -46,6 +46,17 @@ def load_top_DI_RNA_pelz()-> object:
     return data
 
 
+def get_sequence_around_site(segments: list, points: list)-> list:
+    '''
+
+    '''
+    sequences = list()
+    for s, p in zip(segments, points):
+        seq = get_sequence("PR", s)
+        sequences.append(seq[p-5:p+4])
+    return sequences
+
+
 def analyse_top_DI_RNA(df: object)-> None:
     '''
         Gets a data frame of DI RNA and calculates the lengths of the resulting
@@ -60,13 +71,20 @@ def analyse_top_DI_RNA(df: object)-> None:
         length = df["Start"] + (get_seq_len("PR", s) - df["End"] + 1)
         df.loc[df["Segment"] == s, "Length"] = length
     df["Length"] = df["Length"].astype(int)
+    
+    # nucleotide occurrence at junction start and end site
+    segments = df["Segment"].tolist()
+    starts = df["Start"].tolist()
+    ends = df["End"].tolist()
+    df["Sequence_At_Start"] = get_sequence_around_site(segments, starts)
+    df["Sequence_At_End"] = get_sequence_around_site(segments, ends)
 
     # calculate the overlap and the resulting overlap sequence
     overlap_m1 = list()
     sequence_m1 = list()
     overlap_m2 = list()
     sequence_m2 = list()
-    for _, (_, seg, s, e, _, _) in df.iterrows():
+    for _, (_, seg, s, e, _, _, _, _) in df.iterrows():
         seq = get_sequence("PR", seg)
         c, overlap_seq = calculate_overlapping_nucleotides(seq, s, e, w_len=10, m=1)
         overlap_m1.append(c)
