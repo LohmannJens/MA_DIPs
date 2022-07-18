@@ -43,23 +43,27 @@ def plot_deletion_lengths(data: dict)-> None:
 
         # create a subplot for each key, value pair in count_dict
         fig, axs = plt.subplots(8, 1, figsize=(10, 20), tight_layout=True)
-        fig.suptitle(f"absolute occurrences of deletions for {key}", x=0.3)
         for i, s in enumerate(SEGMENTS):
             axs[i].hist(count_dict[s].keys(), weights=count_dict[s].values(), bins=100)
             axs[i].set_title(f"{s}")
             axs[i].set_xlim(left=0)
             axs[i].set_xlabel("deletion length")
+            axs[i].set_ylabel("NGS count")
 
-        save_path = os.path.join(RESULTSPATH, "deletion_length_and_position", f"{key}_length_del_hist.pdf")
+        fig.suptitle(f"absolute occurrences of start and end of deletions for {key}", x=0.3)
+
+        save_path = os.path.join(RESULTSPATH, "deletion_length_and_position", f"{key}_length_del_hist.png")
         plt.savefig(save_path)
         plt.close()
 
 
-def start_vs_end_lengths(data: dict)-> None:
+def start_vs_end_lengths(data: dict, limit: int=0)-> None:
     '''
         Plots the length of the start against the length of the end of the DI
         RNA sequences as a scatter plot.
         :param data: dictionary with a data frame (value)  for each strain (key)
+        :param limit: indicates the length that is displayed in the plot
+                      if equals 0 full lengths are displayed
 
         :return: None
     '''
@@ -78,7 +82,13 @@ def start_vs_end_lengths(data: dict)-> None:
                 axs[i%4,j].scatter(start, end, s=1.0)
                 axs[i%4,j].plot([0, 1], [0, 1], transform=axs[i%4,j].transAxes, c="r", linewidth=0.5, linestyle="--")
 
-                max_p = max(start.max(), end.max())
+                if limit == 0:
+                    max_p = max(start.max(), end.max())
+                else:
+                    max_p = limit
+                    axs[i%4,j].set_xlim(0, max_p)
+                    axs[i%4,j].set_ylim(0, max_p)
+
                 axs[i%4,j].set_xlim(left=0, right=max_p)
                 axs[i%4,j].set_xticks([0,max_p])
                 axs[i%4,j].set_yticks([0,max_p])
@@ -97,9 +107,13 @@ def start_vs_end_lengths(data: dict)-> None:
             if i == 3:
                 j = 1
 
-        fig.suptitle(f"relation of length of start and end site {k}", x=0.3)
+        fig.suptitle(f"Lengths of start and end site {k}", x=0.3)
+        if limit == 0:
+            filename = f"{k}_length_start_end.png"
+        else:
+            filename = f"{k}_length_start_end_{limit}.png"
 
-        save_path = os.path.join(RESULTSPATH, "deletion_length_and_position", f"{k}_length_start_end.pdf")
+        save_path = os.path.join(RESULTSPATH, "deletion_length_and_position", filename)
         plt.savefig(save_path)
         plt.close()
 
@@ -108,5 +122,6 @@ if __name__ == "__main__":
     cleaned_data_dict = load_alnaji_excel()
     all_reads_dict = load_short_reads(cleaned_data_dict)
     plot_deletion_lengths(all_reads_dict)
-    start_vs_end_lengths(all_reads_dict)   
+    start_vs_end_lengths(all_reads_dict)
+    start_vs_end_lengths(all_reads_dict, 700)
 
