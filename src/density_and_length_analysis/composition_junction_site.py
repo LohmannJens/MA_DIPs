@@ -347,6 +347,6 @@ if __name__ == "__main__":
         nucleotide_overlap_analysis(sequence_list_dict, s, mode=1)
         nucleotide_overlap_analysis(sequence_list_dict, s, mode=2)
 
-        nucleotide_overlap_analysis(sequence_list_dict, s, mode=1, ngs_thresh=1000)
-        nucleotide_overlap_analysis(sequence_list_dict, s, mode=2, ngs_thresh=1000)
+#        nucleotide_overlap_analysis(sequence_list_dict, s, mode=1, ngs_thresh=1000)
+ #       nucleotide_overlap_analysis(sequence_list_dict, s, mode=2, ngs_thresh=1000)
 
