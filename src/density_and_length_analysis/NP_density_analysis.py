@@ -99,12 +99,12 @@ def map_positions_to_density(data: dict, density_data: dict)-> dict:
         :return: counts positions found in NGS data
     '''
     NGS_dict = dict()
-    for key, value in data.items():
+    for k, v in data.items():
         # create a dict for each segment using Start and End
         count_dict = dict()
         for s in SEGMENTS:
             count_dict[s] = dict()
-        for i, r in value.iterrows():
+        for i, r in v.iterrows():
             if r["Start"] in count_dict[r["Segment"]]:
                 count_dict[r["Segment"]][r["Start"]] += r["NGS_read_count"]
             else:
@@ -113,7 +113,7 @@ def map_positions_to_density(data: dict, density_data: dict)-> dict:
                 count_dict[r["Segment"]][r["End"]] += r["NGS_read_count"]
             else:
                 count_dict[r["Segment"]][r["End"]] = r["NGS_read_count"]
-
+        
         # create a subplot for each key, value pair in count_dict
         fig, axs = plt.subplots(8, 1, figsize=(7, 14), tight_layout=True)
         for i, s in enumerate(SEGMENTS):
@@ -126,14 +126,14 @@ def map_positions_to_density(data: dict, density_data: dict)-> dict:
             axs[i].set_ylabel("high/low NP area")
  #           axs[i].axhline(y=5.0, color="red", linestyle="--")
 
-        fig.suptitle(f"deletion position against NP areas for {key}", x=0.3)
+        fig.suptitle(f"deletion position against NP areas for {k}", x=0.3)
         fig.legend([l1, l2], ["count", "NP density"])
 
-        save_path = os.path.join(RESULTSPATH, "NP_density", f"{key}_del_position_NP_density.pdf")
+        save_path = os.path.join(RESULTSPATH, "NP_density", f"{k}_del_position_NP_density.pdf")
         plt.savefig(save_path)
         plt.close()
 
-        NGS_dict[key] = count_dict
+        NGS_dict[k] = count_dict
 
     return NGS_dict
 
