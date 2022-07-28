@@ -19,7 +19,7 @@ DATAPATH = os.path.join(REPOPATH, "data")
 RESULTSPATH = os.path.join(REPOPATH, "results")
 
 SEGMENTS = list(["PB2", "PB1", "PA", "HA", "NP", "NA", "M", "NS"])
-COLORS = dict({"A": "blue", "C": "orange", "G": "green", "U": "red"})
+COLORS = dict({"A": "deepskyblue", "C": "gold", "G": "springgreen", "U": "salmon"})
 NUCLEOTIDES = list(["A", "C", "G", "U"])
 
 # parameters for the sampling
