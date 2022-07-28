@@ -209,7 +209,7 @@ def count_overlapping_nucleotides_overall(df: object, seq: str ,mode: int)-> (di
     return nuc_overlap_dict, overlap_seq_dict
 
 
-def count_nucleotide_freq_overlap_seq(seq_dict: dict, strain: str, seg: str)-> object:
+def count_nuc_freq_overlap(seq_dict: dict, strain: str, seg: str)-> object:
     '''
         Counts the number of nucleotides of the overlapping sequences and
         normalizes them. Also gets the expected values, which is the occurrence
@@ -222,40 +222,33 @@ def count_nucleotide_freq_overlap_seq(seq_dict: dict, strain: str, seg: str)-> o
     '''
     w_len = 15
     # count nucleotide occurrence split up by overlapping sequence length
-    count_dict = dict({n: np.zeros(w_len) for n in NUCLEOTIDES})
+    count_dict = dict({n: 0 for n in NUCLEOTIDES})
     for k, v in seq_dict.items():
         seq = k
-        seq_len = len(seq)
         for n in NUCLEOTIDES:
-            count_dict[n][seq_len] += seq.count(n) * v
-    df = pd.DataFrame(count_dict)
+            count_dict[n] += seq.count(n) * v
+    df = pd.DataFrame(count_dict, index=[0])
 
     # create expected data by counting over the whole sequence
     full_seq = get_sequence(strain, seg)
     labels = dict()
     for n in NUCLEOTIDES:
         labels[n] = full_seq.count(n)
-    exp_df = pd.DataFrame(labels, index=["exp"])
+    exp_df = pd.DataFrame(labels, index=[0])
 
-    # Adding expected data at index 0
-    df.iloc[0] = exp_df.iloc[0]
-    # Adding sum over all overlapping sequence lengths at index 14
-    df.iloc[14] = df.iloc[1:].sum(axis=0)
+    df = pd.concat([df, exp_df])
     # Add sum column and normalize data
     sum_df = df.sum(axis=1).astype(int)
     n_df = df.div(df.sum(axis=1), axis=0)
     n_df["Sum"] = sum_df
-    n_df = n_df.fillna(0)
-    n_df["label"] = n_df.index
-    n_df["label"] = n_df["label"].replace({0: "exp", 14: "overall"}).astype(str)
+    n_df["label"] = [f"obs", f"exp"]
     return n_df
 
 
 def nucleotide_overlap_analysis(seq_dict: dict, seg: str, mode: int, ngs_thresh: int=0)-> None:
     '''
         gets the sequences for all four strains and calculates the overlap of 
-        the nucleotides at the junction site. Also generates the overlapping
-        sequences and plots them.
+        the nucleotides at the junction site.
         :param seq_dict: dictionary with the sequences
         :param seg: name of the segment that is analyzed
         :param mode: states which calculation mode is used in 
@@ -263,12 +256,13 @@ def nucleotide_overlap_analysis(seq_dict: dict, seg: str, mode: int, ngs_thresh:
         :param ngs_thresh: gives the threshold on which data to include
         :return: None
     '''
-    fig, axs = plt.subplots(4, 2, figsize=(10, 10), tight_layout=True,
-                            gridspec_kw={"width_ratios": [1, 3]})
+    overlap_seq_per_strain = dict()
+    fig, axs = plt.subplots(4, 1, figsize=(5, 10), tight_layout=True)
     for i, (k, v) in enumerate(seq_dict.items()):
         v = v.loc[(v["Segment"] == seg) & (v["NGS_read_count"] > ngs_thresh)]
         seq = get_sequence(k, seg)
         nuc_overlap_dict, overlap_seq_dict = count_overlapping_nucleotides_overall(v, seq, mode)
+        overlap_seq_per_strain[k] = overlap_seq_dict
         n = len(v.index)
         # only plot results if at least one data point
         if n == 0:
@@ -297,46 +291,72 @@ def nucleotide_overlap_analysis(seq_dict: dict, seg: str, mode: int, ngs_thresh:
         symbol = get_stat_symbol(res.pvalue)
 
         # plot results as barplot
-        axs[i, 0].bar(x=x, height=h/h.sum(), width=-0.4, align="edge", label="observed")
-        axs[i, 0].bar(x=x, height=h_exp/h_exp.sum(), width=0.4, align="edge", label="expected")
-        axs[i, 0].set_xlabel("number of overlapping nucleotides")
-        axs[i, 0].set_ylabel("relative occurrence")
-        axs[i, 0].set_title(f"{k} (n={n}) {symbol}")
-        axs[i, 0].legend(loc="upper right")
-        axs[i, 0].set_ylim(bottom=0.0, top=1.0)
-
-        # count the occurrence of the four nucleotides in the overlapping sequences
-        norm_df = count_nucleotide_freq_overlap_seq(overlap_seq_dict, k, seg)
-
-        # plot the results as stacked barplot
-        bottom = np.zeros(15)
-        for n in NUCLEOTIDES:
-            axs[i, 1].bar(x=norm_df["label"], height=norm_df[n], bottom=bottom, label=n, color=COLORS[n])
-            bottom += norm_df[n]
-
-        # test nucleotide distribution in overlapping sequence for significance
-        f_exp = norm_df.iloc[0][NUCLEOTIDES]
-        for pos in norm_df["label"]:
-            symbol = ""
-            if pos == "exp":
-                pos = 0
-            else:
-                if pos == "overall":
-                    pos = 14
-                f_obs = norm_df.iloc[int(pos)][NUCLEOTIDES]
-                if f_obs.sum() != 0:
-                    res = stats.chisquare(f_obs, f_exp)
-                    symbol = get_stat_symbol(res.pvalue)
-            text = f"n={str(int(norm_df['Sum'].iloc[int(pos)]))}\n{symbol}"
-            axs[i, 1].annotate(text, (pos, 0.0), fontsize="xx-small", ha="center")
-
-        axs[i, 1].legend()
-        axs[i, 1].set_title("nucleotide occurrence in overlapping sequence")
-        axs[i, 1].set_xlabel("length of overlapping sequence")
-        axs[i, 1].set_ylabel("relative nuc. occurrence")
+        axs[i].bar(x=x, height=h/h.sum(), width=-0.4, align="edge", label="observed")
+        axs[i].bar(x=x, height=h_exp/h_exp.sum(), width=0.4, align="edge", label="expected")
+        axs[i].set_xlabel("number of overlapping nucleotides")
+        axs[i].set_ylabel("relative occurrence")
+        axs[i].set_title(f"{k} (n={n}) {symbol}")
+        axs[i].legend(loc="upper right")
+        axs[i].set_ylim(bottom=0.0, top=1.0)
 
     ngs_thresh = "" if ngs_thresh == 0 else f"NGS{ngs_thresh}_"
     fname = f"{seg}_mode{mode}_{ngs_thresh}sequence_distribution.pdf"
+    savepath = os.path.join(RESULTSPATH, "overlapping_nucleotides", fname)
+    plt.savefig(savepath)
+    plt.close()
+
+    return overlap_seq_per_strain
+
+
+def overlap_seq_occurrence_analysis(overlap_dict: dict)-> None:
+    '''
+        Gets a dictionary with all overlapping sequences ,split by segments and
+        strains. Calculates the relative occurrence of each nucleotide and
+        returns the results as a barplot.
+        :param overlap_dict: dictionary with the overlapping sequences
+
+        :return: None
+    '''
+    strains = list(overlap_dict["PB1"].keys())
+    fig, axs = plt.subplots(4, 1, figsize=(10, 10), tight_layout=True)
+    for i, st in enumerate(strains):
+        f_df = pd.DataFrame()
+        for s in SEGMENTS:
+            # count the occurrence of the four nucleotides in the overlapping sequences
+            f_df = pd.concat([f_df, count_nuc_freq_overlap(overlap_dict[s][st], st, s)])
+            
+        # plot the results as stacked barplot
+        x = np.arange(0, 8)
+        b_obs = np.zeros(8)
+        b_exp = np.zeros(8)
+        for n in NUCLEOTIDES:
+            obs = f_df[f_df["label"] == "obs"]
+            exp = f_df[f_df["label"] == "exp"]
+            axs[i].bar(x-0.2, height=obs[n], width=0.3, bottom=b_obs, label=n, color=COLORS[n])
+            axs[i].bar(x+0.2, height=exp[n], width=0.3, bottom=b_exp, color=COLORS[n], alpha=0.5)
+            b_obs += obs[n]
+            b_exp += exp[n]
+
+        # test nucleotide distribution in overlapping sequence for significance
+        for pos in range(0, 15, 2):
+            f_exp = f_df.iloc[pos + 1][NUCLEOTIDES]
+            f_obs = f_df.iloc[pos][NUCLEOTIDES]
+
+            symbol = ""
+            if f_obs.sum() != 0:
+                res = stats.chisquare(f_obs, f_exp)
+                symbol = get_stat_symbol(res.pvalue)
+            text = f"n={str(int(f_df['Sum'].iloc[pos]))}\n{symbol}"
+            axs[i].annotate(text, (pos/2-0.2, 0.0), fontsize="xx-small", ha="center")
+
+        axs[i].set_xlim(left=-0.5, right=8)
+        axs[i].set_xticks(np.arange(0, 8), SEGMENTS)
+        axs[i].legend(loc="upper right", fontsize="small")
+        axs[i].set_title(f"nucleotide occurrence in overlapping sequence for {st}")
+        axs[i].set_xlabel("length of overlapping sequence")
+        axs[i].set_ylabel("rel. nuc. occurrence")
+
+    fname = f"nuc_dist_overlap_sequence.pdf"
     savepath = os.path.join(RESULTSPATH, "overlapping_nucleotides", fname)
     plt.savefig(savepath)
     plt.close()
@@ -356,10 +376,11 @@ if __name__ == "__main__":
 
     # Check if nucleotides directly before junction site have the same sequence
     # as the ones directly before junction site at the end
+    overlap_seq_per_seg = dict()
     for s in SEGMENTS:
-        nucleotide_overlap_analysis(sequence_list_dict, s, mode=1)
-        nucleotide_overlap_analysis(sequence_list_dict, s, mode=2)
+        overlap_per_strain = nucleotide_overlap_analysis(sequence_list_dict, s, mode=1)
+        _ = nucleotide_overlap_analysis(sequence_list_dict, s, mode=2)
+        overlap_seq_per_seg[s] = overlap_per_strain
 
-#        nucleotide_overlap_analysis(sequence_list_dict, s, mode=1, ngs_thresh=1000)
- #       nucleotide_overlap_analysis(sequence_list_dict, s, mode=2, ngs_thresh=1000)
+    overlap_seq_occurrence_analysis(overlap_seq_per_seg)
 
