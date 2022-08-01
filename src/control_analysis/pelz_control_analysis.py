@@ -14,7 +14,7 @@ from scipy import stats
 sys.path.insert(0, "..")
 sys.path.insert(0, "../density_and_length_analysis")
 sys.path.insert(0, "../regression_length_vs_occurrence")
-from utils import DATAPATH, RESULTSPATH, SEGMENTS, QUANT, N_SAMPLING
+from utils import DATAPATH, RESULTSPATH, SEGMENTS, QUANT, S_ROUNDS
 from utils import load_pelz_dataset, get_stat_symbol, get_sequence, generate_sampling_data, create_sequence_library
 from composition_junction_site import nucleotide_occurrence_analysis, count_overlapping_nucleotides_overall
 from regression_length_occurrence import format_dataset_for_plotting, fit_models_and_plot_data
@@ -56,7 +56,7 @@ def nuc_overlap_analysis(seq_dict: dict, mode: int, top: bool=False)-> None:
     
             start = (int(v_s.Start.quantile(QUANT)), int(v_s.Start.quantile(1-QUANT)))
             end = (int(v_s.End.quantile(QUANT)), int(v_s.End.quantile(1-QUANT)))
-            sampling_data = generate_sampling_data(seq, start, end, n*N_SAMPLING)
+            sampling_data = generate_sampling_data(seq, start, end, n*S_ROUNDS)
             exp, _ = count_overlapping_nucleotides_overall(sampling_data, seq, mode)
 
             x = list(nuc_overlap_dict.keys())
@@ -96,6 +96,7 @@ def nuc_overlap_analysis(seq_dict: dict, mode: int, top: bool=False)-> None:
 
 if __name__ == "__main__":
     # analysis for top gain and top de novo DI RNAs
+    
     top_di_rna = load_top_gain_de_novo()  
     top_seq_dict = create_sequence_library(top_di_rna)
     nuc_overlap_analysis(top_seq_dict, 1, True)
@@ -108,7 +109,8 @@ if __name__ == "__main__":
         nucleotide_occurrence_analysis(seq_list_dict, s)
         src = os.path.join(RESULTSPATH, "relative_occurrence_nucleotides", f"PR_{s}.png")
         dst = os.path.join(RESULTSPATH, "control_analysis", f"PR_{s}_nucleotide_occurrence.png")
-        os.rename(src, dst)
+        if os.path.exists(src):
+            os.rename(src, dst)
 
     nuc_overlap_analysis(seq_list_dict, 1)
     nuc_overlap_analysis(seq_list_dict, 2)
