@@ -16,6 +16,8 @@ import json
 
 import matplotlib.pyplot as plt
 
+from scipy import stats
+
 sys.path.insert(0, "..")
 from utils import DATAPATH, RESULTSPATH, SEGMENTS
 from utils import load_alnaji_excel, load_short_reads
@@ -74,20 +76,23 @@ def start_vs_end_lengths(data: dict, limit: int=0)-> None:
         fig, axs = plt.subplots(4, 2, figsize=(5, 10), tight_layout=True)
         j = 0
         for i, s in enumerate(SEGMENTS):
-            v_s = v[v["Segment"] == s]
-            if v_s.size != 0:
+            v_s = v[v["Segment"] == s].copy()
+            if v_s.shape[0] > 1:
                 start = v_s["Start"]
-                end = v_s["Length"] - v_s["Start"]
+                v_s["End_L"] = v_s["Length"] - v_s["Start"]
 
-                axs[i%4,j].scatter(start, end, s=1.0)
+                axs[i%4,j].scatter(v_s["Start"], v_s["End_L"], s=1.0)
                 axs[i%4,j].plot([0, 1], [0, 1], transform=axs[i%4,j].transAxes, c="r", linewidth=0.5, linestyle="--")
 
                 if limit == 0:
-                    max_p = max(start.max(), end.max())
+                    max_p = max(v_s["Start"].max(), v_s["End_L"].max())
                 else:
                     max_p = limit
                     axs[i%4,j].set_xlim(0, max_p)
                     axs[i%4,j].set_ylim(0, max_p)
+                    v_s = v_s[(v_s["Start"] <= max_p) & (v_s["End_L"] <= max_p)]
+
+                pearson = stats.pearsonr(v_s["Start"], v_s["End_L"])
 
                 axs[i%4,j].set_xlim(left=0, right=max_p)
                 axs[i%4,j].set_xticks([0,max_p])
@@ -100,7 +105,7 @@ def start_vs_end_lengths(data: dict, limit: int=0)-> None:
                 axs[i%4,j].add_patch(plt.Rectangle((0, 0), max_p, signals["bundling_start"], color="lightgrey", alpha = 0.5, ls="None"))
                 axs[i%4,j].add_patch(plt.Rectangle((0, 0), signals["bundling_end"], max_p, color="lightgrey", alpha = 0.5, ls="None"))
 
-            axs[i%4,j].set_title(f"{s} (n={v_s.shape[0]})")
+            axs[i%4,j].set_title(f"{s} (n={v_s.shape[0]}) r={pearson[0]:.2}")
             axs[i%4,j].set_xlabel("start")
             axs[i%4,j].set_ylabel("end")
 
