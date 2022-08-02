@@ -123,10 +123,9 @@ def map_positions_to_density(data: dict, density_data: dict)-> dict:
             l2, = axs[i].plot(density_data[s]["x"], density_data[s]["y"], label="NP density", alpha=0.5, color="green", fillstyle="full")
             axs[i].set_title(f"{s}")
             axs[i].set_xlim(left=0, right=max(density_data[s]["x"]))
-#            axs[i].set_ylim(bottom=0, top=100)
+            axs[i].set_ylim(bottom=0, top=105)
             axs[i].set_xlabel("sequence position")
             axs[i].set_ylabel("high/low NP area")
- #           axs[i].axhline(y=5.0, color="red", linestyle="--")
 
         fig.suptitle(f"deletion position against NP areas for {k}", x=0.3)
         fig.legend([l1, l2], ["count", "NP density"])
@@ -160,6 +159,7 @@ def map_dens_to_dens(strain: str, dens_1: dict, dens_2: dict)-> None:
             axs[i].set_ylim(bottom=0, top=105)
             axs[i].set_xlabel("sequence position")
             axs[i].set_ylabel("high/low NP area")
+            axs[i].legend()
 
         save_path = os.path.join(RESULTSPATH, "NP_density", f"{strain}_map_density_data_sources.pdf")
         plt.savefig(save_path)
@@ -193,23 +193,39 @@ def compare_position_with_density(data: dict, density_data: dict, all_reads: dic
             if len(count_dict) == 0:
                 continue
 
-            # get expected values by sampling approach
-            seq = get_sequence(k, s)
-            seg_reads = all_reads[k].loc[all_reads[k]["Segment"] == s]
-            start = (int(seg_reads.Start.quantile(QUANT)), int(seg_reads.Start.quantile(1-QUANT)))
-            end = (int(seg_reads.End.quantile(QUANT)), int(seg_reads.End.quantile(1-QUANT)))
-            n_sampling = n * S_ROUNDS
-            sampling_data = generate_sampling_data(seq, start, end, n_sampling)
-            samp_pos = sampling_data["Start"].tolist() + sampling_data["End"].tolist()
+            exp_mode = "full"
+#            exp_mode = "sampling"
+            if exp_mode == "sampling":
+                # get expected values by sampling approach
+                seq = get_sequence(k, s)
+                seg_reads = all_reads[k].loc[all_reads[k]["Segment"] == s]
+                start = (int(seg_reads.Start.quantile(QUANT)), int(seg_reads.Start.quantile(1-QUANT)))
+                end = (int(seg_reads.End.quantile(QUANT)), int(seg_reads.End.quantile(1-QUANT)))
+                n_sampling = n * S_ROUNDS
+                sampling_data = generate_sampling_data(seq, start, end, n_sampling)
+                samp_pos = sampling_data["Start"].tolist() + sampling_data["End"].tolist()
+                
+                # grouping by NP high/low
+                y = [get_dens_at_pos(p, density_data[s]) for p in count_dict.keys()]
+                y_exp = [get_dens_at_pos(p, density_data[s]) for p in samp_pos]
+                below = y.count(0)
+                below_exp = y_exp.count(0)
+                obs_ratio = below/len(y)
+                exp_ratio = below_exp/len(y_exp)
+            elif exp_mode == "full":
+                # get expected with full sequence
+                y = list()
+                for p in count_dict.keys():
+                    y.append(get_dens_at_pos(p, density_data[s]))
 
-            # grouping by NP high/low
-            y = [get_dens_at_pos(p, density_data[s]) for p in count_dict.keys()]
-            y_exp = [get_dens_at_pos(p, density_data[s]) for p in samp_pos]
-            below = y.count(0)
-            below_exp = y_exp.count(0)
-            obs_ratio = below/len(y)
-            exp_ratio = below_exp/len(y_exp)
-
+                seq = get_sequence(k, s)
+                y_exp = [get_dens_at_pos(p, density_data[s]) for p in np.arange(0, len(seq)+1)]
+                
+                below = sum(map(lambda x : x < 10, y))
+                obs_ratio = below/len(y)
+                below_exp = sum(map(lambda x : x < 10, y_exp))
+                exp_ratio = below_exp/len(y_exp)
+            
             # statistical testing
             result = stats.binomtest(below, n, exp_ratio)
             symbol = get_stat_symbol(result.pvalue)
