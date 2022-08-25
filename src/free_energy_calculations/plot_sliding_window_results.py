@@ -17,6 +17,17 @@ from utils import DATAPATH, RESULTSPATH, SEGMENTS
 from utils import load_alnaji_excel, load_short_reads, get_stat_symbol
 
 
+def slice_dataset(seg_df, energy_df):
+    '''
+
+    '''
+    INDEX = 500
+    seg_df = seg_df[seg_df.index < INDEX]
+    energy_df = energy_df[energy_df["position"] < INDEX]
+
+    return seg_df, energy_df
+
+
 def plot_deletions_with_delta_G(d: dict, w_s: int, s_s: int)-> None:
     '''
         Loads the deletion start and end points and the estimated delta G and
@@ -46,6 +57,8 @@ def plot_deletions_with_delta_G(d: dict, w_s: int, s_s: int)-> None:
             energy_file = os.path.join(energy_path, f"{k}_{s}_{w_s}_{s_s}.csv")
             energy_df = pd.read_csv(energy_file)
             
+            concat_seg_df, energy_df = slice_dataset(concat_seg_df, energy_df)
+
             l1 = axs[i].twinx().bar(concat_seg_df.index, concat_seg_df["NGS_read_count"])
             l2, = axs[i].plot(energy_df["position"], energy_df["delta_G"], color="green")
             l3 = axs[i].axhline(y=energy_df["delta_G"].mean(), c="r", linestyle="--")
@@ -97,6 +110,9 @@ def create_boxplots(d: dict, w_s: int, s_s: int)-> None:
 
                 energy_file = os.path.join(energy_path, f"{k}_{s}_{w_s}_{s_s}.csv")
                 energy_df = pd.read_csv(energy_file)
+
+                concat_seg_df, energy_df = slice_dataset(concat_seg_df, energy_df)
+
                 if y_min > min(energy_df["delta_G"]):
                     y_min = min(energy_df["delta_G"])
                 
