@@ -17,13 +17,16 @@ from utils import DATAPATH, RESULTSPATH, SEGMENTS
 from utils import load_alnaji_excel, load_short_reads, get_stat_symbol
 
 
-def slice_dataset(seg_df, energy_df):
+def slice_dataset(seg_df, energy_df, seg):
     '''
 
     '''
-    INDEX = 500
-    seg_df = seg_df[seg_df.index < INDEX]
-    energy_df = energy_df[energy_df["position"] < INDEX]
+    slice_index = dict({"PB1": 700, "PB2": 500,
+                  "PA": 700, "HA": 500,
+                  "NP": 400, "NA": 600,
+                  "M": 400, "NS": 500})
+    seg_df = seg_df[seg_df.index < slice_index[seg]]
+    energy_df = energy_df[energy_df["position"] < slice_index[seg]]
 
     return seg_df, energy_df
 
@@ -57,7 +60,7 @@ def plot_deletions_with_delta_G(d: dict, w_s: int, s_s: int)-> None:
             energy_file = os.path.join(energy_path, f"{k}_{s}_{w_s}_{s_s}.csv")
             energy_df = pd.read_csv(energy_file)
             
-            concat_seg_df, energy_df = slice_dataset(concat_seg_df, energy_df)
+            concat_seg_df, energy_df = slice_dataset(concat_seg_df, energy_df, s)
 
             l1 = axs[i].twinx().bar(concat_seg_df.index, concat_seg_df["NGS_read_count"])
             l2, = axs[i].plot(energy_df["position"], energy_df["delta_G"], color="green")
@@ -76,7 +79,7 @@ def plot_deletions_with_delta_G(d: dict, w_s: int, s_s: int)-> None:
         fig.suptitle(k, ha="left")
 
         save_path = os.path.join(RESULTSPATH, "free_energy_estimations")
-        save_file = os.path.join(save_path, f"{k}_sliding_window_{w_s}_{s_s}.pdf")
+        save_file = os.path.join(save_path, f"{k}_sliding_window_{w_s}_{s_s}_sliced.pdf")
         fig.savefig(save_file)
         plt.close()
 
@@ -111,7 +114,7 @@ def create_boxplots(d: dict, w_s: int, s_s: int)-> None:
                 energy_file = os.path.join(energy_path, f"{k}_{s}_{w_s}_{s_s}.csv")
                 energy_df = pd.read_csv(energy_file)
 
-                concat_seg_df, energy_df = slice_dataset(concat_seg_df, energy_df)
+                concat_seg_df, energy_df = slice_dataset(concat_seg_df, energy_df, s)
 
                 if y_min > min(energy_df["delta_G"]):
                     y_min = min(energy_df["delta_G"])
@@ -141,7 +144,7 @@ def create_boxplots(d: dict, w_s: int, s_s: int)-> None:
         axs[i].set_ylim(top=20.0)
 
     save_path = os.path.join(RESULTSPATH, "free_energy_estimations")
-    save_file = os.path.join(save_path, f"boxplot_sliding_window_{w_s}_{s_s}.pdf")
+    save_file = os.path.join(save_path, f"boxplot_sliding_window_{w_s}_{s_s}_sliced.pdf")
     fig.savefig(save_file)
     plt.close()
 
