@@ -194,7 +194,7 @@ def compare_position_with_density(data: dict, density_data: dict, all_reads: dic
                 continue
 
             exp_mode = "full"
-#            exp_mode = "sampling"
+            exp_mode = "sampling"
             if exp_mode == "sampling":
                 # get expected values by sampling approach
                 seq = get_sequence(k, s)
@@ -212,6 +212,7 @@ def compare_position_with_density(data: dict, density_data: dict, all_reads: dic
                 below_exp = y_exp.count(0)
                 obs_ratio = below/len(y)
                 exp_ratio = below_exp/len(y_exp)
+
             elif exp_mode == "full":
                 # get expected with full sequence
                 y = list()
@@ -221,9 +222,9 @@ def compare_position_with_density(data: dict, density_data: dict, all_reads: dic
                 seq = get_sequence(k, s)
                 y_exp = [get_dens_at_pos(p, density_data[s]) for p in np.arange(0, len(seq)+1)]
                 
-                below = sum(map(lambda x : x < 10, y))
+                below = sum(map(lambda x : x > 10, y))
                 obs_ratio = below/len(y)
-                below_exp = sum(map(lambda x : x < 10, y_exp))
+                below_exp = sum(map(lambda x : x > 10, y_exp))
                 exp_ratio = below_exp/len(y_exp)
             
             # statistical testing
@@ -236,7 +237,7 @@ def compare_position_with_density(data: dict, density_data: dict, all_reads: dic
                         max(obs_ratio, exp_ratio)),
                         horizontalalignment="center")
             ax.set_xlabel("Segments")
-            ax.set_ylabel("Ratio: sites below threshold/all sites")
+            ax.set_ylabel("deletions in high NP area/all positions")
             ax.set_xticks(ticks=np.arange(0,16), labels=["obs", "exp"]*8)
 
         plt.legend(SEGMENTS)
