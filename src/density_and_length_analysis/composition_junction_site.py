@@ -9,6 +9,7 @@
     2.
     Compares the nucleotides before the junction start with the ones before
     the junction end site. Counts the number of nucleotides, that are the same.
+    --> direct repeats
 '''
 import os
 import sys
@@ -18,6 +19,7 @@ import pandas as pd
 import matplotlib.pyplot as plt
 
 from scipy import stats
+from decimal import Decimal, ROUND_HALF_UP
 
 sys.path.insert(0, "..")
 from utils import RESULTSPATH, SEGMENTS, COLORS, NUCLEOTIDES, QUANT, S_ROUNDS
@@ -245,7 +247,7 @@ def count_nuc_freq_overlap(seq_dict: dict, strain: str, seg: str)-> object:
     return n_df
 
 
-def nucleotide_overlap_analysis(seq_dict: dict, seg: str, mode: int, ngs_thresh: int=0)-> None:
+def nucleotide_overlap_analysis(seq_dict: dict, seg: str, mode: int, ngs_thresh: int=0, correction: bool=False)-> None:
     '''
         gets the sequences for all four strains and calculates the overlap of 
         the nucleotides at the junction site.
@@ -254,6 +256,8 @@ def nucleotide_overlap_analysis(seq_dict: dict, seg: str, mode: int, ngs_thresh:
         :param mode: states which calculation mode is used in 
                      calculate_overlapping_nucleotides() check there for info
         :param ngs_thresh: gives the threshold on which data to include
+        :param correction: if True a correction calculation is made
+
         :return: None
     '''
     overlap_seq_per_strain = dict()
@@ -268,6 +272,20 @@ def nucleotide_overlap_analysis(seq_dict: dict, seg: str, mode: int, ngs_thresh:
         if n == 0:
             continue
         
+        if correction:
+            new = dict()
+            for idx in nuc_overlap_dict.keys():
+                org_value = nuc_overlap_dict[idx]
+                if org_value != 0:
+                    divided_value = org_value/(idx+1)
+                    new[idx] = divided_value
+                    for idx_2 in range(0, idx):
+                        new[idx_2] = new[idx_2] + divided_value
+                else:
+                    new[idx] = 0
+
+            nuc_overlap_dict = new
+
         # get expected values
         s = (int(v.Start.quantile(QUANT)), int(v.Start.quantile(1-QUANT)))
         e = (int(v.End.quantile(QUANT)), int(v.End.quantile(1-QUANT)))
@@ -278,12 +296,15 @@ def nucleotide_overlap_analysis(seq_dict: dict, seg: str, mode: int, ngs_thresh:
         x = list(nuc_overlap_dict.keys())
         h = np.array(list(nuc_overlap_dict.values()))
         h_exp = np.array(list(exp.values()))
-
+        
         # test statistical significance
         f_obs = list()
         f_exp = list()
         for a in x:
-            f_obs.extend([a]*nuc_overlap_dict[a])
+            if correction:
+                f_obs.extend([a]*int(Decimal(nuc_overlap_dict[a]).to_integral_value(rounding=ROUND_HALF_UP)))
+            else:
+                f_obs.extend([a]*nuc_overlap_dict[a])
             f_exp.extend([a]*exp[a])
         f_obs = np.array(f_obs)
         f_exp = np.array(f_exp)
@@ -300,7 +321,8 @@ def nucleotide_overlap_analysis(seq_dict: dict, seg: str, mode: int, ngs_thresh:
         axs[i].set_ylim(bottom=0.0, top=1.0)
 
     ngs_thresh = "" if ngs_thresh == 0 else f"NGS{ngs_thresh}_"
-    fname = f"{seg}_mode{mode}_{ngs_thresh}sequence_distribution.pdf"
+    corr = "corr" if correction else ""
+    fname = f"{seg}_mode{mode}_{ngs_thresh}sequence_distribution_{corr}.pdf"
     savepath = os.path.join(RESULTSPATH, "overlapping_nucleotides", fname)
     plt.savefig(savepath)
     plt.close()
@@ -310,7 +332,7 @@ def nucleotide_overlap_analysis(seq_dict: dict, seg: str, mode: int, ngs_thresh:
 
 def overlap_seq_occurrence_analysis(overlap_dict: dict)-> None:
     '''
-        Gets a dictionary with all overlapping sequences ,split by segments and
+        Gets a dictionary with all overlapping sequences, split by segments and
         strains. Calculates the relative occurrence of each nucleotide and
         returns the results as a barplot.
         :param overlap_dict: dictionary with the overlapping sequences
@@ -379,6 +401,7 @@ if __name__ == "__main__":
     overlap_seq_per_seg = dict()
     for s in SEGMENTS:
         overlap_per_strain = nucleotide_overlap_analysis(sequence_list_dict, s, mode=1)
+        _ = nucleotide_overlap_analysis(sequence_list_dict, s, mode=1, correction=True)
         _ = nucleotide_overlap_analysis(sequence_list_dict, s, mode=2)
         overlap_seq_per_seg[s] = overlap_per_strain
 
