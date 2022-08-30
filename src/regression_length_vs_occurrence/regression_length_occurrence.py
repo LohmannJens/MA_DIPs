@@ -131,7 +131,7 @@ def fit_models_and_plot_data(x: list, y: list, y_exp: list, err: list, k: str)->
     ax.set_ylabel("relative DI occurrence")
 
     # save final figure
-    save_path = os.path.join(RESULTSPATH, "regression_length_count", f"{k}_regression_analysis.png")
+    save_path = os.path.join(RESULTSPATH, "regression_length_vs_occurrence", f"{k}_regression_analysis.png")
     plt.savefig(save_path)
     plt.close()
 

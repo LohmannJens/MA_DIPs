@@ -10,7 +10,7 @@ import pandas as pd
 from Bio import SeqIO
 
 sys.path.insert(0, "..")
-sys.path.insert(0, "../density_and_length_analysis")
+sys.path.insert(0, "../relative_occurrence_nucleotides")
 from utils import DATAPATH, RESULTSPATH
 from utils import load_alnaji_excel, get_sequence, get_seq_len
 from composition_junction_site import count_nucleotide_occurrence, calculate_overlapping_nucleotides

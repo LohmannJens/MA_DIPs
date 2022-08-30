@@ -12,7 +12,7 @@ import matplotlib.pyplot as plt
 from scipy import stats
 
 sys.path.insert(0, "..")
-sys.path.insert(0, "../density_and_length_analysis")
+sys.path.insert(0, "../relative_occurrence_nucleotides")
 sys.path.insert(0, "../regression_length_vs_occurrence")
 from utils import DATAPATH, RESULTSPATH, SEGMENTS, QUANT, S_ROUNDS
 from utils import load_pelz_dataset, get_stat_symbol, get_sequence, generate_sampling_data, create_sequence_library
