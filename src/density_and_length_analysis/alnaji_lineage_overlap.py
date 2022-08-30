@@ -39,19 +39,9 @@ def lineage_overlap(data: dict)-> None:
         l1l2_duplicates = n_l1l2 - l1l2_all
         l1l2_unique = l1l2_all - l1l2_duplicates # only containing unique values
 
-        print(name)
-        print("++++++++")
-        print(f"{n_l1=}")
-        print(f"{n_l2=}")
-        print(f"{n_l1l2=}")
-        print(f"{l1l2_all=}")
-        print(f"{l1l2_unique=}")
-        print(f"{l1l2_duplicates=}")
-        print(l1l2_duplicates/n_l1l2)
-
-        venn2(subsets=(n_l1-l1l2_duplicates, n_l2-l1l2_duplicates, l1l2_duplicates),
-              set_labels=(f"l1 (n={n_l1})", f"l2 (n={n_l2})"))
-        plt.title(name)
+        venn2(subsets=(n_l1, n_l2, l1l2_duplicates),
+              set_labels=("l1", "l2"))
+        plt.title(f"{name} (quantity of duplicates: {l1l2_duplicates/l1l2_all*100:.3} %)")
         plt.show()
 
 
