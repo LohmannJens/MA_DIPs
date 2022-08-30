@@ -7,6 +7,10 @@
     the deletion sides multiplied by their occurence.
     
     2.
+    Creates a plot where it shows the location of the start and the end points
+    of the deletion site in reference to the full length segments
+
+    3.
     Plots length of Start and End part of DI RNA as a scatter plot. Shows if
     they are equally distributed.
 '''
@@ -46,15 +50,58 @@ def plot_deletion_lengths(data: dict)-> None:
         # create a subplot for each key, value pair in count_dict
         fig, axs = plt.subplots(8, 1, figsize=(10, 20), tight_layout=True)
         for i, s in enumerate(SEGMENTS):
-            axs[i].hist(count_dict[s].keys(), weights=count_dict[s].values(), bins=100)
-            axs[i].set_title(f"{s}")
+            axs[i].hist(count_dict[s].keys(), weights=count_dict[s].values(), bins=100, label=s)
             axs[i].set_xlim(left=0)
             axs[i].set_xlabel("deletion length")
             axs[i].set_ylabel("NGS count")
+            axs[i].legend()
 
-        fig.suptitle(f"absolute occurrences of start and end of deletions for {key}", x=0.3)
+        axs[0].set_title(f"Deletion length of the eight segments for {key} as histogram")
 
         save_path = os.path.join(RESULTSPATH, "deletion_length_and_position", f"{key}_length_del_hist.png")
+        plt.savefig(save_path)
+        plt.close()
+
+
+def plot_start_and_end_positions(data: dict)-> None:
+    '''
+        Maps the NP density to the start and end position of the deletion
+        sites.
+        :param data: dict with information about start and end position
+        :param density_data: dict with density data (key is segment name)
+        :return: counts positions found in NGS data
+    '''
+    for k, v in data.items():
+        # create a dict for each segment using Start and End
+        start_dict = dict()
+        end_dict = dict()
+        for s in SEGMENTS:
+            start_dict[s] = dict()
+            end_dict[s] = dict()
+        for i, r in v.iterrows():
+            if r["Start"] in start_dict[r["Segment"]]:
+                start_dict[r["Segment"]][r["Start"]] += r["NGS_read_count"]
+            else:
+                start_dict[r["Segment"]][r["Start"]] = r["NGS_read_count"]
+            if r["End"] in end_dict[r["Segment"]]:
+                end_dict[r["Segment"]][r["End"]] += r["NGS_read_count"]
+            else:
+                end_dict[r["Segment"]][r["End"]] = r["NGS_read_count"]
+        
+        # create a subplot for each key, value pair in count_dict
+        fig, axs = plt.subplots(8, 1, figsize=(10, 20), tight_layout=True)
+        for i, s in enumerate(SEGMENTS):
+            axs[i].bar(start_dict[s].keys(), start_dict[s].values(), label=f"{s} start")
+            axs[i].bar(end_dict[s].keys(), end_dict[s].values(), label=f"{s} end")
+
+            axs[i].set_xlim(left=0)
+            axs[i].set_xlabel("sequence position")
+            axs[i].set_ylabel("NGS count")
+            axs[i].legend()
+
+        axs[0].set_title(f"Location of start and end of deletion site on full sequences for {k}")
+
+        save_path = os.path.join(RESULTSPATH, "deletion_length_and_position", f"{k}_start_and_end_positions.png")
         plt.savefig(save_path)
         plt.close()
 
@@ -112,7 +159,7 @@ def start_vs_end_lengths(data: dict, limit: int=0)-> None:
             if i == 3:
                 j = 1
 
-        fig.suptitle(f"Lengths of start and end site {k}", x=0.3)
+        fig.suptitle(f"Lengths of start and end site {k}", x=0.5)
         if limit == 0:
             filename = f"{k}_length_start_end.png"
         else:
@@ -127,6 +174,6 @@ if __name__ == "__main__":
     cleaned_data_dict = load_alnaji_excel()
     all_reads_dict = load_short_reads(cleaned_data_dict)
     plot_deletion_lengths(all_reads_dict)
+    plot_start_and_end_positions(all_reads_dict)
     start_vs_end_lengths(all_reads_dict)
     start_vs_end_lengths(all_reads_dict, 700)
-
