@@ -25,38 +25,26 @@ def run_tloop_analysis(rna: str, filename: str)-> None:
 
         :return: None
     '''
-    Footprint = 20 # polymerase properties
-    NP = 24 # NP footprint
-    TloopDuplex = 48
-    Duplex = int(TloopDuplex / 2)
-    Uloop = "&" #Use & for co-fold to compute long-range interactions between upstream and downstream sequences.
-    Swindow = 1 #size of sliding window
+    Footprint = 20 # nts bound by polymerase
+    TloopDuplex = 48 # Size of a t-loop
+    Duplex = int(TloopDuplex / 2) # Length of one side of a t-loop
 
-    path = os.path.join(DATAPATH, "energy_calculation", "sliding_window")
-    f = open(os.path.join(path, filename), "w+")
+    path = os.path.join(DATAPATH, "energy_calculation", "sliding_window", filename)
+    if os.path.exists(path):
+        os.remove(path)
+
+    f = open(path, "w+")
     f.write("position,delta_G\n")
 
     # invert input sequence to start at 3' end
     NegRNA = rna[::-1]
     Length = len(NegRNA)
     Bubble = Footprint + Duplex
-    End = int((Length - Footprint + 1) / Swindow)
+    End = int((Length - Footprint + 1))
 
-    for i in range(1, End-1, Swindow):
-        if i <= NP:
-            Upstream = i
-            Downstream = 0
-        else:
-            Upstream = NP
-            Downstream = i-NP
-     
-        Ahead = NegRNA[Footprint+i:Footprint+NP+i]
-        Aheadinv = Ahead[::-1]
-        Down = NegRNA[Downstream:i]
-        Downinv = Down[::-1]
-
+    for i in range(1, End-1):
         if i <= Duplex:
-            Prime3 = NegRNA[0:Upstream]
+            Prime3 = NegRNA[0:Duplex]
         else:
             Prime3 = NegRNA[i-Duplex:i]
         Prime3inv = Prime3[::-1]
@@ -69,20 +57,8 @@ def run_tloop_analysis(rna: str, filename: str)-> None:
 
         #use duplex fold to compute t-loop from Vienna package because it ignores intermol bp
         duplex = RNA.duplexfold(Prime5inv, Prime3inv)
+        f.write(f"{i},{duplex.energy}\n")
 
-        #use cofold from Vienna package to check for bp in sequence upstream and downstream of t-loop.
-        #Various options can be checked separately, including just upstream seq, just downstream seq, or both seq
-        Other = Aheadinv + Uloop + Downinv
-        #Other = Aheadinv
-        #Other = Downinv
-        (ss, mfe_dimer) = RNA.cofold(Other)
-        DDeltaG = duplex.energy - mfe_dimer
-
-     #   f.write(f"{i},{duplex.energy}\n")
-     #   f.write(f"{i},{mfe_dimer}\n")
-        f.write(f"{i},{DDeltaG}\n")
-
-    # close .txt file that deltaG values were written to
     f.close()
     print (f"Done {filename}")
 

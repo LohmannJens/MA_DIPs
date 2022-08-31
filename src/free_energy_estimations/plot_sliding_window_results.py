@@ -68,10 +68,7 @@ def plot_deletions_with_delta_G(d: dict, w_s: int, s_s: int)-> None:
 
             axs[i].set_title(s)
             axs[i].set_xlim(left=0.0, right=max(energy_df["position"]))
-            if w_s == 1:
-                axs[i].set_ylim(bottom=0.0, top=20.0)
-            else:
-                axs[i].set_ylim(bottom=0.0, top=min(energy_df["delta_G"]))
+            axs[i].set_ylim(bottom=0.0, top=min(energy_df["delta_G"]))
             axs[i].set_xlabel("Sequence position")
             axs[i].set_ylabel("\u0394 G")
 
@@ -117,7 +114,7 @@ def create_boxplots(d: dict, w_s: int, s_s: int)-> None:
                 concat_seg_df, energy_df = slice_dataset(concat_seg_df, energy_df, s)
 
                 if y_min > min(energy_df["delta_G"]):
-                    y_min = min(energy_df["delta_G"])
+                    y_min = min(energy_df["delta_G"]) + 1
                 
                 df1 = energy_df[energy_df["position"].isin(list(concat_seg_df.index))]
                 df2 = energy_df[~energy_df["position"].isin(list(concat_seg_df.index))]
