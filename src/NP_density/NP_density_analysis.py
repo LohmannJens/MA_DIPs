@@ -117,7 +117,7 @@ def map_positions_to_density(data: dict, density_data: dict)-> dict:
                 count_dict[r["Segment"]][r["End"]] = r["NGS_read_count"]
         
         # create a subplot for each key, value pair in count_dict
-        fig, axs = plt.subplots(8, 1, figsize=(7, 14), tight_layout=True)
+        fig, axs = plt.subplots(8, 1, figsize=(10, 14), tight_layout=True)
         for i, s in enumerate(SEGMENTS):
             l1 = axs[i].twinx().bar(count_dict[s].keys(), height=count_dict[s].values(), label="count")
             l2, = axs[i].plot(density_data[s]["x"], density_data[s]["y"], label="NP density", alpha=0.5, color="green", fillstyle="full")
@@ -127,10 +127,10 @@ def map_positions_to_density(data: dict, density_data: dict)-> dict:
             axs[i].set_xlabel("sequence position")
             axs[i].set_ylabel("high/low NP area")
 
-        fig.suptitle(f"deletion position against NP areas for {k}", x=0.3)
+        fig.suptitle(f"deletion position against NP areas for {k}")
         fig.legend([l1, l2], ["count", "NP density"])
 
-        save_path = os.path.join(RESULTSPATH, "NP_density", f"{k}_del_position_NP_density.pdf")
+        save_path = os.path.join(RESULTSPATH, "NP_density", f"{k}_del_position_NP_density.pdf") # leave as .pdf, because saving as .png loses some bars
         plt.savefig(save_path)
         plt.close()
 
@@ -151,17 +151,19 @@ def map_dens_to_dens(strain: str, dens_1: dict, dens_2: dict)-> None:
     for k, v in dens_1.items():
         fig, axs = plt.subplots(8, 1, figsize=(7, 14), tight_layout=True)
         for i, s in enumerate(SEGMENTS):
-            axs[i].plot(dens_1[s]["x"], dens_1[s]["y"], label="Lee", alpha=0.5, color="green", fillstyle="full")
-            axs[i].plot(dens_2[s]["x"], dens_2[s]["y"], label="Le Sage", alpha=0.5, color="blue", fillstyle="full")
+            l1, = axs[i].plot(dens_1[s]["x"], dens_1[s]["y"], label="Lee", alpha=0.5, color="green", fillstyle="full")
+            l2, = axs[i].plot(dens_2[s]["x"], dens_2[s]["y"], label="Le Sage", alpha=0.5, color="blue", fillstyle="full")
 
             axs[i].set_title(f"{s}")
             axs[i].set_xlim(left=0, right=max(dens_1[s]["x"]))
             axs[i].set_ylim(bottom=0, top=105)
             axs[i].set_xlabel("sequence position")
             axs[i].set_ylabel("high/low NP area")
-            axs[i].legend()
 
-        save_path = os.path.join(RESULTSPATH, "NP_density", f"{strain}_map_density_data_sources.pdf")
+        fig.suptitle("Mapping of the data source for NP density data")
+        fig.legend([l1, l2], ["Lee", "Le Sage"])
+
+        save_path = os.path.join(RESULTSPATH, "NP_density", f"{strain}_map_density_data_sources.png")
         plt.savefig(save_path)
         plt.close()
 
@@ -243,7 +245,7 @@ def compare_position_with_density(data: dict, density_data: dict, all_reads: dic
         plt.legend(SEGMENTS)
         fig.suptitle(k)
 
-        savepath = os.path.join(RESULTSPATH, "NP_density", f"{k}_high_low_NP_areas.pdf")
+        savepath = os.path.join(RESULTSPATH, "NP_density", f"{k}_high_low_NP_areas.png")
         fig.savefig(savepath)
         plt.close()
 
