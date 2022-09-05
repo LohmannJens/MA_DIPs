@@ -161,7 +161,7 @@ def get_stat_symbol(p: float)-> str:
     else:
         return ""
 
-def load_pelz_dataset()-> object:
+def load_pelz_dataset()-> dict:
     '''
         Loads the data from Pelz et al 2019 publication.
         Is structured the same way as data from alnaji 2019.
@@ -216,4 +216,23 @@ def create_sequence_library(data_dict: dict)-> dict:
         data_dict[k]["DelSequence"] = del_seq_list
 
     return data_dict
+
+def load_kupke()-> dict:
+    '''
+        Loads the data set of Kupke et al. 2020. Does not load unused columns.
+        Returns a dictionary with the data.
+
+        :return: dictionary with strain name as key and data frame as value
+    '''
+    path = os.path.join(DATAPATH, "Kupke2020", "Table_S5_chim_junctions_h1n1.csv")
+    data = pd.read_csv(path, usecols=["junctions", "infection", "num_reads"])
+
+    replace_dict = dict({"H1N1_seg1": "PB2", "H1N1_seg2": "PB1", "H1N1_seg3": "PA"})
+
+    data[["Segment", "DI"]] = data["junctions"].str.split(":", expand=True)
+    data.replace(to_replace=replace_dict, inplace=True)
+    data.drop(["junctions"], axis=1, inplace=True)
+
+    dic = dict({"PR8": data})
+    return dic
 
