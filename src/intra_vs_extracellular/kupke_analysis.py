@@ -9,7 +9,7 @@ import sys
 import pandas as pd
 import matplotlib.pyplot as plt
 
-from matplotlib_venn import venn2
+from matplotlib_venn import venn3
 
 sys.path.insert(0, "..")
 from utils import DATAPATH, RESULTSPATH
@@ -27,23 +27,34 @@ def venn_analysis(data: dict)-> None:
         :return: None
     '''
     for k, v in data.items():
-        fig, axs = plt.subplots(3, 1, figsize=(8, 10), tight_layout=True)
-        for i, s in enumerate(["PB2", "PB1", "PA"]):
-            v_s = v[v["Segment"] == s].copy()
-            pre = v_s[v_s["infection"] == "pre"]
-            post = v_s[v_s["infection"] == "post"]
+        fig, axs = plt.subplots(4, 1, figsize=(8, 10), tight_layout=True)
+        for i, s in enumerate(["PB2", "PB1", "PA", "all"]):
+            if s == "all":
+                v_s = v.copy()
+            else:
+                v_s = v[v["Segment"] == s].copy()
+            pre = set(v_s[v_s["infection"] == "pre"]["DI"])
+            post = set(v_s[v_s["infection"] == "post"]["DI"])
+            post_sc = set(v_s[v_s["infection"] == "post_sc"]["DI"])
+            '''
             pre_post = pd.concat([pre["DI"], post["DI"]], ignore_index=True)
+            pre_post_sc = pd.concat([pre["DI"], post_sc["DI"]], ignore_index=True)
+            post_post_sc = pd.concat([post["DI"], post_sc["DI"]], ignore_index=True)
+            pre_post_post_sc = pd.concat([pre["DI"], post["DI"], post_sc["DI"]], ignore_index=True)
 
             pre_count = pre["DI"].nunique()
             post_count = post["DI"].nunique()
+            post_sc_count = post["DI"].nunique()
             pre_post_all = pre_post.nunique()
             duplicates = pre_count + post_count - pre_post_all
             pre_post_unique = pre_post_all - duplicates
-
-            venn2(subsets=(pre_count-duplicates, post_count-duplicates, duplicates),
-                  set_labels=("pre", "post"), ax=axs[i])
+            '''
+            venn3([pre, post, post_sc],
+                  set_labels=("pre", "post", "post_sc"), ax=axs[i])
             axs[i].set_title(f"{s}")
-        
+       
+
+
         fig.suptitle(f"overlap of pre and post groups for {k}")
         
         save_path = os.path.join(RESULTSPATH, "intra_vs_extracellular", f"venn_diagramm_{k}.png")
