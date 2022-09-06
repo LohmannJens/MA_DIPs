@@ -247,6 +247,30 @@ def count_nuc_freq_overlap(seq_dict: dict, strain: str, seg: str)-> object:
     return n_df
 
 
+def include_correction(nuc_overlap_dict: dict)-> dict:
+    '''
+        Adds a correction to the counting of the direct repeats. This is due to
+        the fact that at these sites the observations get merged towards higher
+        lengths of the direct repeat.
+        :param nuc_overlap_dict: counting dict of the direct repeats
+
+        :return: corrected counts of the direct repeats (same structure as
+                 input
+    '''
+    new = dict()
+    for idx in nuc_overlap_dict.keys():
+        org_value = nuc_overlap_dict[idx]
+        if org_value != 0:
+            divided_value = org_value/(idx+1)
+            new[idx] = divided_value
+            for idx_2 in range(0, idx):
+                new[idx_2] = new[idx_2] + divided_value
+        else:
+            new[idx] = 0
+
+    return new
+
+
 def nucleotide_overlap_analysis(seq_dict: dict, seg: str, mode: int, ngs_thresh: int=0, correction: bool=False)-> None:
     '''
         gets the sequences for all four strains and calculates the overlap of 
@@ -273,18 +297,7 @@ def nucleotide_overlap_analysis(seq_dict: dict, seg: str, mode: int, ngs_thresh:
             continue
         
         if correction:
-            new = dict()
-            for idx in nuc_overlap_dict.keys():
-                org_value = nuc_overlap_dict[idx]
-                if org_value != 0:
-                    divided_value = org_value/(idx+1)
-                    new[idx] = divided_value
-                    for idx_2 in range(0, idx):
-                        new[idx_2] = new[idx_2] + divided_value
-                else:
-                    new[idx] = 0
-
-            nuc_overlap_dict = new
+            nuc_overlap_dict = include_correction(nuc_overlap_dict)
 
         # get expected values
         s = (int(v.Start.quantile(QUANT)), int(v.Start.quantile(1-QUANT)))
