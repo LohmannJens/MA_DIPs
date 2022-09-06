@@ -10,13 +10,14 @@ import pandas as pd
 import matplotlib.pyplot as plt
 
 from scipy import stats
+from decimal import Decimal, ROUND_HALF_UP
 
 sys.path.insert(0, "..")
 sys.path.insert(0, "../relative_occurrence_nucleotides")
 sys.path.insert(0, "../regression_length_vs_occurrence")
 from utils import DATAPATH, RESULTSPATH, SEGMENTS, QUANT, S_ROUNDS
 from utils import load_pelz_dataset, get_stat_symbol, get_sequence, generate_sampling_data, create_sequence_library
-from composition_junction_site import nucleotide_occurrence_analysis, count_overlapping_nucleotides_overall
+from composition_junction_site import nucleotide_occurrence_analysis, count_overlapping_nucleotides_overall, include_correction
 from regression_length_occurrence import format_dataset_for_plotting, fit_models_and_plot_data
 
 
@@ -32,7 +33,7 @@ def load_top_gain_de_novo()-> dict:
     return data_dict
 
 
-def nuc_overlap_analysis(seq_dict: dict, mode: int, top: bool=False)-> None:
+def nuc_overlap_analysis(seq_dict: dict, mode: int, top: bool=False, correction: bool=False)-> None:
     '''
         Calculates the overlapping nucleotides of all sequences of the Pelz
         dataset.
@@ -40,6 +41,7 @@ def nuc_overlap_analysis(seq_dict: dict, mode: int, top: bool=False)-> None:
         :param mode: states which calculation mode is used. Check
                      composition_junction_site.py for more info.
         :param top: states if the whole dataset or just the top DI RNA are used
+        :param correction: if True a correction calculation is made
 
         :return: None
     '''
@@ -53,7 +55,10 @@ def nuc_overlap_analysis(seq_dict: dict, mode: int, top: bool=False)-> None:
             n = len(v_s.index)
             if n <= 1:
                 continue
-    
+
+            if correction:
+                nuc_overlap_dict = include_correction(nuc_overlap_dict)
+
             start = (int(v_s.Start.quantile(QUANT)), int(v_s.Start.quantile(1-QUANT)))
             end = (int(v_s.End.quantile(QUANT)), int(v_s.End.quantile(1-QUANT)))
             sampling_data = generate_sampling_data(seq, start, end, n*S_ROUNDS)
@@ -67,7 +72,10 @@ def nuc_overlap_analysis(seq_dict: dict, mode: int, top: bool=False)-> None:
             f_obs = list()
             f_exp = list()
             for a in x:
-                f_obs.extend([a]*nuc_overlap_dict[a])
+                if correction:
+                    f_obs.extend([a]*int(Decimal(nuc_overlap_dict[a]).to_integral_value(rounding=ROUND_HALF_UP)))
+                else:
+                    f_obs.extend([a]*nuc_overlap_dict[a])
                 f_exp.extend([a]*exp[a])
             f_obs = np.array(f_obs)
             f_exp = np.array(f_exp)
@@ -89,6 +97,8 @@ def nuc_overlap_analysis(seq_dict: dict, mode: int, top: bool=False)-> None:
         fname = f"overlapping_nucleotides_{k}_top_mode{mode}.pdf"
     else:
         fname = f"overlapping_nucleotides_{k}_mode{mode}.pdf"
+    if correction:
+        fname = f"overlapping_nucleotides_{k}_mode{mode}_corr.pdf"
     savepath = os.path.join(RESULTSPATH, "control_analysis", fname)
     plt.savefig(savepath)
     plt.close()
@@ -114,13 +124,14 @@ if __name__ == "__main__":
 
     nuc_overlap_analysis(seq_list_dict, 1)
     nuc_overlap_analysis(seq_list_dict, 2)
+    nuc_overlap_analysis(seq_list_dict, 1, correction=True)
     
     # do the linear regression analysis (length vs NGS count)
     strain = "PR"
     x, y, err = format_dataset_for_plotting(data_dict["PR"], strain)
     y_exp = y
     fit_models_and_plot_data(x, y, y_exp, err, strain)
-    src = os.path.join(RESULTSPATH, "regression_length_count", f"PR_regression_analysis.png")
+    src = os.path.join(RESULTSPATH, "regression_length_vs_occurrence", f"PR_regression_analysis.png")
     dst = os.path.join(RESULTSPATH, "control_analysis", f"PR_regression_analysis.png")
     os.rename(src, dst)
 
