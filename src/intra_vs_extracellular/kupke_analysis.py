@@ -36,24 +36,10 @@ def venn_analysis(data: dict)-> None:
             pre = set(v_s[v_s["infection"] == "pre"]["DI"])
             post = set(v_s[v_s["infection"] == "post"]["DI"])
             post_sc = set(v_s[v_s["infection"] == "post_sc"]["DI"])
-            '''
-            pre_post = pd.concat([pre["DI"], post["DI"]], ignore_index=True)
-            pre_post_sc = pd.concat([pre["DI"], post_sc["DI"]], ignore_index=True)
-            post_post_sc = pd.concat([post["DI"], post_sc["DI"]], ignore_index=True)
-            pre_post_post_sc = pd.concat([pre["DI"], post["DI"], post_sc["DI"]], ignore_index=True)
 
-            pre_count = pre["DI"].nunique()
-            post_count = post["DI"].nunique()
-            post_sc_count = post["DI"].nunique()
-            pre_post_all = pre_post.nunique()
-            duplicates = pre_count + post_count - pre_post_all
-            pre_post_unique = pre_post_all - duplicates
-            '''
             venn3([pre, post, post_sc],
                   set_labels=("pre", "post", "post_sc"), ax=axs[i])
             axs[i].set_title(f"{s}")
-       
-
 
         fig.suptitle(f"overlap of pre and post groups for {k}")
         

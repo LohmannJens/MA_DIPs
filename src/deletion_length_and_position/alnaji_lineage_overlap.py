@@ -24,26 +24,21 @@ def lineage_overlap(data: dict)-> None:
 
         :return: None
     '''
-    for name in ["Cal07", "NC", "Perth", "B_LEE"]:
+    fig, axs = plt.subplots(4, 1, figsize=(8, 10), tight_layout=True)
+    for i, name in enumerate(["Cal07", "NC", "Perth", "B_LEE"]):
         l1 = data[name + "_l1"]
         l2 = data[name + "_l2"]
 
-        l1_df = l1[l1.columns[0:3]].apply(lambda x: "_".join(x.astype(str)), axis=1)
-        l2_df = l2[l2.columns[0:3]].apply(lambda x: "_".join(x.astype(str)), axis=1)
-        l1_l2_df = pd.concat([l1_df, l2_df], ignore_index=True)
+        l1_df = set(l1[l1.columns[0:3]].apply(lambda x: "_".join(x.astype(str)), axis=1))
+        l2_df = set(l2[l2.columns[0:3]].apply(lambda x: "_".join(x.astype(str)), axis=1))
 
-        n_l1 = l1_df.nunique()
-        n_l2 = l2_df.nunique()
-        n_l1l2 = n_l1 + n_l2
-        l1l2_all = l1_l2_df.nunique() # containing the duplicates once
-        l1l2_duplicates = n_l1l2 - l1l2_all
-        l1l2_unique = l1l2_all - l1l2_duplicates # only containing unique values
+        venn2([l1_df, l2_df], set_labels=("l1", "l2"), ax=axs[i])
+        axs[i].set_title(name)
 
-        venn2(subsets=(n_l1, n_l2, l1l2_duplicates),
-              set_labels=("l1", "l2"))
-        plt.title(f"{name} (quantity of duplicates: {l1l2_duplicates/l1l2_all*100:.3} %)")
-        plt.show()
-
+    fig.suptitle(f"overlap of lineage 1 and 2 for alnaji 2019 dataset")
+    save_path = os.path.join(RESULTSPATH, "deletion_length_and_position", f"venn_diagramm_alnaji.png")
+    plt.savefig(save_path)
+    plt.close()
 
 
 if __name__ == "__main__":
