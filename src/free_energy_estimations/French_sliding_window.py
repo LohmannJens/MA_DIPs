@@ -29,6 +29,9 @@ def run_tloop_analysis(rna: str, filename: str)-> None:
     TloopDuplex = 48 # Size of a t-loop
     Duplex = int(TloopDuplex / 2) # Length of one side of a t-loop
 
+    NP = 24
+    Uloop = "&"
+
     path = os.path.join(DATAPATH, "energy_calculation", "sliding_window", filename)
     if os.path.exists(path):
         os.remove(path)
@@ -43,6 +46,7 @@ def run_tloop_analysis(rna: str, filename: str)-> None:
     End = int((Length - Footprint + 1))
 
     for i in range(1, End-1):
+        # This is for the Tloop Duplex
         if i <= Duplex:
             Prime3 = NegRNA[0:Duplex]
         else:
@@ -55,9 +59,27 @@ def run_tloop_analysis(rna: str, filename: str)-> None:
             Prime5 = NegRNA[Footprint+i:Length]
         Prime5inv = Prime5[::-1]
 
-        #use duplex fold to compute t-loop from Vienna package because it ignores intermol bp
         duplex = RNA.duplexfold(Prime5inv, Prime3inv)
-        f.write(f"{i},{duplex.energy}\n")
+
+        # This is for the t loops that can occure before and after the polymerase
+        if i <= NP:
+            Upstream = i
+            Downstream = 0
+        else:
+            Upstream = NP
+            Downstream = i-NP
+     
+        Ahead = NegRNA[Footprint+i:Footprint+NP+i]
+        Aheadinv = Ahead[::-1]
+        Down = NegRNA[Downstream:i]
+        Downinv = Down[::-1]
+        Other = Aheadinv + Uloop + Downinv
+
+        (ss, mfe_dimer) = RNA.cofold(Other)
+
+        result = duplex.energy + mfe_dimer
+
+        f.write(f"{i},{result}\n")
 
     f.close()
     print (f"Done {filename}")

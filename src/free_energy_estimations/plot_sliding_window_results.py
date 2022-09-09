@@ -7,6 +7,7 @@
 import os
 import sys
 
+import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
 
@@ -146,6 +147,58 @@ def create_boxplots(d: dict, w_s: int, s_s: int)-> None:
     plt.close()
 
 
+def create_scatterplots(d: dict, w_s: int, s_s: int)-> None:
+    '''
+        Loads the deletion start and end points and the estimated delta G and
+        Plots the delta G against the NGS count in a scatter plot. Also does a
+        linear regression to detect a possible correlation.
+        :param d: dictionary with the start and end point data split by strains
+        :param w_s: size of the window in the sliding window approach
+        :param s_s: step size of the sliding window approach
+
+        :return: None
+    '''
+    energy_path = os.path.join(DATAPATH, "energy_calculation", "sliding_window")
+    fig, axs = plt.subplots(4, 1, figsize=(10, 15), tight_layout=True)
+    for i, (k, v) in enumerate(d.items()):
+        data = list()
+
+        for s in SEGMENTS:
+            seg_df = v.loc[v["Segment"] == s]
+            if seg_df.size != 0:
+                start_seg_df = seg_df.loc[:, ["Start", "NGS_read_count"]]
+                start_seg_df.rename(columns={"Start": "Position"}, inplace=True)
+                end_seg_df = seg_df.loc[:, ["End", "NGS_read_count"]]
+                end_seg_df.rename(columns={"End": "Position"}, inplace=True)
+                concat_seg_df = pd.concat([start_seg_df, end_seg_df])
+                concat_seg_df = concat_seg_df.groupby("Position").sum()
+
+                energy_file = os.path.join(energy_path, f"{k}_{s}_{w_s}_{s_s}.csv")
+                energy_df = pd.read_csv(energy_file)
+
+                concat_seg_df["position"] = concat_seg_df.index
+                merged_df = pd.merge(concat_seg_df, energy_df)
+                data.append(merged_df)
+
+        data = pd.concat(data, ignore_index=True)
+
+        axs[i].scatter(data["NGS_read_count"], data["delta_G"])
+
+        b, a, r, p, std_err = stats.linregress(data["NGS_read_count"], data["delta_G"], )
+        axs[i].plot(data["NGS_read_count"], a + b * data["delta_G"])
+
+        axs[i].set_title(f"{k} R²:{r:.2}")
+        axs[i].set_xlabel("Segments")
+        axs[i].set_ylabel("\u0394 G")
+        axs[i].invert_yaxis()
+
+
+    save_path = os.path.join(RESULTSPATH, "free_energy_estimations")
+    save_file = os.path.join(save_path, f"boxplot_sliding_window_scatter.pdf")
+    fig.savefig(save_file)
+    plt.close()
+
+
 if __name__ == "__main__":
     cleaned_data_dict = load_alnaji_excel()
     all_reads_dict = load_short_reads(cleaned_data_dict)
@@ -154,4 +207,5 @@ if __name__ == "__main__":
     step_size = 1
     plot_deletions_with_delta_G(all_reads_dict, window_size, step_size)
     create_boxplots(all_reads_dict, window_size, step_size)
+    create_scatterplots(all_reads_dict, window_size, step_size)
 
