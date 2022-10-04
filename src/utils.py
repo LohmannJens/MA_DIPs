@@ -236,3 +236,15 @@ def load_kupke()-> dict:
     dic = dict({"PR8": data})
     return dic
 
+def load_alnaji_2021()-> dict:
+    '''
+        Loads the data set of Alnaji et al. 2021. Returns a dictionary with the
+        data.
+
+        :return: dictionary with strain name as key and data frame as value
+    '''
+    path = os.path.join(DATAPATH, "Alnaji2021", "Early_DIs_mbio.xlsx")
+    data = pd.read_excel(path)
+    dic = dict({"PR8": data})
+    return dic
+
