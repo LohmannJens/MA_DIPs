@@ -72,20 +72,45 @@ def get_intersection(df: object, col_name: str, choices: list)-> dict:
     return df_inter
 
 
+def slice_by_occurrence(data: dict, thresh: int, filepath: str)-> None:
+    '''
+        Allows to slice a dataset by the number of occurrences for each DI
+        candidate. Counts the number of occurrences for each DI Name and then
+        prints the candidates out, that are above a given threshhold.
+        :param data: data frame containing the DI candidates
+        :param thresh: occurrences larger or equal to this parameter are
+                       included in the writen file
+        :param filepath: indicating a path where to save the selected DI
+                         candidates as .csv file
+
+        :return: None
+    '''
+    df = data["PR8"]
+    occur_df = pd.DataFrame(df.groupby(["DI"]).size())
+    occur_df = occur_df.rename(columns={0: "Occurrences"})
+
+    #print(occur_df.groupby(["occurrences"]).size())
+
+    select_list = occur_df[occur_df["Occurrences"] >= thresh].index.values.tolist()
+    write_df = df[df["DI"].isin(select_list)].copy()
+
+    print(write_df)
+
+    write_df.drop(["DI", "Replicate", "Timepoint"], axis=1, inplace=True)
+
+    path = os.path.join(filepath, f"occurrence_{thresh}.csv")
+    write_df.to_csv(path, index=False)
+
+
 if __name__ == "__main__":
     data_dict = load_alnaji_2021()
-    venn_different_timepoints(data_dict)
+ #   venn_different_timepoints(data_dict)
 
-    # gives distribution on the number of duplicate DI sequences
-    # along the replicates and the timepoint (min 1, max 9)
-    occur = data_dict["PR8"].groupby(["DI"]).size()
-    occur_df = pd.DataFrame(occur)
-    occur_df = occur_df.rename(columns={0: "occurrences"})
-    print(occur_df.groupby(["occurrences"]).size())
 
-    #occur_df[occur_df["occurrences" == 9]]--> DI candidates that are in all replicates
     #give them out as .csv and use DIP-DSA to investigate them
     #maybe also use other thressholds 6-9
+    slice_by_occurrence(data_dict, 9, ".")
+
     #also give out all DI candidates that are at least once in each timepoint:
     #print(get_intersection(data_dict["PR8"], "Timepoint", ["3hpi", "6hpi", "24hpi"]))
 
