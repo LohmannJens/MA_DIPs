@@ -249,7 +249,7 @@ def load_alnaji_2021()-> dict:
         :return: dictionary with strain name as key and data frame as value
     '''
     path = os.path.join(DATAPATH, "Alnaji2021", "Early_DIs_mbio.xlsx")
-    data = pd.read_excel(path)
+    data = pd.read_excel(path, na_values=["", "None"], keep_default_na=False)
     dic = dict({"PR8": data})
     return dic
 
