@@ -68,7 +68,7 @@ def get_intersection(df: object, col_name: str, choices: list)-> dict:
 
     set_inter = set1.intersection(set2, set3)
     df_inter = df[df["DI"].isin(set_inter)]
-
+    
     return df_inter
 
 
@@ -92,11 +92,14 @@ def slice_by_occurrence(data: dict, thresh: int, filepath: str)-> None:
     #print(occur_df.groupby(["occurrences"]).size())
 
     select_list = occur_df[occur_df["Occurrences"] >= thresh].index.values.tolist()
-    write_df = df[df["DI"].isin(select_list)].copy()
+    selected_df = df[df["DI"].isin(select_list)].copy()
+    selected_df = selected_df.groupby("DI").sum() # combine NGS_read_count
+    selected_df.reset_index(inplace=True)
 
-    print(write_df)
-
-    write_df.drop(["DI", "Replicate", "Timepoint"], axis=1, inplace=True)
+    write_df = selected_df[["DI", "NGS_read_count"]]
+    write_df[["Segment", "Start", "End"]] = write_df["DI"].str.split("_", expand=True)
+    write_df.drop(["DI"], axis=1, inplace=True)
+    write_df = write_df[["Segment", "Start", "End", "NGS_read_count"]] # reorder cols
 
     path = os.path.join(filepath, f"occurrence_{thresh}.csv")
     write_df.to_csv(path, index=False)
