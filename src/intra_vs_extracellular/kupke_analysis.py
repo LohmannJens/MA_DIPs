@@ -49,5 +49,5 @@ def venn_analysis(data: dict)-> None:
 
 
 if __name__ == "__main__":
-    data_dict = load_kupke()
+    data_dict = load_kupke(corrected=False)
     venn_analysis(data_dict)
