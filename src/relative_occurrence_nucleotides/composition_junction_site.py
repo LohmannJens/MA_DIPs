@@ -321,8 +321,17 @@ def nucleotide_overlap_analysis(seq_dict: dict, seg: str, mode: int, ngs_thresh:
             f_exp.extend([a]*exp[a])
         f_obs = np.array(f_obs)
         f_exp = np.array(f_exp)
-        res = stats.mannwhitneyu(f_obs, f_exp)
-        symbol = get_stat_symbol(res.pvalue)
+
+        # select statistical test here
+        #stats_test = "mannwhitneyu"
+        stats_test = "ks_2samp"
+
+        if stats_test == "mannwhitneyu":
+           res = stats.mannwhitneyu(f_obs, f_exp)
+           symbol = get_stat_symbol(res.pvalue)
+        elif stats_test == "ks_2samp":
+            stat, pvalue = stats.ks_2samp(f_obs, f_exp)
+            symbol=get_stat_symbol(pvalue)
 
         # plot results as barplot
         axs[i].bar(x=x, height=h/h.sum(), width=-0.4, align="edge", label="observed")
@@ -334,8 +343,8 @@ def nucleotide_overlap_analysis(seq_dict: dict, seg: str, mode: int, ngs_thresh:
         axs[i].set_ylim(bottom=0.0, top=1.0)
 
     ngs_thresh = "" if ngs_thresh == 0 else f"NGS{ngs_thresh}_"
-    corr = "corr" if correction else ""
-    fname = f"{seg}_mode{mode}_{ngs_thresh}sequence_distribution_{corr}.pdf"
+    corr = "_corr" if correction else ""
+    fname = f"{seg}_mode{mode}_{ngs_thresh}sequence_distribution{corr}.pdf"
     savepath = os.path.join(RESULTSPATH, "overlapping_nucleotides", fname)
     plt.savefig(savepath)
     plt.close()
