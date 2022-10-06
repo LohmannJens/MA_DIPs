@@ -191,8 +191,8 @@ def compare_direct_repeats(df: dict, strain: str, mode: int)-> None:
             symbol = get_stat_symbol(pvalue)
 
         # plot results as barplot
-        axs[i, j].bar(x=x, height=below_h/below_h.sum(), width=-0.4, align="edge", label="observed")
-        axs[i, j].bar(x=x, height=above_h/above_h.sum(), width=0.4, align="edge", label="expected")
+        axs[i, j].bar(x=x, height=below_h/below_h.sum(), width=-0.4, align="edge", label="below")
+        axs[i, j].bar(x=x, height=above_h/above_h.sum(), width=0.4, align="edge", label="above")
         axs[i, j].set_xlabel("number of overlapping nucleotides")
         axs[i, j].set_ylabel("relative occurrence")
         axs[i, j].set_title(f"{s} {symbol}")
@@ -218,7 +218,7 @@ def slice_by_occurrence(df: object, thresh: int, below: bool)-> object:
         prints the candidates out, that are above a given threshhold.
         :param data: data frame containing the DI candidates
         :param thresh: occurrences larger or equal to this parameter are
-                       included in the writen file
+                       included in the written file
 
         :return: data frame
     '''
@@ -239,6 +239,10 @@ def slice_by_occurrence(df: object, thresh: int, below: bool)-> object:
     return_df.drop(["DI"], axis=1, inplace=True)
     return_df = return_df[["Segment", "Start", "End", "NGS_read_count"]] # reorder cols
 
+    return_df["Start"] = return_df["Start"].astype(str).astype(int)
+    return_df["End"] = return_df["End"].astype(str).astype(int)
+    return_df["Segment"] = return_df["Segment"].astype(str)
+
     return return_df
 
 
@@ -249,14 +253,13 @@ if __name__ == "__main__":
 
     # Compare DI candidates that occur once to those that occur more often
     data_df = data_dict["PR8"]
+
     below_df = slice_by_occurrence(data_df, 2, below=True)
     above_df = slice_by_occurrence(data_df, 2, below=False)
 
     below_df = below_df.assign(Group = ["below"] * len(below_df.index))
     above_df = above_df.assign(Group = ["above"] * len(above_df.index))
     concat_df = pd.concat([below_df, above_df])
-    concat_df["Start"] = concat_df["Start"].astype(str).astype(int)
-    concat_df["End"] = concat_df["Start"].astype(str).astype(int)
 
     sequences_dict = create_sequence_library({"PR8": concat_df})
 
