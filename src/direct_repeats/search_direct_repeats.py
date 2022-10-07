@@ -43,6 +43,11 @@ def calculate_direct_repeat(seq: str, s: int, e: int, w_len: int, m: int)-> (int
     if m == 1:
         start_window = seq[s-w_len: s]
         end_window = seq[e-1-w_len: e-1]
+        
+        #if they are the same return directly to avoid off-by-one error
+        if start_window == end_window:
+            return len(start_window), start_window
+
         for i in range(w_len - 1, -1, -1):
             if start_window[i] == end_window[i]:
                 counter += 1
