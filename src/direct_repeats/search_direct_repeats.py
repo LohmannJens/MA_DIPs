@@ -238,7 +238,7 @@ def count_nuc_freq_direct_repeats(seq_dict: dict, strain: str, seg: str)-> objec
     return n_df
 
 
-def direct_repeat_seq_occurrence_analysis(overlap_dict: dict)-> None:
+def direct_repeats_seq_occurrence_analysis(overlap_dict: dict)-> None:
     '''
         Gets a dictionary with all direct repeat sequences, split by segments
         and strains. Calculates the relative occurrence of each nucleotide and
