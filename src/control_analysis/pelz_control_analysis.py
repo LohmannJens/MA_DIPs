@@ -14,10 +14,12 @@ from decimal import Decimal, ROUND_HALF_UP
 
 sys.path.insert(0, "..")
 sys.path.insert(0, "../relative_occurrence_nucleotides")
+sys.path.insert(0, "../direct_repeats")
 sys.path.insert(0, "../regression_length_vs_occurrence")
 from utils import DATAPATH, RESULTSPATH, SEGMENTS, QUANT, S_ROUNDS
 from utils import load_pelz_dataset, get_stat_symbol, get_sequence, generate_sampling_data, create_sequence_library
-from composition_junction_site import nucleotide_occurrence_analysis, count_overlapping_nucleotides_overall, include_correction
+from composition_junction_site import nucleotide_occurrence_analysis
+from search_direct_repeats import count_direct_repeats_overall, include_correction
 from regression_length_occurrence import format_dataset_for_plotting, fit_models_and_plot_data
 
 
@@ -29,14 +31,13 @@ def load_top_gain_de_novo()-> dict:
     '''
     path = os.path.join(DATAPATH, "Pelz2021", "Top_DI_RNA.xlsx")
     data = pd.read_excel(path)
-    data_dict = dict({"PR": data})
+    data_dict = dict({"PR8": data})
     return data_dict
 
 
-def nuc_overlap_analysis(seq_dict: dict, mode: int, top: bool=False, correction: bool=False)-> None:
+def direct_repeats_analysis(seq_dict: dict, mode: int, top: bool=False, correction: bool=False)-> None:
     '''
-        Calculates the overlapping nucleotides of all sequences of the Pelz
-        dataset.
+        Calculates the direct repeats of all sequences of the Pelz dataset.
         :param seq_dict: dictionary with the sequences
         :param mode: states which calculation mode is used. Check
                      composition_junction_site.py for more info.
@@ -51,7 +52,7 @@ def nuc_overlap_analysis(seq_dict: dict, mode: int, top: bool=False, correction:
         for i, s in enumerate(SEGMENTS):
             v_s = v.loc[(v["Segment"] == s)]
             seq = get_sequence(k, s)
-            nuc_overlap_dict, _ = count_overlapping_nucleotides_overall(v_s, seq, mode)  
+            nuc_overlap_dict, _ = count_direct_repeats_overall(v_s, seq, mode)  
             n = len(v_s.index)
             if n <= 1:
                 continue
@@ -62,7 +63,7 @@ def nuc_overlap_analysis(seq_dict: dict, mode: int, top: bool=False, correction:
             start = (int(v_s.Start.quantile(QUANT)), int(v_s.Start.quantile(1-QUANT)))
             end = (int(v_s.End.quantile(QUANT)), int(v_s.End.quantile(1-QUANT)))
             sampling_data = generate_sampling_data(seq, start, end, n*S_ROUNDS)
-            exp, _ = count_overlapping_nucleotides_overall(sampling_data, seq, mode)
+            exp, _ = count_direct_repeats_overall(sampling_data, seq, mode)
 
             x = list(nuc_overlap_dict.keys())
             h = np.array(list(nuc_overlap_dict.values()))
@@ -94,11 +95,11 @@ def nuc_overlap_analysis(seq_dict: dict, mode: int, top: bool=False, correction:
             if i == 3:
                 j = 1
     if top:
-        fname = f"overlapping_nucleotides_{k}_top_mode{mode}.pdf"
+        fname = f"direct_repeats_{k}_top_mode{mode}.pdf"
     else:
-        fname = f"overlapping_nucleotides_{k}_mode{mode}.pdf"
+        fname = f"direct_repeats_{k}_mode{mode}.pdf"
     if correction:
-        fname = f"overlapping_nucleotides_{k}_mode{mode}_corr.pdf"
+        fname = f"direct_repeats_{k}_mode{mode}_corr.pdf"
     savepath = os.path.join(RESULTSPATH, "control_analysis", fname)
     plt.savefig(savepath)
     plt.close()
@@ -109,8 +110,8 @@ if __name__ == "__main__":
     
     top_di_rna = load_top_gain_de_novo()  
     top_seq_dict = create_sequence_library(top_di_rna)
-    nuc_overlap_analysis(top_seq_dict, 1, True)
-    nuc_overlap_analysis(top_seq_dict, 2, True)
+    direct_repeats_analysis(top_seq_dict, 1, True)
+    direct_repeats_analysis(top_seq_dict, 2, True)
     
     # analysis for the whole Pelz dataset
     data_dict = load_pelz_dataset()
@@ -122,16 +123,16 @@ if __name__ == "__main__":
         if os.path.exists(src):
             os.rename(src, dst)
 
-    nuc_overlap_analysis(seq_list_dict, 1)
-    nuc_overlap_analysis(seq_list_dict, 2)
-    nuc_overlap_analysis(seq_list_dict, 1, correction=True)
+    direct_repeats_analysis(seq_list_dict, 1)
+    direct_repeats_analysis(seq_list_dict, 2)
+    direct_repeats_analysis(seq_list_dict, 1, correction=True)
     
     # do the linear regression analysis (length vs NGS count)
-    strain = "PR"
-    x, y, err = format_dataset_for_plotting(data_dict["PR"], strain)
+    strain = "PR8"
+    x, y, err = format_dataset_for_plotting(data_dict["PR8"], strain)
     y_exp = y
     fit_models_and_plot_data(x, y, y_exp, err, strain)
-    src = os.path.join(RESULTSPATH, "regression_length_vs_occurrence", f"PR_regression_analysis.png")
-    dst = os.path.join(RESULTSPATH, "control_analysis", f"PR_regression_analysis.png")
+    src = os.path.join(RESULTSPATH, "regression_length_vs_occurrence", f"PR8_regression_analysis.png")
+    dst = os.path.join(RESULTSPATH, "control_analysis", f"PR8_regression_analysis.png")
     os.rename(src, dst)
 
