@@ -282,7 +282,7 @@ def direct_repeat_seq_occurrence_analysis(overlap_dict: dict)-> None:
         axs[i].set_ylabel("rel. nuc. occurrence")
 
     fname = f"nuc_dist_overlap_sequence.pdf"
-    savepath = os.path.join(RESULTSPATH, "overlapping_nucleotides", fname)
+    savepath = os.path.join(RESULTSPATH, "direct_repeats", fname)
     plt.savefig(savepath)
     plt.close()
 
