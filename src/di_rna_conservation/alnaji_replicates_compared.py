@@ -10,12 +10,13 @@ import matplotlib.pyplot as plt
 
 from scipy import stats
 from matplotlib_venn import venn3
+from decimal import Decimal, ROUND_HALF_UP
 
 sys.path.insert(0, "..")
 sys.path.insert(0, "../relative_occurrence_nucleotides")
 from utils import RESULTSPATH, SEGMENTS, COLORS
 from utils import load_alnaji_2021, get_sequence, get_stat_symbol, create_sequence_library
-from composition_junction_site import count_nucleotide_occurrence_overall, count_overlapping_nucleotides_overall, nucleotide_overlap_analysis
+from composition_junction_site import count_nucleotide_occurrence_overall, count_overlapping_nucleotides_overall, include_correction
 
 
 def venn_different_timepoints(data: dict)-> None:
@@ -137,7 +138,7 @@ def compare_nucleotide_occurrence(df: object, strain: str)-> None:
         plt.close()
 
 
-def compare_direct_repeats(df: dict, strain: str, mode: int)-> None:
+def compare_direct_repeats(df: dict, strain: str, mode: int, correction: bool)-> None:
     '''
         gets the sequences for all four strains and calculates the overlap of 
         the nucleotides at the junction site.
@@ -145,6 +146,8 @@ def compare_direct_repeats(df: dict, strain: str, mode: int)-> None:
         :param strain: name of the strain
         :param mode: states which calculation mode is used in 
                      calculate_overlapping_nucleotides() check there for info
+        :param correction: if True a correction calculation for the counts is
+                           made
 
         :return: None
     '''
@@ -162,9 +165,13 @@ def compare_direct_repeats(df: dict, strain: str, mode: int)-> None:
         above_direct_repeats, _ = count_overlapping_nucleotides_overall(above_df, seq, mode)
 
         # only plot results if at least one data point is available
-        if (n_below == 0 or n_above == 0):
+        if (n_below <= 1 or n_above <= 1):
             continue
         
+        if correction:
+            below_direct_repeats = include_correction(below_direct_repeats)       
+            above_direct_repeats = include_correction(above_direct_repeats)
+
         x = list(below_direct_repeats.keys())
         below_h = np.array(list(below_direct_repeats.values()))
         above_h = np.array(list(above_direct_repeats.values()))
@@ -173,8 +180,12 @@ def compare_direct_repeats(df: dict, strain: str, mode: int)-> None:
         f_below = list()
         f_above = list()
         for a in x:
-            f_below.extend([a]*below_direct_repeats[a])
-            f_above.extend([a]*above_direct_repeats[a])
+            if correction:
+                f_below.extend([a]*int(Decimal(below_direct_repeats[a]).to_integral_value(rounding=ROUND_HALF_UP)))
+                f_above.extend([a]*int(Decimal(above_direct_repeats[a]).to_integral_value(rounding=ROUND_HALF_UP)))
+            else:
+                f_below.extend([a]*below_direct_repeats[a])
+                f_above.extend([a]*above_direct_repeats[a])
 
         f_below = np.array(f_below)
         f_above = np.array(f_above)
@@ -189,10 +200,10 @@ def compare_direct_repeats(df: dict, strain: str, mode: int)-> None:
         elif stats_test == "ks_2samp":
             stat, pvalue = stats.ks_2samp(f_below, f_above)
             symbol = get_stat_symbol(pvalue)
-
+        
         # plot results as barplot
-        axs[i, j].bar(x=x, height=below_h/below_h.sum(), width=-0.4, align="edge", label="below")
-        axs[i, j].bar(x=x, height=above_h/above_h.sum(), width=0.4, align="edge", label="above")
+        axs[i, j].bar(x=x, height=below_h/below_h.sum(), width=-0.4, align="edge", label=f"below (n={n_below})")
+        axs[i, j].bar(x=x, height=above_h/above_h.sum(), width=0.4, align="edge", label=f"above (n={n_above})")
         axs[i, j].set_xlabel("number of overlapping nucleotides")
         axs[i, j].set_ylabel("relative occurrence")
         axs[i, j].set_title(f"{s} {symbol}")
@@ -205,7 +216,9 @@ def compare_direct_repeats(df: dict, strain: str, mode: int)-> None:
         else:
             i += 1
 
-    fname = f"{strain}_mode{mode}_direct_repeats.pdf"
+
+    corr = "_corr" if correction else ""    
+    fname = f"{strain}_mode{mode}_direct_repeats{corr}.pdf"
     savepath = os.path.join(RESULTSPATH, "di_rna_conservation", fname)
     plt.savefig(savepath)
     plt.close()
@@ -249,7 +262,7 @@ def slice_by_occurrence(df: object, thresh: int, below: bool)-> object:
 if __name__ == "__main__":
     data_dict = load_alnaji_2021()
     # check the overlap of the different timepoints
-    venn_different_timepoints(data_dict)
+#    venn_different_timepoints(data_dict)
 
     # Compare DI candidates that occur once to those that occur more often
     data_df = data_dict["PR8"]
@@ -263,6 +276,7 @@ if __name__ == "__main__":
 
     sequences_dict = create_sequence_library({"PR8": concat_df})
 
-    compare_nucleotide_occurrence(sequences_dict["PR8"], "PR8")
-    compare_direct_repeats(sequences_dict["PR8"], "PR8", mode=1)
+#    compare_nucleotide_occurrence(sequences_dict["PR8"], "PR8")
+    compare_direct_repeats(sequences_dict["PR8"], "PR8", mode=1, correction=True)
+    compare_direct_repeats(sequences_dict["PR8"], "PR8", mode=1, correction=False)
 
