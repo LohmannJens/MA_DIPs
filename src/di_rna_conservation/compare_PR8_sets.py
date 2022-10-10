@@ -53,14 +53,14 @@ def get_intersection(df: object, col_name: str, choices: list)-> dict:
 
     inter_set = set1.intersection(set2, set3)
     inter_df = df[df["DI"].isin(inter_set)]
-    
+
     return inter_df
 
 
 if __name__ == "__main__":
     alnaji_df = load_alnaji_2021()["PR8"]
     kupke_df = load_kupke(corrected=True)["PR8"]
-    pelz_df = load_pelz_dataset()["PR"]
+    pelz_df = load_pelz_dataset()["PR8"]
 
     pelz_df["DI"] = pelz_df["Segment"] + "_" + pelz_df["Start"].astype(str) + "_" + pelz_df["End"].astype(str)
 
