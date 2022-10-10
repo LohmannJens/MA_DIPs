@@ -14,9 +14,11 @@ from decimal import Decimal, ROUND_HALF_UP
 
 sys.path.insert(0, "..")
 sys.path.insert(0, "../relative_occurrence_nucleotides")
+sys.path.insert(0, "../direct_repeats")
 from utils import RESULTSPATH, SEGMENTS, COLORS
 from utils import load_alnaji_2021, get_sequence, get_stat_symbol, create_sequence_library
-from composition_junction_site import count_nucleotide_occurrence_overall, count_overlapping_nucleotides_overall, include_correction
+from composition_junction_site import count_nucleotide_occurrence_overall
+from search_direct_repeats import count_direct_repeats_overall, include_correction
 
 
 def venn_different_timepoints(data: dict)-> None:
@@ -48,7 +50,7 @@ def venn_different_timepoints(data: dict)-> None:
 
         fig.suptitle(f"overlap of replicates at different timepoints for {k}")
         
-        save_path = os.path.join(RESULTSPATH, "di_rna_conservation", f"venn_diagramm_{k}.png")
+        save_path = os.path.join(RESULTSPATH, "di_rna_conservation", f"venn_alnaji_timepoints.png")
         plt.savefig(save_path)
         plt.close()
 
@@ -104,17 +106,13 @@ def compare_nucleotide_occurrence(df: object, strain: str)-> None:
 
             # statisitcal testing
             # TODO: maybe delete it, because everything is significant
-            for j, p in enumerate(h_above_s):
-                a = [1]*int(below_start[nuc][j]) + [0]*(n_below-int(below_start[nuc][j]))
-                b = [1]*int(above_start[nuc][j]) + [0]*(n_below-int(above_start[nuc][j]))
-                result = stats.ttest_ind(a, b)
+            for j, (k, p) in enumerate(zip(below_start[nuc], h_above_s)):
+                result = stats.binomtest(int(k), n_below, p)
                 symbol = get_stat_symbol(result.pvalue)
                 axs[i, 0].annotate(symbol, (j+1, max(h_below_s[j], p)),
                                    fontsize="x-small", ha="center", stretch="condensed")
-            for j, p in enumerate(h_above_e):
-                a = [1]*int(below_end[nuc][j]) + [0]*(n_below-int(below_end[nuc][j]))
-                b = [1]*int(above_end[nuc][j]) + [0]*(n_below-int(above_end[nuc][j]))
-                result = stats.ttest_ind(a, b)
+            for j, (k, p) in enumerate(zip(below_end[nuc], h_above_e)):
+                result = stats.binomtest(int(k), n_below, p)
                 symbol = get_stat_symbol(result.pvalue)
                 axs[i, 1].annotate(symbol, (j+1, max(h_below_e[j], p)),
                                    fontsize="x-small", ha="center", stretch="condensed")
@@ -161,8 +159,8 @@ def compare_direct_repeats(df: dict, strain: str, mode: int, correction: bool)->
         above_df = df.loc[(df["Group"] == "above") & (df["Segment"] == s)]
         n_below = len(below_df)
         n_above = len(above_df)
-        below_direct_repeats, _ = count_overlapping_nucleotides_overall(below_df, seq, mode)
-        above_direct_repeats, _ = count_overlapping_nucleotides_overall(above_df, seq, mode)
+        below_direct_repeats, _ = count_direct_repeats_overall(below_df, seq, mode)
+        above_direct_repeats, _ = count_direct_repeats_overall(above_df, seq, mode)
 
         # only plot results if at least one data point is available
         if (n_below <= 1 or n_above <= 1):
@@ -218,7 +216,7 @@ def compare_direct_repeats(df: dict, strain: str, mode: int, correction: bool)->
 
 
     corr = "_corr" if correction else ""    
-    fname = f"{strain}_mode{mode}_direct_repeats{corr}.pdf"
+    fname = f"alnaji_{strain}_mode{mode}_compare_direct_repeats{corr}.pdf"
     savepath = os.path.join(RESULTSPATH, "di_rna_conservation", fname)
     plt.savefig(savepath)
     plt.close()
@@ -262,7 +260,7 @@ def slice_by_occurrence(df: object, thresh: int, below: bool)-> object:
 if __name__ == "__main__":
     data_dict = load_alnaji_2021()
     # check the overlap of the different timepoints
-#    venn_different_timepoints(data_dict)
+    venn_different_timepoints(data_dict)
 
     # Compare DI candidates that occur once to those that occur more often
     data_df = data_dict["PR8"]
@@ -276,7 +274,7 @@ if __name__ == "__main__":
 
     sequences_dict = create_sequence_library({"PR8": concat_df})
 
-#    compare_nucleotide_occurrence(sequences_dict["PR8"], "PR8")
+    compare_nucleotide_occurrence(sequences_dict["PR8"], "PR8")
     compare_direct_repeats(sequences_dict["PR8"], "PR8", mode=1, correction=True)
     compare_direct_repeats(sequences_dict["PR8"], "PR8", mode=1, correction=False)
 
