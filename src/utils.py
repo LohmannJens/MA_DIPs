@@ -253,3 +253,15 @@ def load_alnaji_2021()-> dict:
     dic = dict({"PR8": data})
     return dic
 
+def load_hpi14_alnaji()-> dict:
+    '''
+        Loads the hpi 14 data set of Alnaji et al. 2021. Returns a dictionary
+        with the data.
+
+        :return: dictionary with strain name as key and data frame as value
+    '''
+    path = os.path.join(DATAPATH, "Alnaji2021", "14hpi_inter_exter.xlsx")
+    data = pd.read_excel(path, na_values=["", "None"], keep_default_na=False)
+    dic = dict({"PR8": data})
+    return dic
+
