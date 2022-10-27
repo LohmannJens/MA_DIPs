@@ -16,13 +16,14 @@ sys.path.insert(0, "..")
 sys.path.insert(0, "../relative_occurrence_nucleotides")
 sys.path.insert(0, "../direct_repeats")
 sys.path.insert(0, "../control_analysis")
+sys.path.insert(0, "../regression_length_vs_occurrence")
 
 from utils import RESULTSPATH, SEGMENTS, COLORS
 from utils import load_alnaji_2021, get_sequence, get_stat_symbol, create_sequence_library
 from composition_junction_site import count_nucleotide_occurrence_overall, nucleotide_occurrence_analysis
 from search_direct_repeats import count_direct_repeats_overall, include_correction
-from pelz_control_analysis import direct_repeats_analysis
-
+from pelz_control_analysis import direct_repeats_analysis, linear_regression_analysis
+from regression_length_occurrence import format_dataset_for_plotting, fit_models_and_plot_data
 
 def venn_different_timepoints(data: dict)-> None:
     '''
@@ -294,3 +295,11 @@ if __name__ == "__main__":
     compare_direct_repeats(sequences_dict["PR8"], "PR8", mode=1, correction=True)
     compare_direct_repeats(sequences_dict["PR8"], "PR8", mode=1, correction=False)
 
+    # Linear regression analysis
+    strain = "PR8"
+    dst = os.path.join(RESULTSPATH, "di_rna_conservation", f"PR8_regression_analysis_full.pdf")
+    linear_regression_analysis(strain, concat_df, dst)
+    dst = os.path.join(RESULTSPATH, "di_rna_conservation", f"PR8_regression_analysis_above.pdf")
+    linear_regression_analysis(strain, above_df, dst)
+    dst = os.path.join(RESULTSPATH, "di_rna_conservation", f"PR8_regression_analysis_below.pdf")
+    linear_regression_analysis(strain, below_df, dst)
