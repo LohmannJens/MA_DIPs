@@ -50,10 +50,11 @@ def format_dataset_for_plotting(df, dataset_name: str)-> (list, list, list):
                 err.append(0)
             else:
                 err.append(np.std(df_s["NGS_read_count"]) / all_sum)
+
     return np.array(x), np.array(y) / np.array(y).sum(), err
 
 
-def fit_models_and_plot_data(x: list, y: list, y_exp: list, err: list, k: str)-> None:
+def fit_models_and_plot_data(x: list, y: list, y_exp: list, err: list, k: str, del_indices: list=[])-> None:
     '''
         Creates the linear and exponential model for the given data and plots
         the results.
@@ -62,6 +63,7 @@ def fit_models_and_plot_data(x: list, y: list, y_exp: list, err: list, k: str)->
         :param y_exp: cleaned y values for the exponential model (no 0 values)
         :param err: data for the error bar (only for schwartz dataset)
         :param k: name of the strain/data set
+        :param del_indices:
 
         :return: None
     '''
@@ -95,15 +97,8 @@ def fit_models_and_plot_data(x: list, y: list, y_exp: list, err: list, k: str)->
 
     # excluding outliners to maximize R²
     x_exp = x
-    if k == "Perth":
-        x = x[:-1]
-        y = y[:-1]
-    if k in ["Cal07", "schwartz", "B_Lee"]:
-        x = x[:-2]
-        y = y[:-2]
-    elif k == "IVA":
-        x = np.delete(x, [5, 6, 7, 14, 15, 22, 23])
-        y = np.delete(y, [5, 6, 7, 14, 15, 22, 23])
+    x = np.delete(x, del_indices)
+    y = np.delete(y, del_indices)
 
     # fit the models
     model = LinearRegression().fit(x.reshape((-1, 1)), y)
@@ -171,10 +166,16 @@ def perform_regression_analysis(data: dict)-> None:
                 y_IVA_expected = x / x.sum()
                 IVA_err = err
 
-        fit_models_and_plot_data(x, y, y_exp, err, k)
+        if k == "Perth":
+            del_indices = [7]
+        if k in ["Cal07", "schwartz", "B_Lee"]:
+            del_indices = [6, 7]
+
+        fit_models_and_plot_data(x, y, y_exp, err, k, del_indices)
 
     # do regression for all three IV A strains together
-    fit_models_and_plot_data(x_IVA, y_IVA, y_IVA_exp, IVA_err, "IVA")
+    del_indices = [5, 6, 7, 14, 15, 22, 23]
+    fit_models_and_plot_data(x_IVA, y_IVA, y_IVA_exp, IVA_err, "IVA", del_indices)
 
 
 if __name__ == "__main__":

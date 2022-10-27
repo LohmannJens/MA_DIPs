@@ -106,7 +106,7 @@ def direct_repeats_analysis(seq_dict: dict, mode: int, top: bool=False, correcti
     plt.savefig(savepath)
     plt.close()
 
-def linear_regression_analysis(strain: str, df: object, dst: str) -> None:
+def linear_regression_analysis(strain: str, df: object, dst: str, del_indices: list=[]) -> None:
     '''
         Runs the linear regression analysis
         :param strain: name of the influenza strain
@@ -117,7 +117,7 @@ def linear_regression_analysis(strain: str, df: object, dst: str) -> None:
     '''
     x, y, err = format_dataset_for_plotting(df, strain)
     y_exp = y
-    fit_models_and_plot_data(x, y, y_exp, err, strain)
+    fit_models_and_plot_data(x, y, y_exp, err, strain, del_indices)
     src = os.path.join(RESULTSPATH, "regression_length_vs_occurrence", f"{strain}_regression_analysis.png")
     os.rename(src, dst)
 
