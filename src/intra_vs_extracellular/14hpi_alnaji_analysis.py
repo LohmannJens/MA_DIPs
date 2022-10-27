@@ -55,11 +55,12 @@ if __name__ == "__main__":
     df = data_dict["PR8"]
     inter_df = df.loc[df["Class"] == "internal"]
     extra_df = df.loc[df["Class"] == "external"]
-
+    del_indices = [4]
+    
     dst = os.path.join(RESULTSPATH, "intra_vs_extracellular", f"PR8_regression_analysis_full.pdf")
-    linear_regression_analysis(strain, df, dst)
+    linear_regression_analysis(strain, df, dst, del_indices=del_indices)
     dst = os.path.join(RESULTSPATH, "intra_vs_extracellular", f"PR8_regression_analysis_inter.pdf")
-    linear_regression_analysis(strain, inter_df, dst)
+    linear_regression_analysis(strain, inter_df, dst, del_indices=del_indices)
     dst = os.path.join(RESULTSPATH, "intra_vs_extracellular", f"PR8_regression_analysis_extra.pdf")
-    linear_regression_analysis(strain, extra_df, dst)
+    linear_regression_analysis(strain, extra_df, dst, del_indices=del_indices)
 
