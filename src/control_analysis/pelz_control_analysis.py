@@ -35,7 +35,7 @@ def load_top_gain_de_novo()-> dict:
     return data_dict
 
 
-def direct_repeats_analysis(seq_dict: dict, mode: int, top: bool=False, correction: bool=False)-> None:
+def direct_repeats_analysis(seq_dict: dict, mode: int, top: bool=False, correction: bool=False, savepath: str="")-> None:
     '''
         Calculates the direct repeats of all sequences of the Pelz dataset.
         :param seq_dict: dictionary with the sequences
@@ -43,6 +43,7 @@ def direct_repeats_analysis(seq_dict: dict, mode: int, top: bool=False, correcti
                      composition_junction_site.py for more info.
         :param top: states if the whole dataset or just the top DI RNA are used
         :param correction: if True a correction calculation is made
+        :param savepath: allows the user to give a path for saving
 
         :return: None
     '''
@@ -94,15 +95,31 @@ def direct_repeats_analysis(seq_dict: dict, mode: int, top: bool=False, correcti
 
             if i == 3:
                 j = 1
-    if top:
-        fname = f"direct_repeats_{k}_top_mode{mode}.pdf"
-    else:
-        fname = f"direct_repeats_{k}_mode{mode}.pdf"
-    if correction:
-        fname = f"direct_repeats_{k}_mode{mode}_corr.pdf"
-    savepath = os.path.join(RESULTSPATH, "control_analysis", fname)
+    if savepath == "":
+        if top:
+            fname = f"direct_repeats_{k}_top_mode{mode}.pdf"
+        else:
+            fname = f"direct_repeats_{k}_mode{mode}.pdf"
+        if correction:
+            fname = f"direct_repeats_{k}_mode{mode}_corr.pdf"
+        savepath = os.path.join(RESULTSPATH, "control_analysis", fname)
     plt.savefig(savepath)
     plt.close()
+
+def linear_regression_analysis(strain: str, df: object, dst: str) -> None:
+    '''
+        Runs the linear regression analysis
+        :param strain: name of the influenza strain
+        :param df: data frame with the necessary data
+        :param dst: path to the save destination
+
+        :return: None
+    '''
+    x, y, err = format_dataset_for_plotting(df, strain)
+    y_exp = y
+    fit_models_and_plot_data(x, y, y_exp, err, strain)
+    src = os.path.join(RESULTSPATH, "regression_length_vs_occurrence", f"{strain}_regression_analysis.png")
+    os.rename(src, dst)
 
 
 if __name__ == "__main__":
@@ -129,10 +146,6 @@ if __name__ == "__main__":
     
     # do the linear regression analysis (length vs NGS count)
     strain = "PR8"
-    x, y, err = format_dataset_for_plotting(data_dict["PR8"], strain)
-    y_exp = y
-    fit_models_and_plot_data(x, y, y_exp, err, strain)
-    src = os.path.join(RESULTSPATH, "regression_length_vs_occurrence", f"PR8_regression_analysis.png")
+    df = data_dict[strain]
     dst = os.path.join(RESULTSPATH, "control_analysis", f"PR8_regression_analysis.png")
-    os.rename(src, dst)
-
+    linear_regression_analysis(strain, df, dst)
