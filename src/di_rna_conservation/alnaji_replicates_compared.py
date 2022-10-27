@@ -15,10 +15,13 @@ from decimal import Decimal, ROUND_HALF_UP
 sys.path.insert(0, "..")
 sys.path.insert(0, "../relative_occurrence_nucleotides")
 sys.path.insert(0, "../direct_repeats")
+sys.path.insert(0, "../control_analysis")
+
 from utils import RESULTSPATH, SEGMENTS, COLORS
 from utils import load_alnaji_2021, get_sequence, get_stat_symbol, create_sequence_library
-from composition_junction_site import count_nucleotide_occurrence_overall
+from composition_junction_site import count_nucleotide_occurrence_overall, nucleotide_occurrence_analysis
 from search_direct_repeats import count_direct_repeats_overall, include_correction
+from pelz_control_analysis import direct_repeats_analysis
 
 
 def venn_different_timepoints(data: dict)-> None:
@@ -131,7 +134,7 @@ def compare_nucleotide_occurrence(df: object, strain: str)-> None:
         plt.suptitle(f"start (left) and end (right) of {s} of {strain}")
         savepath = os.path.join(RESULTSPATH,
                                 "di_rna_conservation",
-                                f"{s}_nucleotide_occurrence.png")
+                                f"{s}_compare_nucleotide_occurrence.png")
         plt.savefig(savepath)
         plt.close()
 
@@ -159,6 +162,7 @@ def compare_direct_repeats(df: dict, strain: str, mode: int, correction: bool)->
         above_df = df.loc[(df["Group"] == "above") & (df["Segment"] == s)]
         n_below = len(below_df)
         n_above = len(above_df)
+        n = n_below + n_above
         below_direct_repeats, _ = count_direct_repeats_overall(below_df, seq, mode)
         above_direct_repeats, _ = count_direct_repeats_overall(above_df, seq, mode)
 
@@ -204,7 +208,7 @@ def compare_direct_repeats(df: dict, strain: str, mode: int, correction: bool)->
         axs[i, j].bar(x=x, height=above_h/above_h.sum(), width=0.4, align="edge", label=f"above (n={n_above})")
         axs[i, j].set_xlabel("number of overlapping nucleotides")
         axs[i, j].set_ylabel("relative occurrence")
-        axs[i, j].set_title(f"{s} {symbol}")
+        axs[i, j].set_title(f"{s} (n={n}) {symbol}")
         axs[i, j].legend(loc="upper right")
         axs[i, j].set_ylim(bottom=0.0, top=1.0)
 
@@ -273,6 +277,18 @@ if __name__ == "__main__":
     concat_df = pd.concat([below_df, above_df])
 
     sequences_dict = create_sequence_library({"PR8": concat_df})
+
+    for s in SEGMENTS:
+        nucleotide_occurrence_analysis(sequences_dict, s)
+        src = os.path.join(RESULTSPATH, "relative_occurrence_nucleotides", f"PR_{s}.png")
+        dst = os.path.join(RESULTSPATH, "di_rna_conservation", f"PR_{s}_nucleotide_occurrence.png")
+        if os.path.exists(src):
+            os.rename(src, dst)
+
+    savepath = os.path.join(RESULTSPATH, "di_rna_conservation", "PR8_alnaji2021_direct_repeats.pdf")
+    direct_repeats_analysis(sequences_dict, 1, savepath=savepath)
+    savepath = os.path.join(RESULTSPATH, "di_rna_conservation", "PR8_alnaji2021_direct_repeats_corr.pdf")
+    direct_repeats_analysis(sequences_dict, 1, correction=True, savepath=savepath)
 
     compare_nucleotide_occurrence(sequences_dict["PR8"], "PR8")
     compare_direct_repeats(sequences_dict["PR8"], "PR8", mode=1, correction=True)
