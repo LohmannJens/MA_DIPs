@@ -126,7 +126,7 @@ def fit_models_and_plot_data(x: list, y: list, y_exp: list, err: list, k: str)->
     ax.legend(loc="upper left")
     ax.set_title(f"{k}")
     ax.set_xlim(left=0)
-    ax.set_ylim(bottom=0)
+    ax.set_ylim(bottom=0, top=0.65)
     ax.set_xlabel("sequence position")
     ax.set_ylabel("relative DI occurrence")
 
