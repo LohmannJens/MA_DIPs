@@ -119,7 +119,6 @@ def nucleotide_occurrence_analysis(seq_dict: dict, seg: str, author: str="")-> N
                                      ha="center", stretch="condensed")
 
             for i in range(2):
-                axs[idx, i].legend()
                 axs[idx, i].margins(x=0)
                 axs[idx, i].set_xlim(left=0.5, right=9.5)
                 axs[idx, i].set_ylim(top=0.8, bottom=0.0)
@@ -129,7 +128,13 @@ def nucleotide_occurrence_analysis(seq_dict: dict, seg: str, author: str="")-> N
             axs[idx, 0].add_patch(plt.Rectangle((5.5, 0), 4, 1, color="grey", alpha=0.3))
             axs[idx, 1].add_patch(plt.Rectangle((0.5, 0), 4, 1, color="grey", alpha=0.3))
   
-        plt.suptitle(f"start (left) and end (right) of {seg} of {k} ({n})")
+        by_label = dict()
+        for ax in axs:
+            for a in ax:
+                handles, labels = a.get_legend_handles_labels()
+                by_label.update(dict(zip(labels, handles)))
+        fig.legend(by_label.values(), by_label.keys(), ncol=4, loc="upper center")
+        fig.suptitle(f"\n\n\nstart (left) and end (right) of {seg} of {k} ({n})")
 
         fname = f"{k}_{seg}.png"
         if author != "":
