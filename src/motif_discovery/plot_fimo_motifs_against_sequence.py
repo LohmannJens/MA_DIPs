@@ -63,6 +63,10 @@ def load_fimo_files(folders: list):
 
 
 if __name__ == "__main__":
+    
+    #In thesis it was used like this
+    ##    python plot_fimo_motifs_against_sequence.py -d "seg1-3" -w
+
     p = argparse.ArgumentParser(description="plot position of xstreme motifs agains start and end points of junction site")
     p.add_argument("--cropped", "-c", action="store_true")
     p.add_argument("--data", "-d", type=str, help="define which data to use; should be 'all', 'IVA', or 'seg1-3'")
@@ -102,13 +106,9 @@ if __name__ == "__main__":
                 s = df["Start"]
                 e = df["End"]
                 if args.weighted:
-                    w = df["NGS_read_count"]
-                    x = s.append(e)
-                    y = w.append(w)
-                    line_df = pd.concat({"position": x, "ngs_count": y}, axis=1)
-                    line_df.sort_values(by="position", inplace=True)
-                    rect_height = max(w)/10
-                    axs[i].plot(line_df["position"], line_df["ngs_count"])
+                    rect_height = max(df["NGS_read_count"])/10
+                    axs[i].bar(df["Start"], df["NGS_read_count"])
+                    axs[i].bar(df["End"], df["NGS_read_count"])
                 else:    
                     # plot start and end point of junctions as scatter
                     rect_height = 0.5
@@ -125,6 +125,8 @@ if __name__ == "__main__":
                 axs[i].add_patch(patches.Rectangle((s, 0), e-s, rect_height, linewidth=0.5, label=label, color=color_map[label]))
 
             axs[i].set_title(f"{seg}")
+            axs[i].set_xlabel("Sequence position")
+            axs[i].set_ylabel("NGS count")
 
         by_label = dict()
         for ax in axs:
@@ -132,12 +134,12 @@ if __name__ == "__main__":
             by_label.update(dict(zip(labels, handles)))
 
         fig.legend(by_label.values(), by_label.keys(), ncol=8, mode="expand")
-        fig.suptitle(f"\n\n\n{k}")
+        fig.suptitle(f"\n\n\n\n{k}")
         fig.subplots_adjust(top=0.2)
         if args.weighted:
-            filename = f"{k}_{args.data}_weighted_motif_on_sequence.pdf"
+            filename = f"{k}_{args.data}_weighted_motif_on_sequence.png"
         else:
-            filename = f"{k}_{args.data}_motif_on_sequence.pdf"
+            filename = f"{k}_{args.data}_motif_on_sequence.png"
         savepath = os.path.join(RESULTSPATH, "motif_discovery", filename)
         plt.savefig(savepath)
 
