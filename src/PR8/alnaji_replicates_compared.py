@@ -98,15 +98,13 @@ def compare_nucleotide_occurrence(df: object, strain: str, author: str="")-> Non
             h_above_e = above_end[nuc] / (n_above)
 
             axs[i, 0].bar(x, height=h_below_s, width=0.3,
-                          label="below", color=COLORS[nuc])
+                          label=f"{nuc} below", color=COLORS[nuc])
             axs[i, 1].bar(x, height=h_below_e, width=0.3,
-                          label="below", color=COLORS[nuc])
+                          label=f"{nuc} below", color=COLORS[nuc])
             axs[i, 0].bar(x+0.4, height=h_above_s, width=0.3,
-                          label="above", color=COLORS[nuc], alpha=0.5)
+                          label=f"{nuc} above", color=COLORS[nuc], alpha=0.5)
             axs[i, 1].bar(x+0.4, height=h_above_e, width=0.3,
-                          label="above", color=COLORS[nuc], alpha=0.5)
-            axs[i, 0].set_title(nuc)
-            axs[i, 1].set_title(nuc)
+                          label=f"{nuc} above", color=COLORS[nuc], alpha=0.5)
 
             # statisitcal testing
             for j, (k, p) in enumerate(zip(below_start[nuc], h_above_s)):
@@ -121,7 +119,6 @@ def compare_nucleotide_occurrence(df: object, strain: str, author: str="")-> Non
                                    fontsize="x-small", ha="center", stretch="condensed")
 
             for k in range(2):
-                axs[i, k].legend()
                 axs[i, k].margins(x=0)
                 axs[i, k].set_xlim(left=0.5, right=9.5)
                 axs[i, k].set_ylim(top=0.8, bottom=0.0)
@@ -131,7 +128,15 @@ def compare_nucleotide_occurrence(df: object, strain: str, author: str="")-> Non
             axs[i, 0].add_patch(plt.Rectangle((5.5, 0), 4, 1, color="grey", alpha=0.3))
             axs[i, 1].add_patch(plt.Rectangle((0.5, 0), 4, 1, color="grey", alpha=0.3))
   
-        plt.suptitle(f"start (left) and end (right) of {s} of {strain}")
+        by_label = dict()
+        for ax in axs:
+            for a in ax:
+                handles, labels = a.get_legend_handles_labels()
+                by_label.update(dict(zip(labels, handles)))
+        fig.legend(by_label.values(), by_label.keys(), ncol=4, loc="upper center")
+
+
+        plt.suptitle(f"\n\n\nstart (left) and end (right) of {s} of {strain}")
 
         fname = f"{author}_{s}_compare_nucleotide_occurrence.png"
         savepath = os.path.join(RESULTSPATH, "PR8", fname)
