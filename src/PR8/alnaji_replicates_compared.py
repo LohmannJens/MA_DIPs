@@ -22,8 +22,8 @@ from utils import RESULTSPATH, SEGMENTS, COLORS
 from utils import load_alnaji_2021, get_sequence, get_stat_symbol, create_sequence_library
 from composition_junction_site import count_nucleotide_occurrence_overall, nucleotide_occurrence_analysis
 from search_direct_repeats import count_direct_repeats_overall, include_correction
-from pelz_control_analysis import direct_repeats_analysis, linear_regression_analysis
-from regression_length_occurrence import format_dataset_for_plotting, fit_models_and_plot_data
+from regression_length_occurrence import linear_regression_analysis
+
 
 def venn_different_timepoints(data: dict)-> None:
     '''
@@ -54,12 +54,12 @@ def venn_different_timepoints(data: dict)-> None:
 
         fig.suptitle(f"overlap of replicates at different timepoints for {k}")
         
-        save_path = os.path.join(RESULTSPATH, "di_rna_conservation", f"venn_alnaji_timepoints_3_6_24.png")
+        save_path = os.path.join(RESULTSPATH, "PR8", f"venn_alnaji_timepoints_3_6_24.png")
         plt.savefig(save_path)
         plt.close()
 
 
-def compare_nucleotide_occurrence(df: object, strain: str)-> None:
+def compare_nucleotide_occurrence(df: object, strain: str, author: str="")-> None:
     '''
         gets the sequences dataset and calculates the occurrence of each
         nucleotide at the start and end deletion site.
@@ -132,14 +132,14 @@ def compare_nucleotide_occurrence(df: object, strain: str)-> None:
             axs[i, 1].add_patch(plt.Rectangle((0.5, 0), 4, 1, color="grey", alpha=0.3))
   
         plt.suptitle(f"start (left) and end (right) of {s} of {strain}")
-        savepath = os.path.join(RESULTSPATH,
-                                "di_rna_conservation",
-                                f"{s}_compare_nucleotide_occurrence.png")
+
+        fname = f"{author}_{s}_compare_nucleotide_occurrence.png"
+        savepath = os.path.join(RESULTSPATH, "PR8", fname)
         plt.savefig(savepath)
         plt.close()
 
 
-def compare_direct_repeats(df: dict, strain: str, mode: int, correction: bool)-> None:
+def compare_direct_repeats(df: dict, strain: str, mode: int, correction: bool, author: str="")-> None:
     '''
         gets the sequences for all four strains and calculates the overlap of 
         the nucleotides at the junction site.
@@ -220,8 +220,8 @@ def compare_direct_repeats(df: dict, strain: str, mode: int, correction: bool)->
 
 
     corr = "_corr" if correction else ""    
-    fname = f"alnaji_{strain}_mode{mode}_compare_direct_repeats{corr}.pdf"
-    savepath = os.path.join(RESULTSPATH, "di_rna_conservation", fname)
+    fname = f"{author}_{strain}_mode{mode}_compare_direct_repeats{corr}.png"
+    savepath = os.path.join(RESULTSPATH, "PR8", fname)
     plt.savefig(savepath)
     plt.close()
 
@@ -271,33 +271,18 @@ if __name__ == "__main__":
 
     below_df = slice_by_occurrence(data_df, 2, below=True)
     above_df = slice_by_occurrence(data_df, 2, below=False)
-
     below_df = below_df.assign(Group = ["below"] * len(below_df.index))
     above_df = above_df.assign(Group = ["above"] * len(above_df.index))
     concat_df = pd.concat([below_df, above_df])
     
     sequences_dict = create_sequence_library({"PR8": concat_df})
 
-    for s in SEGMENTS:
-        nucleotide_occurrence_analysis(sequences_dict, s, author="Alnaji2021")
-
-
-
-    savepath = os.path.join(RESULTSPATH, "di_rna_conservation", "PR8_alnaji2021_direct_repeats.pdf")
-    direct_repeats_analysis(sequences_dict, 1, savepath=savepath)
-    savepath = os.path.join(RESULTSPATH, "di_rna_conservation", "PR8_alnaji2021_direct_repeats_corr.pdf")
-    direct_repeats_analysis(sequences_dict, 1, correction=True, savepath=savepath)
-
-    compare_nucleotide_occurrence(sequences_dict["PR8"], "PR8")
-    compare_direct_repeats(sequences_dict["PR8"], "PR8", mode=1, correction=True)
-    compare_direct_repeats(sequences_dict["PR8"], "PR8", mode=1, correction=False)
+    compare_nucleotide_occurrence(sequences_dict["PR8"], "PR8", author="Alnaji")
+    compare_direct_repeats(sequences_dict["PR8"], "PR8", mode=1, correction=True, author="Alnaji")
+    compare_direct_repeats(sequences_dict["PR8"], "PR8", mode=1, correction=False, author="Alnaji")
 
     # Linear regression analysis
     strain = "PR8"
-    dst = os.path.join(RESULTSPATH, "di_rna_conservation", f"PR8_regression_analysis_full.pdf")
-    linear_regression_analysis(strain, concat_df, dst)
-    dst = os.path.join(RESULTSPATH, "di_rna_conservation", f"PR8_regression_analysis_above.pdf")
-    linear_regression_analysis(strain, above_df, dst)
-    dst = os.path.join(RESULTSPATH, "di_rna_conservation", f"PR8_regression_analysis_below.pdf")
-    linear_regression_analysis(strain, below_df, dst)
+    linear_regression_analysis(strain, above_df, author="AlnajiAbove")
+    linear_regression_analysis(strain, below_df, author="AlnajiBelow")
     

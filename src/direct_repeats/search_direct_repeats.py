@@ -132,8 +132,8 @@ def direct_repeats_analysis(seq_dict: dict, mode: int, top: bool=False, correcti
         :param savepath: allows the user to give a path for saving
         :return: None
     '''
-    fig, axs = plt.subplots(4, 2, figsize=(5, 10), tight_layout=True)
     for k, v in seq_dict.items():
+        fig, axs = plt.subplots(4, 2, figsize=(5, 10), tight_layout=True)
         j = 0
         for i, s in enumerate(SEGMENTS):
             v_s = v.loc[(v["Segment"] == s)]
@@ -189,18 +189,18 @@ def direct_repeats_analysis(seq_dict: dict, mode: int, top: bool=False, correcti
             if i == 3:
                 j = 1
 
-    fname = "{k}_mode{mode}"
-    if author != "":
-        fname = f"{author}_{fname}"
-    if top:
-        fname = f"{fname}_top"
-    if correction:
-        fname = f"{fname}_corr"
-    fname = f"{fname}.png"
+        fname = f"{k}_mode{mode}"
+        if author != "":
+            fname = f"{author}_{fname}"
+        if top:
+            fname = f"{fname}_top"
+        if correction:
+            fname = f"{fname}_corr"
+        fname = f"{fname}.png"
 
-    savepath = os.path.join(RESULTSPATH, "direct_repeats", fname)
-    plt.savefig(savepath)
-    plt.close()
+        savepath = os.path.join(RESULTSPATH, "direct_repeats", fname)
+        plt.savefig(savepath)
+        plt.close()
 
 
 if __name__ == "__main__":

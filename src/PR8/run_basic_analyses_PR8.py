@@ -38,7 +38,7 @@ def venn_different_datasets(df1: object, df2: object, df3: object, labels: list)
 
     fig.suptitle(f"overlap of DI candidates for PR8 datasets from Alnaji, Pelz and Kupke")
         
-    save_path = os.path.join(RESULTSPATH, "di_rna_conservation", f"venn_alnaji_pelz_kupke.png")
+    save_path = os.path.join(RESULTSPATH, "PR8", f"venn_alnaji_pelz_kupke.png")
     plt.savefig(save_path)
     plt.close()
 

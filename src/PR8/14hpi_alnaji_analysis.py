@@ -12,9 +12,11 @@ from matplotlib_venn import venn2
 
 sys.path.insert(0, "..")
 sys.path.insert(0, "../di_rna_conservation")
+sys.path.insert(0, "../regression_length_vs_occurrence")
+
 from utils import DATAPATH, RESULTSPATH
 from utils import load_hpi14_alnaji
-from alnaji_replicates_compared import linear_regression_analysis
+from regression_length_occurrence import linear_regression_analysis
 
 
 def venn_analysis(data: dict)-> None:
@@ -35,7 +37,7 @@ def venn_analysis(data: dict)-> None:
 
         fig.suptitle(f"overlap of internal and external DIs for {k}")
  
-        save_path = os.path.join(RESULTSPATH, "intra_vs_extracellular", "14hpi_venn_diagramm.png")
+        save_path = os.path.join(RESULTSPATH, "PR8", "14hpi_venn_diagramm.png")
         plt.savefig(save_path)
         plt.close()
 
@@ -45,10 +47,6 @@ if __name__ == "__main__":
 
     venn_analysis(data_dict)
 
-    src = os.path.join(RESULTSPATH, "di_rna_conservation", "segment_distribution.png")
-    dst = os.path.join(RESULTSPATH, "intra_vs_extracellular", "segment_distribution.png")
-    os.rename(src, dst)
-
     # Linear regression analysis
     strain = "PR8"
     df = data_dict["PR8"]
@@ -56,10 +54,7 @@ if __name__ == "__main__":
     extra_df = df.loc[df["Class"] == "external"]
     del_indices = [4]
     
-    dst = os.path.join(RESULTSPATH, "intra_vs_extracellular", f"PR8_regression_analysis_full.pdf")
-    linear_regression_analysis(strain, df, dst, del_indices=del_indices)
-    dst = os.path.join(RESULTSPATH, "intra_vs_extracellular", f"PR8_regression_analysis_inter.pdf")
-    linear_regression_analysis(strain, inter_df, dst, del_indices=del_indices)
-    dst = os.path.join(RESULTSPATH, "intra_vs_extracellular", f"PR8_regression_analysis_extra.pdf")
-    linear_regression_analysis(strain, extra_df, dst, del_indices=del_indices)
+    linear_regression_analysis(strain, df, del_indices=del_indices, author="Alnaji14hpi")
+    linear_regression_analysis(strain, inter_df, del_indices=del_indices, author="Alnaji14hpi-intra")
+    linear_regression_analysis(strain, extra_df, del_indices=del_indices, author="Alnaji14hpi-extra")
 

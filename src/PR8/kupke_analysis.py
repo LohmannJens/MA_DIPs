@@ -43,7 +43,7 @@ def venn_analysis(data: dict)-> None:
 
         fig.suptitle(f"overlap of pre and post groups for {k}")
         
-        save_path = os.path.join(RESULTSPATH, "intra_vs_extracellular", f"venn_diagramm_{k}.png")
+        save_path = os.path.join(RESULTSPATH, "PR8", f"venn_diagramms_kupke.png")
         plt.savefig(save_path)
         plt.close()
 

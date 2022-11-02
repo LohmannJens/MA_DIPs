@@ -131,7 +131,9 @@ def nucleotide_occurrence_analysis(seq_dict: dict, seg: str, author: str="")-> N
   
         plt.suptitle(f"start (left) and end (right) of {seg} of {k} ({n})")
 
-        fname = f"{author}_{k}_{seg}.png"
+        fname = f"{k}_{seg}.png"
+        if author != "":
+            fname = f"{author}_{fname}"
         savepath = os.path.join(RESULTSPATH, "relative_occurrence_nucleotides", fname)
         plt.savefig(savepath)
         plt.close()
