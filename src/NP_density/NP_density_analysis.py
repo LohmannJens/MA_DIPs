@@ -128,7 +128,7 @@ def map_positions_to_density(data: dict, density_data: dict)-> dict:
             axs[i].set_ylabel("high/low NP area")
 
         fig.suptitle(f"deletion position against NP areas for {k}")
-        fig.legend([l1, l2], ["count", "NP density"])
+        fig.legend([l1, l2], ["NGS count", "NP density"])
 
         save_path = os.path.join(RESULTSPATH, "NP_density", f"{k}_del_position_NP_density.pdf") # leave as .pdf, because saving as .png loses some bars
         plt.savefig(save_path)
