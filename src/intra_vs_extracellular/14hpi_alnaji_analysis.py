@@ -14,7 +14,7 @@ sys.path.insert(0, "..")
 sys.path.insert(0, "../di_rna_conservation")
 from utils import DATAPATH, RESULTSPATH
 from utils import load_hpi14_alnaji
-from alnaji_replicates_compared import analyze_segment_distribution, linear_regression_analysis
+from alnaji_replicates_compared import linear_regression_analysis
 
 
 def venn_analysis(data: dict)-> None:
@@ -45,7 +45,6 @@ if __name__ == "__main__":
 
     venn_analysis(data_dict)
 
-    analyze_segment_distribution(data_dict["PR8"], "Class", ["all", "internal", "external"])
     src = os.path.join(RESULTSPATH, "di_rna_conservation", "segment_distribution.png")
     dst = os.path.join(RESULTSPATH, "intra_vs_extracellular", "segment_distribution.png")
     os.rename(src, dst)

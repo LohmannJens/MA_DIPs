@@ -109,7 +109,6 @@ def compare_nucleotide_occurrence(df: object, strain: str)-> None:
             axs[i, 1].set_title(nuc)
 
             # statisitcal testing
-            # TODO: maybe delete it, because everything is significant
             for j, (k, p) in enumerate(zip(below_start[nuc], h_above_s)):
                 result = stats.binomtest(int(k), n_below, p)
                 symbol = get_stat_symbol(result.pvalue)
@@ -262,37 +261,6 @@ def slice_by_occurrence(df: object, thresh: int, below: bool)-> object:
     return return_df
 
 
-def analyze_segment_distribution(df: object, col: str, classes: list)-> None:
-    '''
-        Compares the segment distribution between given classes.
-        :param df: data frame including the DIPs
-        :param col: name of the column to split by
-        :param classes: list of the name of the possible options in the given
-                        column. Include 'all' to get a bar with all together
-
-        :return: None
-    '''
-    width=0.2
-    fig, axs = plt.subplots(1, 1, figsize=(10, 10), tight_layout=True)
-    for i, c in enumerate(classes):
-        if c == "all":
-            seg_dist = df.groupby(["Segment"]).size()
-        else:
-            seg_dist = df.loc[df[col] == c].groupby(["Segment"]).size()
-
-        seg_dist = seg_dist/sum(seg_dist)
-
-        axs.bar(np.arange(len(seg_dist))+(width*i), height=seg_dist, width=width)
-    
-    axs.set_xticks(np.arange(len(seg_dist))+width, seg_dist.index)
-    axs.legend(classes)
-
-    savepath = os.path.join(RESULTSPATH, "di_rna_conservation", "segment_distribution.png")
-
-    plt.savefig(savepath)
-    plt.close()
-
-
 if __name__ == "__main__":
     data_dict = load_alnaji_2021()
     # check the overlap of the different timepoints
@@ -312,8 +280,8 @@ if __name__ == "__main__":
 
     for s in SEGMENTS:
         nucleotide_occurrence_analysis(sequences_dict, s)
-        src = os.path.join(RESULTSPATH, "relative_occurrence_nucleotides", f"PR_{s}.png")
-        dst = os.path.join(RESULTSPATH, "di_rna_conservation", f"PR_{s}_nucleotide_occurrence.png")
+        src = os.path.join(RESULTSPATH, "relative_occurrence_nucleotides", f"PR8_{s}.png")
+        dst = os.path.join(RESULTSPATH, "di_rna_conservation", f"PR8_{s}_nucleotide_occurrence.png")
         if os.path.exists(src):
             os.rename(src, dst)
 
@@ -335,6 +303,3 @@ if __name__ == "__main__":
     dst = os.path.join(RESULTSPATH, "di_rna_conservation", f"PR8_regression_analysis_below.pdf")
     linear_regression_analysis(strain, below_df, dst)
     
-    # distribution of segments
-    analyze_segment_distribution(concat_df, "Group", ["all", "below", "above"])
-
