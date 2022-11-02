@@ -130,7 +130,7 @@ def plot_deltaG_length(df: object, path: str, d_set: str)-> None:
     ax.set_ylabel("sequence length")
     ax.legend()
 
-    save_path = os.path.join(path, f"deltaG_length_{d_set}.pdf")
+    save_path = os.path.join(path, f"deltaG_length_{d_set}.png")
     plt.savefig(save_path)
     plt.close()
 
@@ -159,7 +159,7 @@ def plot_deltaG_NGS(df: object, path: str, normalize: bool)-> None:
     ax.legend()
 
     n = "_normalized" if normalize else ""
-    save_path = os.path.join(path, f"deltaG_NGScount{n}.pdf")
+    save_path = os.path.join(path, f"deltaG_NGScount{n}.png")
     plt.savefig(save_path)
     plt.close()
 
@@ -196,7 +196,7 @@ def plot_delta_G_observed_expected(df: object, path: str, mode: str)-> None:
 
     plt.locator_params(axis="y", nbins=10)
 
-    save_path = os.path.join(path, f"deltaG_observed_{mode}.pdf")
+    save_path = os.path.join(path, f"deltaG_observed_{mode}.png")
     plt.savefig(save_path)
     plt.close()
 
@@ -237,7 +237,7 @@ def create_difference_boxplots(df: object, path: str, mode: str)-> None:
                 symbol = get_stat_symbol(p)
                 axs[i%2][j].annotate(symbol, (k+1, max(data[k])), horizontalalignment="center")
 
-    save_path = os.path.join(path, f"boxplot_delta_delta_G_{mode}.pdf")
+    save_path = os.path.join(path, f"boxplot_delta_delta_G_{mode}.png")
     fig.savefig(save_path)
     plt.close()
 
@@ -326,7 +326,7 @@ def check_secondary_structures(all_reads_dict, df, path)-> None:
     
     plt.legend(SEGMENTS)
 
-    save_path = os.path.join(path, "bound_bases_occurrence.pdf")
+    save_path = os.path.join(path, "bound_bases_occurrence.png")
     fig.savefig(save_path)
     plt.close()
 
@@ -356,5 +356,5 @@ if __name__ == "__main__":
     cleaned_data_dict = load_alnaji_excel()
     all_reads_dict = load_short_reads(cleaned_data_dict)
     
-    check_secondary_structures(all_reads_dict, full_df, results_path)
+#    check_secondary_structures(all_reads_dict, full_df, results_path)
 
