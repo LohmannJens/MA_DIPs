@@ -32,13 +32,14 @@ def slice_dataset(seg_df, energy_df, seg):
     return seg_df, energy_df
 
 
-def plot_deletions_with_delta_G(d: dict, w_s: int, s_s: int)-> None:
+def plot_deletions_with_delta_G(d: dict, w_s: int, s_s: int, sliced: bool=False)-> None:
     '''
         Loads the deletion start and end points and the estimated delta G and
         Plots them together in one plot.
         :param d: dictionary with the start and end point data split by strains
         :param w_s: size of the window in the sliding window approach
         :param s_s: step size of the sliding window approach
+        :param sliced: states if the full lenght or only the beginning is shown
 
         :return: None
     '''
@@ -61,7 +62,8 @@ def plot_deletions_with_delta_G(d: dict, w_s: int, s_s: int)-> None:
             energy_file = os.path.join(energy_path, f"{k}_{s}_{w_s}_{s_s}.csv")
             energy_df = pd.read_csv(energy_file)
             
-            concat_seg_df, energy_df = slice_dataset(concat_seg_df, energy_df, s)
+            if sliced:
+                concat_seg_df, energy_df = slice_dataset(concat_seg_df, energy_df, s)
 
             l1 = axs[i].twinx().bar(concat_seg_df.index, concat_seg_df["NGS_read_count"])
             l2, = axs[i].plot(energy_df["position"], energy_df["delta_G"], color="green")
@@ -76,19 +78,22 @@ def plot_deletions_with_delta_G(d: dict, w_s: int, s_s: int)-> None:
         fig.legend([l1, l2, l3], ["NGS count", "\u0394 G", "mean of \u0394 G"])
         fig.suptitle(k, ha="left")
 
-        save_path = os.path.join(RESULTSPATH, "free_energy_estimations")
-        save_file = os.path.join(save_path, f"{k}_sliding_window_{w_s}_{s_s}_sliced.pdf")
-        fig.savefig(save_file)
+        fname = f"{k}_sliding_window_{w_s}_{s_s}.png"
+        if sliced:
+            fname = f"{k}_sliding_window_{w_s}_{s_s}_sliced.png"
+
+        fig.savefig(os.path.join(RESULTSPATH, "free_energy_estimations", fname))
         plt.close()
 
 
-def create_boxplots(d: dict, w_s: int, s_s: int)-> None:
+def create_boxplots(d: dict, w_s: int, s_s: int, sliced: bool=False)-> None:
     '''
         Loads the deletion start and end points and the estimated delta G and
         Plots them together in one plot.
         :param d: dictionary with the start and end point data split by strains
         :param w_s: size of the window in the sliding window approach
         :param s_s: step size of the sliding window approach
+        :param sliced: states if the full lenght or only the beginning is shown
 
         :return: None
     '''
@@ -111,8 +116,9 @@ def create_boxplots(d: dict, w_s: int, s_s: int)-> None:
 
                 energy_file = os.path.join(energy_path, f"{k}_{s}_{w_s}_{s_s}.csv")
                 energy_df = pd.read_csv(energy_file)
-
-                concat_seg_df, energy_df = slice_dataset(concat_seg_df, energy_df, s)
+                
+                if sliced:
+                    concat_seg_df, energy_df = slice_dataset(concat_seg_df, energy_df, s)
 
                 if y_min > min(energy_df["delta_G"]):
                     y_min = min(energy_df["delta_G"]) + 1
@@ -141,9 +147,11 @@ def create_boxplots(d: dict, w_s: int, s_s: int)-> None:
         axs[i].set_ylim(bottom=y_min)
         axs[i].set_ylim(top=20.0)
 
-    save_path = os.path.join(RESULTSPATH, "free_energy_estimations")
-    save_file = os.path.join(save_path, f"boxplot_sliding_window_{w_s}_{s_s}_sliced.pdf")
-    fig.savefig(save_file)
+    fname = f"boxplot_sliding_window_{w_s}_{s_s}.png"
+    if sliced:
+        fname = f"boxplot_sliding_window_{w_s}_{s_s}_sliced.png"
+
+    fig.savefig(os.path.join(RESULTSPATH, "free_energy_estimations", fname))
     plt.close()
 
 
@@ -188,14 +196,12 @@ def create_scatterplots(d: dict, w_s: int, s_s: int)-> None:
         axs[i].plot(data["NGS_read_count"], a + b * data["delta_G"])
 
         axs[i].set_title(f"{k} R²:{r:.2}")
-        axs[i].set_xlabel("Segments")
+        axs[i].set_xlabel("NGS read count")
         axs[i].set_ylabel("\u0394 G")
         axs[i].invert_yaxis()
 
-
-    save_path = os.path.join(RESULTSPATH, "free_energy_estimations")
-    save_file = os.path.join(save_path, f"boxplot_sliding_window_scatter.pdf")
-    fig.savefig(save_file)
+    fname = f"boxplot_sliding_window_scatter.png"
+    fig.savefig(os.path.join(RESULTSPATH, "free_energy_estimations", fname))
     plt.close()
 
 
@@ -206,6 +212,8 @@ if __name__ == "__main__":
     window_size = 1
     step_size = 1
     plot_deletions_with_delta_G(all_reads_dict, window_size, step_size)
+    plot_deletions_with_delta_G(all_reads_dict, window_size, step_size, sliced=True)
     create_boxplots(all_reads_dict, window_size, step_size)
+    create_boxplots(all_reads_dict, window_size, step_size, sliced=True)
     create_scatterplots(all_reads_dict, window_size, step_size)
 
