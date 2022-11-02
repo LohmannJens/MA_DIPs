@@ -286,3 +286,7 @@ if __name__ == "__main__":
     linear_regression_analysis(strain, above_df, author="AlnajiAbove")
     linear_regression_analysis(strain, below_df, author="AlnajiBelow")
     
+    for timepoint in ["3hpi", "6hpi", "24hpi"]:
+        df_t = data_df.loc[data_df["Timepoint"] == timepoint]
+        linear_regression_analysis(strain, df_t, author=f"Alnaji{timepoint}")
+
