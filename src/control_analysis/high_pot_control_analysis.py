@@ -17,7 +17,6 @@ from utils import load_alnaji_excel, get_sequence, get_seq_len
 from composition_junction_site import count_nucleotide_occurrence
 from search_direct_repeats import calculate_direct_repeat
 
-
 def load_DI244()-> object:
     '''
         Loads the data of the DI244 DI RNA
@@ -112,9 +111,9 @@ if __name__ == "__main__":
     fasta_file = os.path.join(DATAPATH, "Dimmock2008", "PB2.fasta")
 
     pelz_top_df = load_top_DI_RNA_pelz()
-    pelz_top_df = pelz_top_df.drop("NGS_read_count", axis=1)
     di244_df = load_DI244()
-    
+
+    pelz_top_df = pelz_top_df.drop("NGS_read_count", axis=1)
     full_df = pd.concat([pelz_top_df, di244_df], ignore_index=True)
     name_col = full_df.pop("Name")
     full_df.insert(0, "Name", name_col)

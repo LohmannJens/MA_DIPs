@@ -65,12 +65,14 @@ def count_nucleotide_occurrence_overall(df: object, seq: str)-> (dict, dict):
     return count_start_dict, count_end_dict
 
 
-def nucleotide_occurrence_analysis(seq_dict: dict, seg: str)-> None:
+def nucleotide_occurrence_analysis(seq_dict: dict, seg: str, author: str="")-> None:
     '''
         gets the sequences for all four strains and calculates the occurrence
         of each nucleotide at the start and end deletion site.
         :param seq_dict: dictionary with the sequences
-        :param seg: name of the segment taht is analyzed
+        :param seg: name of the segment that is analyzed
+        :param author: name of the author where the data was taken from. Is
+                       used to distinguish different PR8 datasets.
 
         :return: None
     '''
@@ -128,7 +130,9 @@ def nucleotide_occurrence_analysis(seq_dict: dict, seg: str)-> None:
             axs[idx, 1].add_patch(plt.Rectangle((0.5, 0), 4, 1, color="grey", alpha=0.3))
   
         plt.suptitle(f"start (left) and end (right) of {seg} of {k} ({n})")
-        savepath = os.path.join(RESULTSPATH, "relative_occurrence_nucleotides", f"{k}_{seg}.png")
+
+        fname = f"{author}_{k}_{seg}.png"
+        savepath = os.path.join(RESULTSPATH, "relative_occurrence_nucleotides", fname)
         plt.savefig(savepath)
         plt.close()
 

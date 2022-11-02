@@ -54,7 +54,7 @@ def format_dataset_for_plotting(df, dataset_name: str)-> (list, list, list):
     return np.array(x), np.array(y) / np.array(y).sum(), err
 
 
-def fit_models_and_plot_data(x: list, y: list, y_exp: list, err: list, k: str, del_indices: list=[])-> None:
+def fit_models_and_plot_data(x: list, y: list, y_exp: list, err: list, k: str, del_indices: list=[], author: str="")-> None:
     '''
         Creates the linear and exponential model for the given data and plots
         the results.
@@ -64,6 +64,7 @@ def fit_models_and_plot_data(x: list, y: list, y_exp: list, err: list, k: str, d
         :param err: data for the error bar (only for schwartz dataset)
         :param k: name of the strain/data set
         :param del_indices:
+        :param author:
 
         :return: None
     '''
@@ -126,12 +127,43 @@ def fit_models_and_plot_data(x: list, y: list, y_exp: list, err: list, k: str, d
     ax.set_ylabel("relative DI occurrence")
 
     # save final figure
-    save_path = os.path.join(RESULTSPATH, "regression_length_vs_occurrence", f"{k}_regression_analysis.png")
+    save_path = os.path.join(RESULTSPATH, "regression_length_vs_occurrence", f"{author}_{k}_regression_analysis.png")
     plt.savefig(save_path)
     plt.close()
 
 
-def perform_regression_analysis(data: dict)-> None:
+def clean_for_exp_analysis(y_exp: list) -> list:
+    '''
+        cleans the data to make an exponential regression possible. THis means
+        to replace 0 with values very close to 0.
+        :param y_exp: y values for the exponential regression
+
+        :return: list with values equal to zero replaced by 0.000001
+    '''
+    i = 0
+    while (i < len(y_exp)):
+        if y_exp[i] == 0:
+            y_exp[i] = 0.000001
+        i += 1
+
+    return y_exp
+
+
+def linear_regression_analysis(strain: str, df: object, del_indices: list=[], author: str=    "") -> None:
+    '''
+        Runs the linear regression analysis
+        :param strain: name of the influenza strain
+        :param df: data frame with the necessary data
+        :param dst: path to the save destination
+
+        :return: None
+    '''
+    x, y, err = format_dataset_for_plotting(df, strain)
+    y_exp = clean_for_exp_analysis(y)
+    fit_models_and_plot_data(x, y, y_exp, err, strain, del_indices, author)
+
+
+def perform_alnaji2019_regression_analysis(data: dict)-> None:
     '''
         Loops over all datasets. Creates a linear and an exponential model for
         all and plots these. Also creates one for all three Influenza strains
@@ -144,12 +176,7 @@ def perform_regression_analysis(data: dict)-> None:
         x, y, err = format_dataset_for_plotting(v, k)
 
         # clean data for exponential model (y == 0 is invalid)
-        y_exp = y
-        idx = 0
-        while (idx < len(y_exp)):
-            if y_exp[idx] == 0:
-                y_exp[idx] = 0.000001
-            idx += 1
+        y_exp = clean_for_exp_analysis(y)
 
         # collect data for the model over three IV A strains
         if k in ["Cal07", "NC", "Perth"]:
@@ -186,5 +213,5 @@ if __name__ == "__main__":
     schwartz_data = pd.read_excel(xlsx_path, skiprows=[9,10,11,12])
     all_reads_dict["schwartz"] = schwartz_data
     
-    perform_regression_analysis(all_reads_dict)
+    perform_alnaji2019_regression_analysis(all_reads_dict)
 

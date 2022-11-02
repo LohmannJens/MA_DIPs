@@ -1,5 +1,5 @@
 '''
-
+    Compares the timepoints 3hpi, 6hpi and 24hpi of Alnaji2021.
 '''
 import os
 import sys
@@ -54,7 +54,7 @@ def venn_different_timepoints(data: dict)-> None:
 
         fig.suptitle(f"overlap of replicates at different timepoints for {k}")
         
-        save_path = os.path.join(RESULTSPATH, "di_rna_conservation", f"venn_alnaji_timepoints.png")
+        save_path = os.path.join(RESULTSPATH, "di_rna_conservation", f"venn_alnaji_timepoints_3_6_24.png")
         plt.savefig(save_path)
         plt.close()
 
@@ -279,11 +279,9 @@ if __name__ == "__main__":
     sequences_dict = create_sequence_library({"PR8": concat_df})
 
     for s in SEGMENTS:
-        nucleotide_occurrence_analysis(sequences_dict, s)
-        src = os.path.join(RESULTSPATH, "relative_occurrence_nucleotides", f"PR8_{s}.png")
-        dst = os.path.join(RESULTSPATH, "di_rna_conservation", f"PR8_{s}_nucleotide_occurrence.png")
-        if os.path.exists(src):
-            os.rename(src, dst)
+        nucleotide_occurrence_analysis(sequences_dict, s, author="Alnaji2021")
+
+
 
     savepath = os.path.join(RESULTSPATH, "di_rna_conservation", "PR8_alnaji2021_direct_repeats.pdf")
     direct_repeats_analysis(sequences_dict, 1, savepath=savepath)
