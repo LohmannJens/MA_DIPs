@@ -86,7 +86,7 @@ if __name__ == "__main__":
     fimo_df = load_fimo_files(fimo_folders)
 
     if args.data == "IVA":
-        del all_reads_dict["B_LEE"]
+        del all_reads_dict["BLEE"]
 
     # have 4 figures (for each strain) including 8 subplots (for each segment)    
     for k, v in all_reads_dict.items(): 
