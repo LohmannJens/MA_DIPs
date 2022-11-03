@@ -7,10 +7,10 @@ import sys
 import shutil
 
 from Bio import SeqIO
+from Bio.Seq import Seq
 from Bio.SeqRecord import SeqRecord
 
 sys.path.insert(0, "..")
-sys.path.insert(0, "../density_and_length_analysis")
 from utils import DATAPATH, SEGMENTS
 from utils import load_alnaji_excel, load_short_reads, get_sequence, create_sequence_library
 
@@ -29,7 +29,7 @@ def delete_folder(folder: str)-> bool:
         return False
 
 
-def write_sequence(seq, strain: str, segment: str, folder: str, control: bool=False)-> None:
+def write_sequence(record: object, strain: str, segment: str, folder: str, control: bool=False)-> None:
     '''
         gets RNA sequence as Biopython SeqRecord and writes it into three
         files. One for all sequences, one for the strains and one for the
@@ -41,7 +41,6 @@ def write_sequence(seq, strain: str, segment: str, folder: str, control: bool=Fa
 
         :return: None
     '''
-
     if control:
         all_file = os.path.join(folder, "all_control.fasta")
         strain_file = os.path.join(folder, f"{strain}_control.fasta")
@@ -52,11 +51,11 @@ def write_sequence(seq, strain: str, segment: str, folder: str, control: bool=Fa
         seg_file = os.path.join(folder, f"{segment}.fasta")
 
     with open(all_file, "a") as f:
-        SeqIO.write(seq, f, "fasta")
+        SeqIO.write(record, f, "fasta")
     with open(strain_file, "a") as f:
-        SeqIO.write(seq, f, "fasta")
+        SeqIO.write(record, f, "fasta")
     with open(seg_file, "a") as f:
-        SeqIO.write(seq, f, "fasta")
+        SeqIO.write(record, f, "fasta")
 
 
 def create_full_seq_files(strains: list)-> None:
@@ -100,7 +99,7 @@ def create_cropped_seq_files(d: dict)-> None:
     for k, v in d.items():
         for r in v.iterrows():
             r = r[1]
-            seq = r["DelSequence"]
+            seq = Seq(r["DelSequence"])
             seg = r["Segment"]
             s = r["Start"]
             e = r["End"]
@@ -139,15 +138,15 @@ def create_windows_del_site_files(d: dict, n: int, combine: bool)-> None:
             # the beginning/end of the whole sequence.
             if combine:
                 window_seq = seq[max(s-n, 0):s+n] + seq[e-n:min(e+n, len(seq))]
-                record = SeqRecord(window_seq, id=f"{k}_{seg}_{s}_{e}")
+                record = SeqRecord(Seq(window_seq), id=f"{k}_{seg}_{s}_{e}")
                 write_sequence(record, k, seg, root_folder)
             else:
                 window_seq = seq[max(s-n, 0):s+n]
-                record = SeqRecord(window_seq, id=f"{k}_{seg}_{s}_start")
+                record = SeqRecord(Seq(window_seq), id=f"{k}_{seg}_{s}_start")
                 write_sequence(record, k, seg, root_folder)
 
                 window_seq = seq[e-n:min(e+n, len(seq))]
-                record = SeqRecord(window_seq, id=f"{k}_{seg}_{e}_end")
+                record = SeqRecord(Seq(window_seq), id=f"{k}_{seg}_{e}_end")
                 write_sequence(record, k, seg, root_folder)
 
 
@@ -176,7 +175,7 @@ def create_high_NGS_dataset(d: dict, thresh: int)-> None:
             seg = r["Segment"]
             s = r["Start"]
             e = r["End"]
-            record = SeqRecord(seq, id=f"{k}_{seg}_{s}_{e}")
+            record = SeqRecord(Seq(seq), id=f"{k}_{seg}_{s}_{e}")
             if r["NGS_read_count"] < thresh:
                 write_sequence(record, k, seg, root_folder, control=True)
             else:
@@ -186,10 +185,10 @@ def create_high_NGS_dataset(d: dict, thresh: int)-> None:
 if __name__ == "__main__":
     cleaned_data_dict = load_alnaji_excel()
     all_reads_dict = load_short_reads(cleaned_data_dict)
-    create_full_seq_files(list(all_reads_dict.keys()))
+ #   create_full_seq_files(list(all_reads_dict.keys()))
 
     seq_library = create_sequence_library(all_reads_dict)
-    create_cropped_seq_files(seq_library)
-    create_windows_del_site_files(seq_library, 20, False)
-    create_high_NGS_dataset(seq_library, 1000)
+ #   create_cropped_seq_files(seq_library)
+    create_windows_del_site_files(seq_library, 50, False)
+  #  create_high_NGS_dataset(seq_library, 1000)
 
