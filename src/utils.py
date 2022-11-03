@@ -76,7 +76,7 @@ def load_alnaji_excel()-> dict:
     # Splitting up the two lines in new data frames and cleaning NaN data
     # For l2 the columns get renamed, they get the same names as in l1
     # Cleaned data is stored in a dict, can be accessed by [datasetname]_[l1/l2]
-    # dataset names are "Cal07", "NC", "Perth", "B_LEE"
+    # dataset names are "Cal07", "NC", "Perth", "BLEE"
     cleaned_data_dict = dict()
     for key, value in data_dict.items():
         cleaned_data_dict[f"{key}_l1"] = data_dict[key].iloc[:, 0:4]
