@@ -14,7 +14,6 @@ import matplotlib.patches as patches
 from matplotlib import cm
 
 sys.path.insert(0, "..")
-sys.path.insert(0, "../density_and_length_analysis")
 from utils import DATAPATH, RESULTSPATH, SEGMENTS
 from utils import load_alnaji_excel, load_short_reads, get_sequence, join_lineages, create_sequence_library
 
