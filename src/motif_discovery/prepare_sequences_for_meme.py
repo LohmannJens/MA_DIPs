@@ -141,7 +141,7 @@ def create_windows_del_site_files(d: dict, n: int, combine: bool)-> None:
             # the beginning/end of the whole sequence.
             if combine:
                 window_seq = seq[max(s-n, 0):s+n] + seq[e-n:min(e+n, len(seq))]
-                record = SeqRecord(Seq(window_seq), id=f"{k}_{seg}_{s}_{e}")
+                record = SeqRecord(Seq(window_seq), id=f"{k}_{seg}_{s}_start_{e}_end")
                 write_sequence(record, k, seg, root_folder)
             else:
                 window_seq = seq[max(s-n, 0):s+n]
