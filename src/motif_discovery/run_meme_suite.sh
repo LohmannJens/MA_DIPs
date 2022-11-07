@@ -24,7 +24,7 @@ then
     path="$dir_crop/$dataset"
 elif [ ${cropped:0:6} == "window" ]
 then
-    path="$dir/$cropped""_sequences/$dataset"
+    path="$dir/$cropped""_sequences_combined/$dataset"
 elif [ $cropped == "high_ngs" ]
 then
     path="$dir/$cropped/$dataset"

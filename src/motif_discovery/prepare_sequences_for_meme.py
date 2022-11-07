@@ -118,7 +118,10 @@ def create_windows_del_site_files(d: dict, n: int, combine: bool)-> None:
 
         :return: None
     '''
-    root_folder = os.path.join(DATAPATH, "meme_suite", "alnaji2019", f"window_{n}_sequences")
+    fname = f"window_{n}_sequences"
+    if combine:
+        fname = f"{fname}_combined"
+    root_folder = os.path.join(DATAPATH, "meme_suite", "alnaji2019", fname)
     if os.path.exists(root_folder):
         if delete_folder(root_folder):
             shutil.rmtree(root_folder)
@@ -189,6 +192,6 @@ if __name__ == "__main__":
 
     seq_library = create_sequence_library(all_reads_dict)
  #   create_cropped_seq_files(seq_library)
-    create_windows_del_site_files(seq_library, 50, False)
+    create_windows_del_site_files(seq_library, 50, True)
   #  create_high_NGS_dataset(seq_library, 1000)
 
