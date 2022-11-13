@@ -15,11 +15,10 @@ from decimal import Decimal, ROUND_HALF_UP
 sys.path.insert(0, "..")
 sys.path.insert(0, "../relative_occurrence_nucleotides")
 sys.path.insert(0, "../direct_repeats")
-sys.path.insert(0, "../control_analysis")
 sys.path.insert(0, "../regression_length_vs_occurrence")
 
 from utils import RESULTSPATH, SEGMENTS, COLORS
-from utils import load_alnaji_2021, get_sequence, get_stat_symbol, create_sequence_library
+from utils import load_alnaji_2021, get_sequence, get_stat_symbol, create_sequence_library, load_hpi14_alnaji
 from composition_junction_site import count_nucleotide_occurrence_overall, nucleotide_occurrence_analysis
 from search_direct_repeats import count_direct_repeats_overall, include_correction
 from regression_length_occurrence import linear_regression_analysis
@@ -267,12 +266,56 @@ def slice_by_occurrence(df: object, thresh: int, below: bool)-> object:
 
 
 if __name__ == "__main__":
+    strain = "PR8"
     data_dict = load_alnaji_2021()
     # check the overlap of the different timepoints
-    venn_different_timepoints(data_dict)
+#    venn_different_timepoints(data_dict)
+
+    # do linear regression for the three timepoints
+ #   for timepoint in ["3hpi", "6hpi", "24hpi"]:
+  #      df_t = data_dict["PR8"].loc[data_dict["PR8"]["Timepoint"] == timepoint]
+   #     linear_regression_analysis(strain, df_t, author=f"Alnaji{timepoint}")
+
+    # merge 14 hpi to data set
+    hpi14_dict = load_hpi14_alnaji()
+    data_df = pd.concat([data_dict["PR8"], hpi14_dict["PR8"]]).reset_index()
+    data_df.drop(columns=["index"], inplace=True)
+
+    # create 3D plot for both sets combined
+ #   fig = plt.figure()
+  #  ax = fig.gca(projection="3d")
+
+    fig, ax = plt.subplots(1, 1, figsize=(5, 5), tight_layout=True)
+
+    x = [1, 2, 3, 4, 5, 6, 7, 8]
+
+    data_df.loc[(data_df["Timepoint"] == "14hpi") & (data_df["Class"] == "internal"), "Timepoint"] = "14hpi_internal"
+    data_df.loc[(data_df["Timepoint"] == "14hpi") & (data_df["Class"] == "external"), "Timepoint"] = "14hpi_external"
+
+    timepoints = list(data_df["Timepoint"].unique())
+    timepoints.append(timepoints.pop(2)) # put 24hpi to the end
+    for i, t in enumerate(timepoints):
+        # calc y (ngs count occurrence)
+        df = data_df[data_df["Timepoint"] == t]
+
+        grouped = df.groupby(["Segment"])
+        counts = grouped.sum()["NGS_read_count"]
+        counts = counts/sum(counts)
+        y = list()
+        for s in SEGMENTS:
+            y.append(counts[s])
+
+ #       ax.plot(x, y, zs=i, zdir="y", label=t)
+        ax.plot(x, y, label=t)
+        ax.set_xlabel(SEGMENTS)
+
+        # set axis with segment names and timepoints
+        ax.legend()
+
+    plt.show()
+    exit()
 
     # Compare DI candidates that occur once to those that occur more often
-    data_df = data_dict["PR8"]
 
     below_df = slice_by_occurrence(data_df, 2, below=True)
     above_df = slice_by_occurrence(data_df, 2, below=False)
@@ -287,11 +330,6 @@ if __name__ == "__main__":
     compare_direct_repeats(sequences_dict["PR8"], "PR8", mode=1, correction=False, author="Alnaji")
 
     # Linear regression analysis
-    strain = "PR8"
     linear_regression_analysis(strain, above_df, author="AlnajiAbove")
     linear_regression_analysis(strain, below_df, author="AlnajiBelow")
     
-    for timepoint in ["3hpi", "6hpi", "24hpi"]:
-        df_t = data_df.loc[data_df["Timepoint"] == timepoint]
-        linear_regression_analysis(strain, df_t, author=f"Alnaji{timepoint}")
-
