@@ -8,9 +8,12 @@ import sys
 
 import numpy as np
 import pandas as pd
+import matplotlib.pyplot as plt
+
+from matplotlib_venn import venn2
 
 sys.path.insert(0, "..")
-from utils import DATAPATH
+from utils import DATAPATH, RESULTSPATH
 from plot_fimo_motifs_against_sequence import get_fimo_folders, load_fimo_files
 
 
@@ -129,6 +132,30 @@ def check_positional_distribution(df: object, motif: str)-> None:
     print(grouped_cleaned_df.groupby(["motif_overlap"]).size().reset_index())
 
 
+def compare_DIPs_of_motifs(df, m1, m2)-> None:
+    '''
+        Gets the name of two motifs and creates a venn diagramm for the DI
+        candidates that belong to those two. Shows the overlap the two given
+        motifs have.
+        :param df: data frame including the motifs and the names of the
+                   DI candidates
+        :param m1: Name of the first motif to compare
+        :param m2: Name of the second motif to compare
+    '''
+    fig, axs = plt.subplots(1, 1, figsize=(5, 3), tight_layout=True)
+
+    m1_set = set(df[df["motif_alt_id"] == m1]["sequence_name"])
+    m2_set = set(df[df["motif_alt_id"] == m2]["sequence_name"])
+
+    venn2([m1_set, m2_set], set_labels=(m1, m2))
+    
+    fig.suptitle(f"overlap of DI candidates for motif {m1} & {m2}")
+
+    save_path = os.path.join(RESULTSPATH, "motif_discovery", f"DI_candidates_venn_{m1}_{m2}.png")
+    plt.savefig(save_path)
+    plt.close()
+
+
 if __name__ == "__main__":
     # adjust parameters here
     combined = False
@@ -179,6 +206,15 @@ if __name__ == "__main__":
 
         check_positional_distribution(fimo_df, motif)
         check_strains_and_segments(fimo_df, motif)
+
+        motif1 = "MEME-5"
+        motif2 = "MEME-8"
+        motif3 = "MEME-17"
+        motif4 = "MEME-32"
+        compare_DIPs_of_motifs(fimo_df, motif1, motif2)
+        compare_DIPs_of_motifs(fimo_df, motif1, motif3)
+        compare_DIPs_of_motifs(fimo_df, motif2, motif3)
+        compare_DIPs_of_motifs(fimo_df, motif3, motif4)
 
     # start and end of sequence used as seperate input sequences
     else:
