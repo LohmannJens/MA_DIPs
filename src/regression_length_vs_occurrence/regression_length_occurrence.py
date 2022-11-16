@@ -20,41 +20,49 @@ from utils import DATAPATH, RESULTSPATH, SEGMENTS
 from utils import get_seq_len, load_alnaji_excel, load_short_reads
 
 
-def format_dataset_for_plotting(df, dataset_name: str)-> (list, list, list):
+def format_dataset_for_plotting(df, dataset_name: str, del_indices: list=[])-> (list, list, list):
     '''
         formats the dataset to have it ready for plotting and doing the linear
         regression.
         :param df: data frame including the data to prepare
         :param dataset_name: indicates which data set is loaded and will be
                              formatted
+        :param del_indices:
 
         :return: tupel with three entries:
                     x values to plot
                     y values to plot
                     error values (if available)
+                    segments used (without excluded ones)
     '''
     if dataset_name == "schwartz":
         x = df["Length"]
         y = df["average"]
         err = np.array(df["standard_deviation"]) / np.array(y).sum()
+        segments = SEGMENTS
     else:
         x = list()
         y = list()
         err = list()
         all_sum = df["NGS_read_count"].sum()
-        for s in SEGMENTS:
-            df_s = df.loc[df["Segment"] == s]
-            y.append(df_s["NGS_read_count"].sum())
-            x.append(get_seq_len(dataset_name, s))
-            if df_s.size == 0:
-                err.append(0)
+        segments = list()
+        for i, s in enumerate(SEGMENTS):
+            if i in del_indices:
+                continue
             else:
-                err.append(np.std(df_s["NGS_read_count"]) / all_sum)
+                df_s = df.loc[df["Segment"] == s]
+                y.append(df_s["NGS_read_count"].sum())
+                x.append(get_seq_len(dataset_name, s))
+                if df_s.size == 0:
+                    err.append(0)
+                else:
+                    err.append(np.std(df_s["NGS_read_count"]) / all_sum)
+                segments.append(s)
 
-    return np.array(x), np.array(y) / np.array(y).sum(), err
+    return np.array(x), np.array(y) / np.array(y).sum(), err, segments
 
 
-def fit_models_and_plot_data(x: list, y: list, y_exp: list, err: list, k: str, del_indices: list=[], author: str="")-> None:
+def fit_models_and_plot_data(x: list, y: list, y_exp: list, err: list, k: str, author: str="", segments: list=[])-> None:
     '''
         Creates the linear and exponential model for the given data and plots
         the results.
@@ -63,27 +71,28 @@ def fit_models_and_plot_data(x: list, y: list, y_exp: list, err: list, k: str, d
         :param y_exp: cleaned y values for the exponential model (no 0 values)
         :param err: data for the error bar (only for schwartz dataset)
         :param k: name of the strain/data set
-        :param del_indices:
         :param author:
 
         :return: None
     '''
-    def label_scatter(x, y, k):
-        for i, s in enumerate(SEGMENTS):
+    def label_scatter(x, y, k, segments):
+        i = 0
+        for s in segments:
             if k == "exp" and s == "PB1":
                 y[i] = y[i] - 0.007
             ax.annotate(s, (x[i], y[i]))
             if k == "IVA":
                 ax.annotate(s, (x[i+8], y[i+8]))
                 ax.annotate(s, (x[i+16], y[i+16]))
+            i += 1
 
     x_plot = np.linspace(0, 2341, num=100).reshape((-1, 1))
     fig, ax = plt.subplots(1, 1, figsize=(10, 10), tight_layout=True)
- 
+    
     ax.scatter(x, y, label="observation")
-    label_scatter(x, y, k)
+    label_scatter(x, y, k, segments)
     ax.errorbar(x, y, yerr=err, fmt="o", capsize=5.0)
-
+ 
     # include expected values (perfect correlation DI count and length)
     if k == "IVA":
         y_expected = x.copy().astype("float64")
@@ -94,16 +103,11 @@ def fit_models_and_plot_data(x: list, y: list, y_exp: list, err: list, k: str, d
         y_expected = x / x.sum()
 
     ax.scatter(x, y_expected, label="expected", color="grey")
-    label_scatter(x, y_expected, "exp")
-
-    # excluding outliners to maximize R²
-    x_exp = x
-    x = np.delete(x, del_indices)
-    y = np.delete(y, del_indices)
+    label_scatter(x, y_expected, "exp", segments)
 
     # fit the models
     model = LinearRegression().fit(x.reshape((-1, 1)), y)
-    exp_model = np.polyfit(x_exp, np.log(y_exp), 1)
+    exp_model = np.polyfit(x, np.log(y_exp), 1)
 
     # predict values using the fitted models
     y_pred = model.predict(x.reshape((-1, 1)))
@@ -111,7 +115,8 @@ def fit_models_and_plot_data(x: list, y: list, y_exp: list, err: list, k: str, d
 
     # plotting the results
     score = model.score(x[:-2].reshape((-1, 1)), y[:-2])
-    ax.plot(x, y_pred, label=f"linear model (R²: {score:.2f})", color="green")
+    formula = f"f(x) = x * {model.coef_} + {model.intercept_}"
+    ax.plot(x, y_pred, label=f"linear model {formula} (R²: {score:.2f})", color="green")
     ax.plot(x_plot, y_exp_pred, label="exponential model", color="orange")
 
     # mark x axis intersection
@@ -161,9 +166,9 @@ def linear_regression_analysis(strain: str, df: object, del_indices: list=[], au
 
         :return: None
     '''
-    x, y, err = format_dataset_for_plotting(df, strain)
+    x, y, err, segments = format_dataset_for_plotting(df, strain, del_indices)
     y_exp = clean_for_exp_analysis(y)
-    fit_models_and_plot_data(x, y, y_exp, err, strain, del_indices, author)
+    fit_models_and_plot_data(x, y, y_exp, err, strain, author, segments)
 
 
 def perform_alnaji2019_regression_analysis(data: dict)-> None:
@@ -176,36 +181,35 @@ def perform_alnaji2019_regression_analysis(data: dict)-> None:
         :return: None
     '''
     for k, v in data.items():
-        x, y, err = format_dataset_for_plotting(v, k)
-
-        # clean data for exponential model (y == 0 is invalid)
-        y_exp = clean_for_exp_analysis(y)
-
-        # collect data for the model over three IV A strains
-        if k in ["Cal07", "NC", "Perth"]:
-            if "x_IVA" in locals():
-                x_IVA = np.concatenate((x_IVA, x))
-                y_IVA = np.concatenate((y_IVA, y))
-                y_IVA_exp = np.concatenate((y_IVA_exp, y_exp))
-                y_IVA_expected = np.concatenate((y_IVA_expected, x / x.sum()))
-                IVA_err = np.concatenate((IVA_err, err))
-            else:
-                x_IVA = x
-                y_IVA = y
-                y_IVA_exp = y_exp
-                y_IVA_expected = x / x.sum()
-                IVA_err = err
-
         if k == "Perth":
             del_indices = [7]
         if k in ["Cal07", "schwartz", "B_Lee"]:
             del_indices = [6, 7]
 
-        fit_models_and_plot_data(x, y, y_exp, err, k, del_indices)
+        x, y, err, segments = format_dataset_for_plotting(v, k, del_indices)
+        # clean data for exponential model (y == 0 is invalid)
+        y_exp = clean_for_exp_analysis(y)
+        fit_models_and_plot_data(x, y, y_exp, err, k, segments=segments)
 
     # do regression for all three IV A strains together
-    del_indices = [5, 6, 7, 14, 15, 22, 23]
-    fit_models_and_plot_data(x_IVA, y_IVA, y_IVA_exp, IVA_err, "IVA", del_indices)
+    for k in ["Cal07", "NC", "Perth"]:
+        v = data[k]
+        x, y, err, segments = format_dataset_for_plotting(v, k)
+        y_exp = clean_for_exp_analysis(y)
+        if k == "Cal07":
+            x_IVA = x
+            y_IVA = y
+            y_IVA_exp = y_exp
+            y_IVA_expected = x / x.sum()
+            IVA_err = err
+        elif k in ["NC", "Perth"]:
+            x_IVA = np.concatenate((x_IVA, x))
+            y_IVA = np.concatenate((y_IVA, y))
+            y_IVA_exp = np.concatenate((y_IVA_exp, y_exp))
+            y_IVA_expected = np.concatenate((y_IVA_expected, x / x.sum()))
+            IVA_err = np.concatenate((IVA_err, err))
+
+    fit_models_and_plot_data(x_IVA, y_IVA, y_IVA_exp, IVA_err, "IVA", segments=segments)
 
 
 if __name__ == "__main__":
