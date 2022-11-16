@@ -125,7 +125,7 @@ def map_positions_to_density(data: dict, density_data: dict)-> dict:
             axs[i].set_xlim(left=0, right=max(density_data[s]["x"]))
             axs[i].set_ylim(bottom=0, top=105)
             axs[i].set_xlabel("sequence position")
-            axs[i].set_ylabel("high/low NP area")
+            axs[i].set_ylabel("NP density")
 
         fig.suptitle(f"deletion position against NP areas for {k}")
         fig.legend([l1, l2], ["NGS count", "NP density"])
@@ -158,7 +158,7 @@ def map_dens_to_dens(strain: str, dens_1: dict, dens_2: dict)-> None:
             axs[i].set_xlim(left=0, right=max(dens_1[s]["x"]))
             axs[i].set_ylim(bottom=0, top=105)
             axs[i].set_xlabel("sequence position")
-            axs[i].set_ylabel("high/low NP area")
+            axs[i].set_ylabel("NP density")
 
         fig.suptitle("Mapping of the data source for NP density data")
         fig.legend([l1, l2], ["Lee", "Le Sage"])
@@ -239,7 +239,7 @@ def compare_position_with_density(data: dict, density_data: dict, all_reads: dic
                         max(obs_ratio, exp_ratio)),
                         horizontalalignment="center")
             ax.set_xlabel("Segments")
-            ax.set_ylabel("deletions in high NP area/all positions")
+            ax.set_ylabel("deletions in low area/all positions")
             ax.set_xticks(ticks=np.arange(0,16), labels=["obs", "exp"]*8)
 
         plt.legend(SEGMENTS)
@@ -256,7 +256,7 @@ if __name__ == "__main__":
     all_reads_dict = load_short_reads(cleaned_data_dict)
     del all_reads_dict["NC"]
     del all_reads_dict["Perth"]
-    del all_reads_dict["B_LEE"]
+    del all_reads_dict["BLEE"]
 
     # Plotting NP data (from Sage 2019) against junction sites
     #    Cal07 data from Alnaji 2019
