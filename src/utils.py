@@ -265,3 +265,59 @@ def load_hpi14_alnaji()-> dict:
     dic = dict({"PR8": data})
     return dic
 
+def load_full_alnaji2021()-> dict:
+    '''
+        Loads the data for 3, 6 and 24 hpi and the data for both 14 hpis and
+        merges them together.
+
+        :return: dictionary with strain name as key and data frame as value
+    '''
+    data_dict = load_alnaji_2021()
+    hpi14_dict = load_hpi14_alnaji()
+    data_df = pd.concat([data_dict["PR8"], hpi14_dict["PR8"]]).reset_index()
+    data_df.drop(columns=["index"], inplace=True)
+
+    data_df.loc[(data_df["Timepoint"] == "14hpi") & (data_df["Class"] == "internal"), "Timepoint"] = "14hpi_internal"
+    data_df.loc[(data_df["Timepoint"] == "14hpi") & (data_df["Class"] == "external"), "Timepoint"] = "14hpi_external"
+
+    return data_df
+
+def load_all_sets()-> object:
+    '''
+        Loads all data sets together in one data frame. Provides the columns
+        Segment, Start, End, NGS_read_count and dataset_name.
+
+        :return: data frame
+    '''
+    # load pelz dataset
+    pelz = load_pelz_dataset()
+    df = pelz["PR8"]
+    df["dataset_name"] = "Pelz"
+
+    # load kupke dataset
+    kupke = load_kupke(corrected=True)
+    kupke["PR8"]["dataset_name"] = "Kupke"
+    kupke["PR8"].drop(["DI", "Length", "Infection", "Num_sample", "Correction"], axis=1, inplace=True)
+    df = pd.concat([df, kupke["PR8"]])
+
+    # load alnaji 2021 dataset
+    alnaji2021 = load_full_alnaji2021()
+    alnaji2021["dataset_name"] = "Alnaji2021"
+    alnaji2021.drop(["DI", "Replicate", "Timepoint", "Class"], axis=1, inplace=True)
+    df = pd.concat([df, alnaji2021])
+
+    # load four datasets of alnaji 2019
+    alnaji2019 = load_short_reads(load_alnaji_excel())
+    for k, v in alnaji2019.items():
+        v["dataset_name"] = f"Alnaji2019_{k}"
+        v.drop(["Length"], axis=1, inplace=True)
+        df = pd.concat([df, v])
+
+    # remove rows where NGS count is zero and clean up
+    df = df[df["NGS_read_count"] > 0]
+    df["NGS_read_count"] = df["NGS_read_count"].astype(float)
+    df.reset_index(inplace=True)
+    df.drop(["index"], axis=1, inplace=True)
+    
+    return df
+
