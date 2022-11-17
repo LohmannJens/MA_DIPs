@@ -18,7 +18,7 @@ sys.path.insert(0, "../direct_repeats")
 sys.path.insert(0, "../regression_length_vs_occurrence")
 
 from utils import RESULTSPATH, SEGMENTS, COLORS
-from utils import load_alnaji_2021, get_sequence, get_stat_symbol, create_sequence_library, load_hpi14_alnaji
+from utils import load_alnaji_2021, get_sequence, get_stat_symbol, create_sequence_library, load_hpi14_alnaji, load_full_alnaji2021
 from composition_junction_site import count_nucleotide_occurrence_overall, nucleotide_occurrence_analysis
 from search_direct_repeats import count_direct_repeats_overall, include_correction
 from regression_length_occurrence import linear_regression_analysis
@@ -321,23 +321,11 @@ if __name__ == "__main__":
     # check the overlap of the different timepoints
     venn_different_timepoints(data_dict)
 
-    # merge 14 hpi to data set
-    hpi14_dict = load_hpi14_alnaji()
-    data_df = pd.concat([data_dict["PR8"], hpi14_dict["PR8"]]).reset_index()
-    data_df.drop(columns=["index"], inplace=True)
+    # load full alnaji 2021 data set
+    data_df = load_full_alnaji2021()
 
-    data_df.loc[(data_df["Timepoint"] == "14hpi") & (data_df["Class"] == "internal"), "Timepoint"] = "14hpi_internal"
-    data_df.loc[(data_df["Timepoint"] == "14hpi") & (data_df["Class"] == "external"), "Timepoint"] = "14hpi_external"
-
-    # do linear regression for the three timepoints
-#    for t in list(data_df["Timepoint"].unique()):
- #       df_t = data_df.loc[data_df["Timepoint"] == t]
-  #      if t in ["14hpi_internal", "14hpi_external"]: # exclude NP for 14 hpi
-   #         linear_regression_analysis(strain, df_t, del_indices=[4], author=f"Alnaji{t}")
-    #    else:
-     #       linear_regression_analysis(strain, df_t, author=f"Alnaji{t}")
+    # analyze alanji data set over the five timepoints
     analyze_over_timepoints(data_df)
-    exit()
 
     # Compare DI candidates that occur once to those that occur more often
 
