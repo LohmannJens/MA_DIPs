@@ -35,7 +35,7 @@ def check_distributions(df: object)-> None:
         axs[0].set_ylabel("# occurrences")
         axs[0].set_title(f"NGS distribution for {name}")
 
-        axs[1].hist(np.log(n_df["NGS_read_count"]), bins=100)
+        axs[1].hist(n_df["NGS_log_norm"], bins=100)
         axs[1].set_xlabel("log(NGS count)")
         axs[1].set_ylabel("# occurrences")
         axs[1].set_title(f"log(NGS) distribution for {name}")

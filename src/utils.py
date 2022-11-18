@@ -289,21 +289,31 @@ def load_all_sets()-> object:
 
         :return: data frame
     '''
+    def log_and_norm(df):
+        df["NGS_read_count"] = df["NGS_read_count"].astype(float)
+        df = df[df["NGS_read_count"] > 0]
+        df["NGS_log"] = np.log(df["NGS_read_count"]).astype(float)
+        df["NGS_norm"] = df["NGS_read_count"]/max(df["NGS_read_count"])
+        df["NGS_log_norm"] = df["NGS_log"]/max(df["NGS_log"])
+
+        return df
     # load pelz dataset
-    pelz = load_pelz_dataset()
-    df = pelz["PR8"]
+    df = load_pelz_dataset()["PR8"]
     df["dataset_name"] = "Pelz"
+    df = log_and_norm(df)
 
     # load kupke dataset
-    kupke = load_kupke(corrected=True)
-    kupke["PR8"]["dataset_name"] = "Kupke"
-    kupke["PR8"].drop(["DI", "Length", "Infection", "Num_sample", "Correction"], axis=1, inplace=True)
-    df = pd.concat([df, kupke["PR8"]])
+    kupke = load_kupke(corrected=True)["PR8"]
+    kupke["dataset_name"] = "Kupke"
+    kupke.drop(["DI", "Length", "Infection", "Num_sample", "Correction"], axis=1, inplace=True)
+    kupke = log_and_norm(kupke)
+    df = pd.concat([df, kupke])
 
     # load alnaji 2021 dataset
     alnaji2021 = load_full_alnaji2021()
     alnaji2021["dataset_name"] = "Alnaji2021"
     alnaji2021.drop(["DI", "Replicate", "Timepoint", "Class"], axis=1, inplace=True)
+    alnaji2021 = log_and_norm(alnaji2021)
     df = pd.concat([df, alnaji2021])
 
     # load four datasets of alnaji 2019
@@ -311,11 +321,9 @@ def load_all_sets()-> object:
     for k, v in alnaji2019.items():
         v["dataset_name"] = f"Alnaji2019_{k}"
         v.drop(["Length"], axis=1, inplace=True)
+        v = log_and_norm(v)
         df = pd.concat([df, v])
 
-    # remove rows where NGS count is zero and clean up
-    df = df[df["NGS_read_count"] > 0]
-    df["NGS_read_count"] = df["NGS_read_count"].astype(float)
     df.reset_index(inplace=True)
     df.drop(["index"], axis=1, inplace=True)
     
