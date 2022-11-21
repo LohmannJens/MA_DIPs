@@ -10,7 +10,7 @@ import matplotlib.pyplot as plt
 
 sys.path.insert(0, "..")
 from utils import DATAPATH, RESULTSPATH
-from utils import load_all_sets
+from ml_utils import load_all_sets
 
 def check_distributions(df: object)-> None:
     '''
