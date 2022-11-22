@@ -136,7 +136,7 @@ if __name__ == "__main__":
         fig.suptitle(f"\n\n\n\n{k}")
         fig.subplots_adjust(top=0.2)
         if args.weighted:
-            filename = f"{k}_{args.data}_weighted_motif_on_sequence.png"
+            filename = f"{k}_{args.data}_weighted_motif_on_sequence.pdf"
         else:
             filename = f"{k}_{args.data}_motif_on_sequence.png"
         savepath = os.path.join(RESULTSPATH, "motif_discovery", filename)
