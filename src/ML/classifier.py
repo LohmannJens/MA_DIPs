@@ -20,6 +20,39 @@ sys.path.insert(0, "..")
 from utils import RESULTSPATH
 
 
+def segment_ohe(df: object)-> (object, list):
+    '''
+
+    '''
+    ohe = OneHotEncoder()
+    segment_df = pd.DataFrame(ohe.fit_transform(df[["Segment"]]).toarray())
+    ohe_cols = ohe.get_feature_names_out().tolist()
+    segment_df.columns = ohe_cols
+    df = df.join(segment_df)
+    return df, ohe_cols
+
+
+def sequence_ohe(df: object)-> (object, list):
+    '''
+
+    '''   
+    print(df)
+    '''
+    seq_array = array(list(sequence))
+    
+    #integer encode the sequence
+    label_encoder = LabelEncoder()
+    integer_encoded_seq = label_encoder.fit_transform(seq_array)
+
+    #one hot the sequence
+    onehot_encoder = OneHotEncoder(sparse=False)
+    #reshape because that's what OneHotEncoder likes
+    integer_encoded_seq = integer_encoded_seq.reshape(len(integer_encoded_seq), 1)
+    onehot_encoded_seq = onehot_encoder.fit_transform(integer_encoded_seq)
+    '''
+    return df, []
+
+
 def test_classifiers(df: object, dataset_name: str)-> None:
     '''
         Tests three different classifiers on a given dataset.
@@ -29,12 +62,11 @@ def test_classifiers(df: object, dataset_name: str)-> None:
 
         :return: None
     '''
-    # add segment information with one hot encoding
-    ohe = OneHotEncoder()
-    segment_df = pd.DataFrame(ohe.fit_transform(df[["Segment"]]).toarray())
-    ohe_cols = ohe.get_feature_names().tolist()
-    segment_df.columns = ohe_cols
-    df = df.join(segment_df)
+    # add segment and sequence information with one hot encoding
+    feature_cols = ["Start", "End"]
+    df, segment_cols = segment_ohe(df)
+    df, sequence_cols = sequence_ohe(df)
+    feature_cols = feature_cols + segment_cols + sequence_cols
 
     # Selecting train/test and validation data sets
     if dataset_name == "Alnaji2019":
@@ -48,11 +80,11 @@ def test_classifiers(df: object, dataset_name: str)-> None:
                           "Alnaji2019_BLEE", "Pelz", "Alnaji2021", "Kupke"]
 
     t_df = df.loc[df["dataset_name"].isin(train_datasets)].copy().reset_index()
-    X = t_df[["Start", "End"] + ohe_cols]
+    X = t_df[feature_cols]
     y = pd.cut(t_df["NGS_log_norm"], bins=2, labels=["low", "high"])
     if dataset_name in ["Alnaji2019", "PR8"]:
         v_df = df.loc[df["dataset_name"].isin(val_datasets)].copy().reset_index()
-        X_val = v_df[["Start", "End"] + ohe_cols]
+        X_val = v_df[feature_cols]
         y_val = pd.cut(v_df["NGS_log_norm"], bins=2, labels=["low", "high"])
 
     # Testing different classifiers
@@ -61,7 +93,7 @@ def test_classifiers(df: object, dataset_name: str)-> None:
         # setting up classifier and k-fold validation
         kf = KFold(n_splits=5, random_state=None)
         if clf_name == "logistic_regression":
-            clf = LogisticRegression()
+            clf = LogisticRegression(max_iter=1000)
         elif clf_name == "svc":
             clf = SVC(gamma=2, C=1) # probably overfitting
         elif clf_name == "random_forest":
@@ -97,7 +129,7 @@ def test_classifiers(df: object, dataset_name: str)-> None:
         RocCurveDisplay.from_estimator(clf, X, y)
         plt.plot([0,1], [0,1])
 
-        path = os.path.join(RESULTSPATH, "ML", f"{clf_name}_{datasets}_roc_curve.png")
+        path = os.path.join(RESULTSPATH, "ML", f"{clf_name}_{dataset_name}_roc_curve.png")
         plt.savefig(path)
         plt.close()
 
