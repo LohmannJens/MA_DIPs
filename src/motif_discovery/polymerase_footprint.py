@@ -28,7 +28,7 @@ def search_footprint(strain: str)-> None:
     for s in SEGMENTS:
         seq = get_sequence(strain, s)
         for f in footprints:
-            d[f].append(seq.find(f))
+            d[f].append([i for i in range(len(seq)) if seq.startswith(f, i)])
 
     df = pd.DataFrame(d)
 
