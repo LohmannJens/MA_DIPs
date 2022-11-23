@@ -7,6 +7,9 @@ import sys
 
 import pandas as pd
 
+from Bio.Seq import Seq
+from Bio.Align import PairwiseAligner
+
 sys.path.insert(0, "..")
 from utils import DATAPATH, RESULTSPATH, SEGMENTS
 from utils import get_sequence
@@ -36,9 +39,33 @@ def search_footprint(strain: str)-> None:
     df.to_latex(path)
 
 
-if __name__ == "__main__":
-#    strains = ["Cal07", "NC", "Perth", "BLEE", "PR8"]
- #   for strain in strains:
-  #      search_footprint(strain)
+def extended_footprint_search(strain: str)-> None:
+    '''
 
-    search_footprint("PR8")
+    '''
+    footprints = [Seq("AGCAAAAGCAGG"), Seq("AGCGAAAGCAGG"), Seq("CCUUGUUUCUACU")]
+
+    aligner = PairwiseAligner()
+    aligner.mode = "local"
+    aligner.target_internal_open_gap_score = -99999
+    aligner.target_left_open_gap_score = -99999
+    aligner.target_right_open_gap_score = -99999
+    aligner.query_internal_open_gap_score = -99999
+    aligner.query_left_open_gap_score = -99999
+    aligner.query_right_open_gap_score = -99999
+
+    for s in SEGMENTS:
+        seq = get_sequence(strain, s)
+        for f in footprints:
+            for a in aligner.align(seq, f):
+                print(a.aligned, a.score)
+
+if __name__ == "__main__":
+    strains = ["Cal07", "NC", "Perth", "BLEE", "PR8"]
+    for strain in strains:
+        print(strain)
+       # search_footprint(strain)
+        extended_footprint_search(strain)
+
+
+    extended_footprint_search("PR8")
