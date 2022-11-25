@@ -180,7 +180,7 @@ def direct_repeats_analysis(seq_dict: dict, mode: int, top: bool=False, correcti
 
             axs[i%4, j].bar(x=x, height=h/h.sum(), width=-0.4, align="edge", label="observed")
             axs[i%4, j].bar(x=x, height=h_exp/h_exp.sum(), width=0.4, align="edge", label="expected")
-            axs[i%4, j].set_xlabel("number of overlapping nucleotides")
+            axs[i%4, j].set_xlabel("length of direct repeat")
             axs[i%4, j].set_ylabel("relative occurrence")
             axs[i%4, j].set_title(f"{s} (n={n}) {symbol}")
             axs[i%4, j].legend(loc="upper right")
