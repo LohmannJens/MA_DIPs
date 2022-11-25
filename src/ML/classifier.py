@@ -12,7 +12,7 @@ from sklearn.preprocessing import OneHotEncoder
 from sklearn.linear_model import LogisticRegression
 from sklearn.svm import SVC
 from sklearn.ensemble import RandomForestClassifier
-from sklearn.metrics import accuracy_score, RocCurveDisplay
+from sklearn.metrics import accuracy_score, RocCurveDisplay, confusion_matrix
 
 from ml_utils import load_all_sets
 
@@ -36,7 +36,7 @@ def sequence_ohe(df: object)-> (object, list):
     '''
 
     '''   
-    print(df)
+    #print(df)
     '''
     seq_array = array(list(sequence))
     
@@ -81,15 +81,17 @@ def test_classifiers(df: object, dataset_name: str)-> None:
 
     t_df = df.loc[df["dataset_name"].isin(train_datasets)].copy().reset_index()
     X = t_df[feature_cols]
-    y = pd.cut(t_df["NGS_log_norm"], bins=2, labels=["low", "high"])
+    y = pd.cut(t_df["NGS_log_norm"], bins=3, labels=["low", "mid", "high"], ordered=False)
+
     if dataset_name in ["Alnaji2019", "PR8"]:
         v_df = df.loc[df["dataset_name"].isin(val_datasets)].copy().reset_index()
         X_val = v_df[feature_cols]
-        y_val = pd.cut(v_df["NGS_log_norm"], bins=2, labels=["low", "high"])
+        y_val = pd.cut(v_df["NGS_log_norm"], bins=3, labels=["low", "mid", "high"])
 
     # Testing different classifiers
     clf_names = ["logistic_regression", "svc", "random_forest"]
     for clf_name in clf_names:
+        print(clf_name)
         # setting up classifier and k-fold validation
         kf = KFold(n_splits=5, random_state=None)
         if clf_name == "logistic_regression":
@@ -113,25 +115,27 @@ def test_classifiers(df: object, dataset_name: str)-> None:
             acc = accuracy_score(pred_values, y_test)
             acc_score.append(acc)
 
-            print(f"accuracy - {acc}")
-
-            if dataset_name in ["Alnaji2019", "PR8"]:
-                acc_val = accuracy_score(clf.predict(X_val), y_val)
-                print(f"accuracy validation - {acc_val}")
-
-        # print results
+        # print results of k-fold
         avg_acc_score = sum(acc_score)/len(acc_score)
-        print("accuracy of each fold - {}".format(acc_score))
         print("Avg accuracy : {}".format(avg_acc_score))
 
-        # fit on overall model and plot ROC curve
+        # fit on overall model and create confusion matrix for validation set
         clf.fit(X, y)
-        RocCurveDisplay.from_estimator(clf, X, y)
-        plt.plot([0,1], [0,1])
+        if dataset_name in ["Alnaji2019", "PR8"]:   
+            predicted_val = clf.predict(X_val)
+            confusion_m = confusion_matrix(predicted_val, y_val)
+            print(accuracy_score(predicted_val, y_val))
+            print(confusion_m)
 
-        path = os.path.join(RESULTSPATH, "ML", f"{clf_name}_{dataset_name}_roc_curve.png")
-        plt.savefig(path)
-        plt.close()
+        # if two classes given create a ROC
+        if len(y.unique()) == 2:
+            RocCurveDisplay.from_estimator(clf, X, y)
+            plt.plot([0,1], [0,1])
+
+            path = os.path.join(RESULTSPATH, "ML", f"{clf_name}_{dataset_name}_roc_curve.png")
+            plt.savefig(path)
+            plt.close()
+            
 
 if __name__ == "__main__":
     # Loading the dataset
