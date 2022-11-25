@@ -87,7 +87,7 @@ def fit_models_and_plot_data(x: list, y: list, y_exp: list, err: list, k: str, a
             i += 1
 
     x_plot = np.linspace(0, 2341, num=100).reshape((-1, 1))
-    fig, ax = plt.subplots(1, 1, figsize=(10, 10), tight_layout=True)
+    fig, ax = plt.subplots(1, 1, figsize=(5, 5), tight_layout=True)
     
     ax.scatter(x, y, label="observation")
     label_scatter(x, y, k, segments)
@@ -115,9 +115,11 @@ def fit_models_and_plot_data(x: list, y: list, y_exp: list, err: list, k: str, a
 
     # plotting the results
     score = model.score(x[:-2].reshape((-1, 1)), y[:-2])
-    formula = f"f(x) = x * {model.coef_} + {model.intercept_}"
+ #   formula = f"f(x) = x * {model.coef_} + {model.intercept_}"
+    formula = ""
     ax.plot(x, y_pred, label=f"linear model {formula} (R²: {score:.2f})", color="green")
     ax.plot(x_plot, y_exp_pred, label="exponential model", color="orange")
+    ax.plot(np.insert(x, 0, 0), np.insert(y_expected, 0, 0), color="grey")
 
     # mark x axis intersection
     ax.plot((-model.intercept_/model.coef_), 0, 'ro')
