@@ -30,8 +30,8 @@ def count_nucleotide_occurrence(seq: str, p: int)-> dict:
         :return: returns a counter dict with an entry for each nucleotide. In
                  each entry the counter for each position is given.
     '''
-    window = seq[p-5:p+4]
-    r_dict = dict({n: np.zeros(9) for n in NUCLEOTIDES})
+    window = seq[p-5:p+5]
+    r_dict = dict({n: np.zeros(10) for n in NUCLEOTIDES})
 
     for i, char in enumerate(window):
         r_dict[char][i] = 1
@@ -50,13 +50,13 @@ def count_nucleotide_occurrence_overall(df: object, seq: str)-> (dict, dict):
                     dict with nucleotide count for end site
     '''
 
-    count_start_dict = dict({n: np.zeros(9) for n in NUCLEOTIDES})
-    count_end_dict = dict({n: np.zeros(9) for n in NUCLEOTIDES})
+    count_start_dict = dict({n: np.zeros(10) for n in NUCLEOTIDES})
+    count_end_dict = dict({n: np.zeros(10) for n in NUCLEOTIDES})
     normalize = 0
 
     for i, row in df.iterrows():
         seq_start_dict = count_nucleotide_occurrence(seq, row["Start"]) 
-        seq_end_dict = count_nucleotide_occurrence(seq, row["End"])
+        seq_end_dict = count_nucleotide_occurrence(seq, row["End"]-1)
         normalize += 1
         for nuc in count_start_dict.keys():
             count_start_dict[nuc] += seq_start_dict[nuc]
@@ -94,7 +94,7 @@ def nucleotide_occurrence_analysis(seq_dict: dict, seg: str, author: str="")-> N
         exp_s, exp_e = count_nucleotide_occurrence_overall(sampling_data, seq)
         
         fig, axs = plt.subplots(4, 2, figsize=(5, 10), tight_layout=True)
-        x = np.arange(0.8, 9.8, dtype=np.float64)
+        x = np.arange(0.8, 10.8, dtype=np.float64)
 
         for idx, nuc in enumerate(count_start_dict.keys()):
             h_s = count_start_dict[nuc]/n
@@ -120,13 +120,13 @@ def nucleotide_occurrence_analysis(seq_dict: dict, seg: str, author: str="")-> N
 
             for i in range(2):
                 axs[idx, i].margins(x=0)
-                axs[idx, i].set_xlim(left=0.5, right=9.5)
+                axs[idx, i].set_xlim(left=0.5, right=10.5)
                 axs[idx, i].set_ylim(top=0.8, bottom=0.0)
-                axs[idx, i].set_xticks([1,2,3,4,5,6,7,8,9])
+                axs[idx, i].set_xticks([1,2,3,4,5,6,7,8,9,10])
                 axs[idx, i].set_xlabel("position at junction side")
                 axs[idx, i].set_ylabel("relative occurrence")
-            axs[idx, 0].add_patch(plt.Rectangle((5.5, 0), 4, 1, color="grey", alpha=0.3))
-            axs[idx, 1].add_patch(plt.Rectangle((0.5, 0), 4, 1, color="grey", alpha=0.3))
+            axs[idx, 0].add_patch(plt.Rectangle((5.5, 0), 5, 1, color="grey", alpha=0.3))
+            axs[idx, 1].add_patch(plt.Rectangle((0.5, 0), 5, 1, color="grey", alpha=0.3))
   
         by_label = dict()
         for ax in axs:
