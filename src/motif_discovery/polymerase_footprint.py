@@ -56,15 +56,23 @@ def extended_footprint_search(strain: str)-> (float, float, float):
                  data frame including start and end positions for all matches
     '''
     # defining polymerase footprints
-    f1 = "AGCAAAAGCAGG"
-    f2 = "AGCGAAAGCAGG"
-    f3 = "CCUUGUUUCUACU"
-    footprints = [Seq(f1), Seq(f2), Seq(f3)]
+    if strain == "PR8":
+        footprints = dict({"AGCAAAAGCAGG": "start", "AGCGAAAGCAGG": "start", "CCUUGUUUCUACU": "end"})
+    else:
+        footprints = dict()
+        for s in SEGMENTS:
+            seq = get_sequence(strain, s)
+            f1 = seq[:12]
+            if f1 not in footprints:
+                footprints[f1] = "start"
+            f2 = seq[-12:]
+            if f2 not in footprints:
+                footprints[f2] = "end"
 
     # generate random footprints by shuffling to have a comparision
     rand_footprints = list()
-    for f in [f1, f2, f3]:
-        rand_footprints = rand_footprints + [Seq("".join(random.sample(f,len(f)))) for i in range(50)]
+    for f in footprints.keys():
+        rand_footprints = rand_footprints + [Seq("".join(random.sample(f,len(f)))) for i in range(5)]
 
     # start PairwiseAligner and set parameters that no gaps are allowed
     aligner = PairwiseAligner()
@@ -79,18 +87,19 @@ def extended_footprint_search(strain: str)-> (float, float, float):
     # run alignment for all segments with given and random footprints
     scores = list()
     rand_scores = list()
-    positions = dict({"Start":list(), "End":list(), "Motif":list(), "Segment":list()})
+    positions = dict({"Start":list(), "End":list(), "Motif":list(), "Segment":list(), "Motif_loc": list()})
     for s in SEGMENTS:
         seq = get_sequence(strain, s)
         if strain == "PR8": # leave 100 percent matches out for PR8
             seq = seq[13:len(seq)-13]
 
-        for f in footprints:
+        for f, p in footprints.items():
             for a in aligner.align(seq, f):
                 scores.append(a.score)
                 positions["Start"].append(a.path[0][0])
                 positions["End"].append(a.path[1][0])
                 positions["Motif"].append(f)
+                positions["Motif_loc"].append(p)
                 positions["Segment"].append(s)
 
         for r_f in rand_footprints:
@@ -100,7 +109,7 @@ def extended_footprint_search(strain: str)-> (float, float, float):
     # calculate mean and statistical testing with one sided t-test
     mean = sum(scores)/len(scores)
     rand_mean = sum(rand_scores)/len(rand_scores)
-    stat, p = stats.ttest_1samp(scores, rand_mean, alternative="greater")
+    stat, p = stats.mannwhitneyu(scores, rand_scores, alternative="greater")
 
     return mean, rand_mean, p, pd.DataFrame(positions)
 
@@ -116,9 +125,7 @@ def plot_motif_positions_on_sequence(df: object, ngs_df: object, strain: str)-> 
 
         :return None:
     '''
-    f_col = dict({"AGCAAAAGCAGG": "red",
-                  "AGCGAAAGCAGG": "blue",
-                  "CCUUGUUUCUACU": "green"})
+    f_col = dict({"start": "blue", "end": "red"})
 
     fig, axs = plt.subplots(8, 1, figsize=(7, 10), tight_layout=True)
     for i, seg in enumerate(SEGMENTS):
@@ -129,15 +136,12 @@ def plot_motif_positions_on_sequence(df: object, ngs_df: object, strain: str)-> 
             rect_h = max(ngs_s_df["NGS_read_count"])/10
             axs[i].bar(ngs_s_df["Start"], ngs_s_df["NGS_read_count"])
             axs[i].bar(ngs_s_df["End"], ngs_s_df["NGS_read_count"])
-        else:
-            rect_h = 1
-
-        if not s_df.empty:
+            
             for r in s_df.iterrows():
                 row = r[1]
                 s = row["Start"]
                 e = row["End"]
-                l = row["Motif"]
+                l = row["Motif_loc"]
                 p = patches.Rectangle((s, 0), e-s, rect_h, label=l, color=f_col[l])
                 axs[i].add_patch(p)
 
@@ -145,7 +149,6 @@ def plot_motif_positions_on_sequence(df: object, ngs_df: object, strain: str)-> 
         axs[i].set_xlabel("Sequence position")
         axs[i].set_ylabel("NGS count")
 
-    plt.legend()
     path = os.path.join(RESULTSPATH, "motif_discovery", f"footprints_on_sequence_{strain}.pdf")
     plt.savefig(path)
 
