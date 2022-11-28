@@ -4,11 +4,12 @@
 import os
 import sys
 
+import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
 
 from sklearn.model_selection import KFold 
-from sklearn.preprocessing import OneHotEncoder
+from sklearn.preprocessing import OneHotEncoder, LabelEncoder
 from sklearn.linear_model import LogisticRegression
 from sklearn.svm import SVC
 from sklearn.ensemble import RandomForestClassifier
@@ -18,11 +19,20 @@ from ml_utils import load_all_sets
 
 sys.path.insert(0, "..")
 from utils import RESULTSPATH
+from utils import get_sequence, get_seq_len
+
+sys.path.insert(0, "../direct_repeats")
+from search_direct_repeats import calculate_direct_repeat
 
 
 def segment_ohe(df: object)-> (object, list):
     '''
+        Converts the column with segment names into an one hot encoding.
+        :param df: data frame including a row called 'Segment'
 
+        :return: Tuple with two entries:
+                    data frame including original data and OHE data
+                    list with the column names of the OHE
     '''
     ohe = OneHotEncoder()
     segment_df = pd.DataFrame(ohe.fit_transform(df[["Segment"]]).toarray())
@@ -32,25 +42,69 @@ def segment_ohe(df: object)-> (object, list):
     return df, ohe_cols
 
 
-def sequence_ohe(df: object)-> (object, list):
+def junction_site_ohe(df: object, position: str)-> (object, list):
     '''
+        Gets the sequence around the start or end of a given junction site and
+        converts the sequence into an one hot encoding.
+        :param df: data frame including Start, End, Strain, and Segment
+        :param position: is either 'Start' or 'End' to indicate which site
 
-    '''   
-    #print(df)
+        :return: Tuple with two entries:
+                    data frame including original data and OHE data
+                    list with the column names of the OHE
     '''
-    seq_array = array(list(sequence))
-    
-    #integer encode the sequence
-    label_encoder = LabelEncoder()
-    integer_encoded_seq = label_encoder.fit_transform(seq_array)
+    # defining static parameters
+    CHARS = 'ACGU'
+    CHARS_COUNT = len(CHARS)
+    n = df.shape[0]
+    res = np.zeros((n, CHARS_COUNT * 10), dtype=np.uint8)
 
-    #one hot the sequence
-    onehot_encoder = OneHotEncoder(sparse=False)
-    #reshape because that's what OneHotEncoder likes
-    integer_encoded_seq = integer_encoded_seq.reshape(len(integer_encoded_seq), 1)
-    onehot_encoded_seq = onehot_encoder.fit_transform(integer_encoded_seq)
+    # getting sequence window for each row and do OHE
+    for row in df.iterrows():
+        r = row[1]
+        s = r[position]
+        seq = get_sequence(r["Strain"], r["Segment"])
+        seq = seq[s-5:s+5]
+        i = row[0]
+        # Write down OHE in numpy array
+        for j, char in enumerate(seq):
+            pos = CHARS.rfind(char)
+            res[i][j*CHARS_COUNT+pos] = 1
+
+    # format as data frame and create columns names of OHE
+    encoded_df = pd.DataFrame(res)
+    col_names = [f"{position}_{i}_{ch}" for i in range(1, 11) for ch in CHARS]
+    encoded_df.columns = col_names
+    df = df.join(encoded_df)
+
+    return df, col_names
+
+
+def get_sequence_length(row: list)-> int:
     '''
-    return df, []
+        Calculates the length of the DI RNA sequence given a row with the
+        necessary data.
+        :param row: data frame row including Strain, Segment, Start, and End
+
+        :return: length of DI RNA sequence
+    '''
+    seq_len = get_seq_len(row["Strain"], row["Segment"])
+    return row["Start"] + (seq_len - row["End"] + 1)
+
+
+def get_direct_repeat_length(row)-> int:
+    '''
+        Calculates the length of the direct repeat given a row with the
+        necessary data.
+        :param row: data frame row including Strain, Segment, Start, and End
+
+        :return: length of direct repeat
+    '''
+    seq = get_sequence(row["Strain"], row["Segment"])
+    s = row["Start"]
+    e = row["End"]
+    n, _ = calculate_direct_repeat(seq, s, e, 15, 1)
+    return n
 
 
 def test_classifiers(df: object, dataset_name: str)-> None:
@@ -65,8 +119,13 @@ def test_classifiers(df: object, dataset_name: str)-> None:
     # add segment and sequence information with one hot encoding
     feature_cols = ["Start", "End"]
     df, segment_cols = segment_ohe(df)
-    df, sequence_cols = sequence_ohe(df)
-    feature_cols = feature_cols + segment_cols + sequence_cols
+    df["DI_Length"] = df.apply(get_sequence_length, axis=1)
+    feature_cols.append("DI_Length")
+    df["Direct_repeat"] = df.apply(get_direct_repeat_length, axis=1)
+    feature_cols.append("Direct_repeat")
+    df, junction_start_cols = junction_site_ohe(df, "Start")
+    df, junction_end_cols = junction_site_ohe(df, "End")
+    feature_cols = feature_cols + segment_cols + junction_start_cols + junction_end_cols
 
     # Selecting train/test and validation data sets
     if dataset_name == "Alnaji2019":
@@ -95,7 +154,7 @@ def test_classifiers(df: object, dataset_name: str)-> None:
         # setting up classifier and k-fold validation
         kf = KFold(n_splits=5, random_state=None)
         if clf_name == "logistic_regression":
-            clf = LogisticRegression(max_iter=1000)
+            clf = LogisticRegression(max_iter=1500)
         elif clf_name == "svc":
             clf = SVC(gamma=2, C=1) # probably overfitting
         elif clf_name == "random_forest":
@@ -117,7 +176,7 @@ def test_classifiers(df: object, dataset_name: str)-> None:
 
         # print results of k-fold
         avg_acc_score = sum(acc_score)/len(acc_score)
-        print("Avg accuracy : {}".format(avg_acc_score))
+        print("Avg accuracy k-fold: {}".format(avg_acc_score))
 
         # fit on overall model and create confusion matrix for validation set
         clf.fit(X, y)

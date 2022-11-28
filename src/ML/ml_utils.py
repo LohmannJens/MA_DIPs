@@ -35,6 +35,7 @@ def load_all_sets()-> object:
     # load pelz dataset
     df = load_pelz_dataset()["PR8"]
     df["dataset_name"] = "Pelz"
+    df["Strain"] = "PR8"
     df = log_and_norm(df)
 
     # load kupke dataset
@@ -42,6 +43,7 @@ def load_all_sets()-> object:
     kupke.drop(["DI", "Length", "Infection", "Num_sample", "Correction"], axis=1, inplace=True)
     kupke = merge_duplicates(kupke)
     kupke["dataset_name"] = "Kupke"
+    kupke["Strain"] = "PR8"
     kupke = log_and_norm(kupke)
     df = pd.concat([df, kupke])
 
@@ -50,6 +52,7 @@ def load_all_sets()-> object:
     alnaji2021.drop(["DI", "Replicate", "Timepoint", "Class"], axis=1, inplace=True)
     alnaji2021 = merge_duplicates(alnaji2021)
     alnaji2021["dataset_name"] = "Alnaji2021"
+    alnaji2021["Strain"] = "PR8"
     alnaji2021 = log_and_norm(alnaji2021)
     df = pd.concat([df, alnaji2021])
 
@@ -60,6 +63,7 @@ def load_all_sets()-> object:
         v["NGS_read_count"] = v["NGS_read_count"].astype(int)
         v = merge_duplicates(v)
         v["dataset_name"] = f"Alnaji2019_{k}"
+        v["Strain"] = k
         v = log_and_norm(v)
         df = pd.concat([df, v])
 
