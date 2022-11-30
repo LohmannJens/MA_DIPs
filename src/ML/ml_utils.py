@@ -9,6 +9,10 @@ import sys
 import numpy as np
 import pandas as pd
 
+from sklearn.linear_model import LogisticRegression
+from sklearn.svm import SVC
+from sklearn.ensemble import RandomForestClassifier
+
 sys.path.insert(0, "..")
 from utils import load_pelz_dataset, load_kupke, load_full_alnaji2021, load_short_reads, load_alnaji_excel
 
@@ -17,7 +21,7 @@ def load_all_sets()-> object:
         Loads all data sets together in one data frame. Provides the columns
         Segment, Start, End, NGS_read_count and dataset_name.
 
-        :return: data frame
+        :return: pandas data frame including all available data sets
     '''
     def log_and_norm(df):
         df["NGS_read_count"] = df["NGS_read_count"].astype(float)
@@ -71,4 +75,62 @@ def load_all_sets()-> object:
     df.drop(["index"], axis=1, inplace=True)
 
     return df
+
+def select_classifier(clf_name: str)-> object:
+    '''
+        Selects a scikit-learn classifier by a given name. Is implemented in an
+        extra function to use the same parameters in each usage of one of the 
+        classifiers.
+        :param clf_name: name of the classifier
+
+        :return: Selected classifier as class implemented in scikit-learn
+    '''
+    if clf_name == "logistic_regression":
+        clf = LogisticRegression(max_iter=4000)
+    elif clf_name == "svc":
+       clf = SVC(gamma=2, C=1)
+    elif clf_name == "random_forest":
+        clf = RandomForestClassifier(max_depth=5, n_estimators=10, max_features=1)
+    else:
+        print(f"classifier {clf_name} unknown!")
+        exit()
+    return clf
+
+def select_datasets(df, dataset_name: str, features: list)-> (object, object, object, object):
+    '''
+        Selects training a test data by a given name.
+        :param df: pandas data frame including all data sets and features
+        :param dataset_name: string indicating which data sets to include
+        :param features: list with all features, that should be selected
+
+        :return: tuple with 4 entries, where each is a pandas data frame
+                    X:     input data for training
+                    y:     True labels for training
+                    X_val: input data for validation
+                    y_val: True labels for validation
+    '''
+    if dataset_name == "Alnaji2019":
+        train = ["Alnaji2019_Cal07", "Alnaji2019_NC", "Alnaji2019_Perth"]
+        val = ["Alnaji2019_BLEE"]
+    elif dataset_name == "PR8":
+        train = ["Pelz", "Alnaji2021"]
+        val = ["Kupke"]
+    else:
+        train = ["Alnaji2019_Cal07", "Alnaji2019_NC", "Alnaji2019_Perth",
+                          "Alnaji2019_BLEE", "Pelz", "Alnaji2021", "Kupke"]
+        val = list()
+
+    t_df = df.loc[df["dataset_name"].isin(train)].copy().reset_index()
+    X = t_df[features]
+    y = pd.cut(t_df["NGS_log_norm"], bins=3, labels=["low", "mid", "high"], ordered=False)
+
+    if len(val) != 0:
+        v_df = df.loc[df["dataset_name"].isin(val)].copy().reset_index()
+        X_val = v_df[features]
+        y_val = pd.cut(v_df["NGS_log_norm"], bins=3, labels=["low", "mid", "high"])
+    else:
+        X_val = pd.DataFrame()
+        y_val = pd.DataFrame()
+
+    return X, y, X_val, y_val
 
