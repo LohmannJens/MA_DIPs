@@ -96,7 +96,7 @@ def select_classifier(clf_name: str)-> object:
         exit()
     return clf
 
-def select_datasets(df, dataset_name: str, features: list)-> (object, object, object, object):
+def select_datasets(df, dataset_name: str, features: list, n_bins: int)-> (object, object, object, object):
     '''
         Selects training a test data by a given name.
         :param df: pandas data frame including all data sets and features
@@ -109,6 +109,31 @@ def select_datasets(df, dataset_name: str, features: list)-> (object, object, ob
                     X_val: input data for validation
                     y_val: True labels for validation
     '''
+    def set_labels(df, style, n_bins, labels):
+        if style == "pd.cut":
+            y = pd.cut(df["NGS_log_norm"], bins=n_bins, labels=labels, ordered=False)
+        elif style == "median":
+            y = list()
+            if n_bins == 2:
+                median = df["NGS_log_norm"].median()
+                for row in df.iterrows():
+                    r = row[1]
+                    y.append("low" if r["NGS_log_norm"] < median else "high")
+            elif n_bins == 3:
+                perc1 = df["NGS_log_norm"].quantile(q=0.33)
+                perc2 = df["NGS_log_norm"].quantile(q=0.66)
+                for row in df.iterrows():
+                    r = row[1]
+                    if r["NGS_log_norm"] < perc1:
+                        y.append("low")
+                    elif r["NGS_log_norm"] > perc2:
+                        y.append("high")
+                    else:
+                        y.append("mid")
+            y = pd.Series(y)
+
+        return y
+
     if dataset_name == "Alnaji2019":
         train = ["Alnaji2019_Cal07", "Alnaji2019_NC", "Alnaji2019_Perth"]
         val = ["Alnaji2019_BLEE"]
@@ -117,17 +142,23 @@ def select_datasets(df, dataset_name: str, features: list)-> (object, object, ob
         val = ["Kupke"]
     else:
         train = ["Alnaji2019_Cal07", "Alnaji2019_NC", "Alnaji2019_Perth",
-                          "Alnaji2019_BLEE", "Pelz", "Alnaji2021", "Kupke"]
+                 "Alnaji2019_BLEE", "Pelz", "Alnaji2021", "Kupke"]
         val = list()
+
+    labels = ["low", "high"]
+    if n_bins == 3:
+        labels.insert(1, "mid")
+
+    labeling_style = "median"
 
     t_df = df.loc[df["dataset_name"].isin(train)].copy().reset_index()
     X = t_df[features]
-    y = pd.cut(t_df["NGS_log_norm"], bins=3, labels=["low", "mid", "high"], ordered=False)
+    y = set_labels(t_df, labeling_style, n_bins, labels)
 
     if len(val) != 0:
         v_df = df.loc[df["dataset_name"].isin(val)].copy().reset_index()
         X_val = v_df[features]
-        y_val = pd.cut(v_df["NGS_log_norm"], bins=3, labels=["low", "mid", "high"])
+        y_val = set_labels(v_df, labeling_style, n_bins, labels)
     else:
         X_val = pd.DataFrame()
         y_val = pd.DataFrame()

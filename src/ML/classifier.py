@@ -4,6 +4,7 @@
 '''
 import os
 import sys
+import warnings
 
 import numpy as np
 import pandas as pd
@@ -108,12 +109,13 @@ def get_direct_repeat_length(row)-> int:
     return n
 
 
-def test_classifiers(df: object, dataset_name: str)-> None:
+def test_classifiers(df: object, dataset_name: str, n_bins: int)-> None:
     '''
         Tests three different classifiers on a given dataset.
         :param df: data frame containing all data sets
         :param dataset_name: string indicating which datasets to use as train/
                              test and validation data set
+        :param n_bins:
 
         :return: None
     '''
@@ -129,11 +131,15 @@ def test_classifiers(df: object, dataset_name: str)-> None:
     feature_cols = feature_cols + segment_cols + junction_start_cols + junction_end_cols
 
     # Selecting train/test and validation data sets and slice data set to get X and y
-    X, y, X_val, y_val = select_datasets(dataset_name)
+    X, y, X_val, y_val = select_datasets(df, dataset_name, feature_cols, n_bins)
 
     # Testing different classifiers
     clf_names = ["logistic_regression", "svc", "random_forest"]
+    data_dict = dict()
+    data_dict["param"] = ["k-fold avg. accurracy", "validation mean"]
     for clf_name in clf_names:
+        print(clf_name)
+        data_dict[clf_name] = list()
         # setting up classifier and k-fold validation
         kf = KFold(n_splits=5, random_state=None)
         clf = select_classifier(clf_name)
@@ -152,20 +158,20 @@ def test_classifiers(df: object, dataset_name: str)-> None:
         # print results of k-fold
         avg_acc_score = sum(acc_score)/len(acc_score)
         print("Avg accuracy k-fold: {}".format(avg_acc_score))
+        data_dict[clf_name].append(avg_acc_score)
 
         # fit on overall model and create confusion matrix for validation set
         clf.fit(X, y)
-        if len(val_datasets) != 0:
+        if len(X_val.index) != 0:
             predicted_val = clf.predict(X_val)
+            acc_score = accuracy_score(predicted_val, y_val)
             confusion_m = confusion_matrix(predicted_val, y_val)
-            print(accuracy_score(predicted_val, y_val))
-            print(confusion_m)
-
         else:
             predicted = clf.predict(X)
+            acc_score = accuracy_score(predicted, y)
             confusion_m = confusion_matrix(predicted, y)
-            print(accuracy_score(predicted, y))
-            print(confusion_m)
+        print(confusion_m)
+        data_dict[clf_name].append(acc_score)
 
         # if two classes given create a ROC
         if len(y.unique()) == 2:
@@ -176,8 +182,12 @@ def test_classifiers(df: object, dataset_name: str)-> None:
             plt.savefig(path)
             plt.close()
 
+    o_df = pd.DataFrame(data_dict)
+    path = os.path.join(RESULTSPATH, "ML", f"{dataset_name}_means.tex")
+    o_df.to_latex(path, index=False, float_format="%.2f", longtable=True)
 
-def test_model(df, clf, f_list, d_name)-> float:
+
+def test_model(df: object, clf: object, f_list: list, d_name: str, n_bins: int)-> float:
     '''
         Fits given data to a given classifier class and returns the accuracy.
         Is used to test different feature combinations.
@@ -188,20 +198,21 @@ def test_model(df, clf, f_list, d_name)-> float:
 
         :return: Accuracy of the prediciton
     '''
-    X, y, _, _, = select_datasets(df, d_name, f_list)
+    X, y, X_val, y_val, = select_datasets(df, d_name, f_list, n_bins)
     clf.fit(X, y)
-    y_pred = clf.predict(X)
-    acc = accuracy_score(y_pred, y)
+    y_pred = clf.predict(X_val)
+    acc = accuracy_score(y_pred, y_val)
+    confusion_m = confusion_matrix(y_pred, y_val)
+    print(confusion_m)
     return acc
 
 
-def feature_comparision(df: object, d_name: str, clf_name: str)-> None:
+def feature_comparision(df: object, d_name: str, n_bins: int)-> None:
     '''
         Test different combinations of the given features.
         :param df: data frame containing all data sets
         :param d_name: string indicating which datasets to use as train/
                              test and validation data set
-        :param clf_name: name of the classifier to use
 
         :return: None
     '''  
@@ -213,37 +224,43 @@ def feature_comparision(df: object, d_name: str, clf_name: str)-> None:
     df, junction_end_cols = junction_site_ohe(df, "End")
     junction_cols = junction_start_cols + junction_end_cols
 
-    clf = select_classifier(clf_name)
+    clf_names = ["logistic_regression", "svc", "random_forest"]
+    data_dict = dict()
+    data_dict["param"] = ["base", "DI_length", "Direct_repeat", "Segment", "junction", "all"]
+    for clf_name in clf_names:
+        print(clf_name)
+        data_dict[clf_name] = list()
+        clf = select_classifier(clf_name)
 
-    mean_dict = dict()
-    base_features = ["Start", "End"]
-    mean_dict["base"] = test_model(df, clf, base_features, d_name)
+        base_features = ["Start", "End"]
+        data_dict[clf_name].append(test_model(df, clf, base_features, d_name, n_bins))
 
-    for f in ["DI_Length", "Direct_repeat", "Segment", "Junction"]:
-        if f == "DI_Length":
-            mean_dict[f] = test_model(df, clf, base_features + [f], d_name)
-        elif f == "Direct_repeat":
-            mean_dict[f] = test_model(df, clf, base_features + [f], d_name)
-        elif f == "Segment":
-            mean_dict[f] = test_model(df, clf, base_features + segment_cols, d_name)
-        elif f == "Junction":
-            mean_dict[f] = test_model(df, clf, base_features + junction_cols, d_name)
+        for f in ["DI_Length", "Direct_repeat", "Segment", "Junction"]:
+            if f == "DI_Length":
+                data_dict[clf_name].append(test_model(df, clf, base_features + [f], d_name, n_bins))
+            elif f == "Direct_repeat":
+                data_dict[clf_name].append(test_model(df, clf, base_features + [f], d_name, n_bins))
+            elif f == "Segment":
+                data_dict[clf_name].append(test_model(df, clf, base_features + segment_cols, d_name, n_bins))
+            elif f == "Junction":
+                data_dict[clf_name].append(test_model(df, clf, base_features + junction_cols, d_name, n_bins))
 
-    all_features = base_features + ["DI_Length", "Direct_repeat"] + segment_cols + junction_cols
-    mean_dict["all"] = test_model(df, clf, all_features, d_name)
+        all_features = base_features + ["DI_Length", "Direct_repeat"] + segment_cols + junction_cols
+        data_dict[clf_name].append(test_model(df, clf, all_features, d_name, n_bins))
 
-    print(mean_dict)
+    o_df = pd.DataFrame(data_dict)
+    print(o_df)
+    path = os.path.join(RESULTSPATH, "ML", f"feature_testing_{d_name}_{n_bins}.tex")
+    o_df.to_latex(path, index=False, float_format="%.2f", longtable=True)
 
 
 if __name__ == "__main__":
+    warnings.simplefilter(action="ignore", category=FutureWarning)
     # Loading the dataset
     df = load_all_sets()
-    datasets = ["Alnaji2019", "PR8", "all"]
+    n_bins = 3
     datasets = ["Alnaji2019", "PR8"]
     for d in datasets:
-     #   test_classifiers(df, d)
-
-        feature_comparision(df, d, "svc")
-        feature_comparision(df, d, "logistic_regression")
-        feature_comparision(df, d, "random_forest")
+        test_classifiers(df, d, n_bins)
+        feature_comparision(df, d, n_bins)
 
