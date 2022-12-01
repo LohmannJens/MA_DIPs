@@ -39,7 +39,7 @@ def search_footprint(strain: str)-> None:
 
     df = pd.DataFrame(d)
     path = os.path.join(RESULTSPATH, "motif_discovery", f"polymerase_footprint_{strain}.tex")
-    df.to_latex(path)
+    df.to_latex(path, index=False, float_format="%.2f", longtable=True)
 
 
 def extended_footprint_search(strain: str)-> (float, float, float):
@@ -170,5 +170,5 @@ if __name__ == "__main__":
 
     df = pd.DataFrame(d)
     path = os.path.join(RESULTSPATH, "motif_discovery", f"polymerase_footprint_extended.tex")
-    df.to_latex(path)
+    df.to_latex(path, index=False, float_format="%.2f", longtable=True)
 

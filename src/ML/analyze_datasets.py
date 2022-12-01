@@ -67,14 +67,14 @@ def check_stat_parameters(df: object)-> None:
              df["NGS_read_count"].max(), df["NGS_read_count"].min(),
              df["NGS_read_count"].mean(), df["NGS_read_count"].median()]
     r_df.loc[len(r_df.index)] = all_l
-
     r_df = r_df.set_index("Datasetname")
     
-    path = os.path.join(RESULTSPATH, "ML")
-    r_df.to_latex(os.path.join(path, "stat_param_datasets.tex"))
+    path = os.path.join(RESULTSPATH, "ML", "stat_param_datasets.tex")
+    r_df.to_latex(path, index=False, float_format="%.2f", longtable=True)
 
 
 if __name__ == "__main__":
     all_df = load_all_sets()
     check_distributions(all_df)
     check_stat_parameters(all_df)
+
