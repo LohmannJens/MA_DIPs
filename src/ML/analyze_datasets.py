@@ -10,7 +10,7 @@ import matplotlib.pyplot as plt
 
 sys.path.insert(0, "..")
 from utils import DATAPATH, RESULTSPATH
-from ml_utils import load_all_sets
+from ml_utils import load_all_sets, set_labels
 
 def check_distributions(df: object)-> None:
     '''
@@ -73,8 +73,34 @@ def check_stat_parameters(df: object)-> None:
     r_df.to_latex(path, index=False, float_format="%.2f", longtable=True)
 
 
+def check_duplicates(df: object)-> None:
+    '''
+        For the Segment, Start, End combinations that occur more than once this
+        function checks how many of them have the same label
+        :param df: data frame including all data points
+
+        :return: None
+    '''
+    df["DI"] = df["Segment"] + "_" + df["Start"].map(str) + "_" + df["End"].map(str)
+    entries = df["DI"].tolist()
+    dupl = [e for e in entries if entries.count(e) > 1]
+
+    df["class"] = set_labels(df, "median", 3)
+
+    eq = 0
+    a = 0
+    for d in dupl:
+        l_list = df.loc[df["DI"] == d]["class"].tolist()
+        if len(l_list) == 2:
+            a = a + 1
+            if l_list[0] == l_list[1]:
+                eq = eq + 1
+
+    print(eq/a)
+
+
 if __name__ == "__main__":
     all_df = load_all_sets()
-    check_distributions(all_df)
-    check_stat_parameters(all_df)
-
+#    check_distributions(all_df)
+ #   check_stat_parameters(all_df)
+    check_duplicates(all_df)

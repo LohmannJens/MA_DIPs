@@ -96,6 +96,41 @@ def select_classifier(clf_name: str)-> object:
         exit()
     return clf
 
+def set_labels(df: object, style: str, n_bins: int, labels: list=[])-> object:
+    '''
+        Sets the labels for the classifer. Can be done by using pd.cut() or by
+        using the median/33-percentil as split.
+        :param df: data frame including the data
+        :param style: declares how to create the labels
+        :param n_bins: number of bins to use
+        :param labels: list with labels to use, using 'pd.cut()'
+
+        :return: pandas Series including the labels
+    '''
+    if style == "pd.cut":
+        y = pd.cut(df["NGS_log_norm"], bins=n_bins, labels=labels, ordered=False)
+    elif style == "median":
+        y = list()
+        if n_bins == 2:
+            median = df["NGS_log_norm"].median()
+            for row in df.iterrows():
+                r = row[1]
+                y.append("low" if r["NGS_log_norm"] < median else "high")
+        elif n_bins == 3:
+            perc1 = df["NGS_log_norm"].quantile(q=0.33)
+            perc2 = df["NGS_log_norm"].quantile(q=0.66)
+            for row in df.iterrows():
+                r = row[1]
+                if r["NGS_log_norm"] < perc1:
+                    y.append("low")
+                elif r["NGS_log_norm"] > perc2:
+                    y.append("high")
+                else:
+                    y.append("mid")
+        y = pd.Series(y)
+
+    return y
+
 def select_datasets(df, dataset_name: str, features: list, n_bins: int)-> (object, object, object, object):
     '''
         Selects training a test data by a given name.
@@ -109,30 +144,6 @@ def select_datasets(df, dataset_name: str, features: list, n_bins: int)-> (objec
                     X_val: input data for validation
                     y_val: True labels for validation
     '''
-    def set_labels(df, style, n_bins, labels):
-        if style == "pd.cut":
-            y = pd.cut(df["NGS_log_norm"], bins=n_bins, labels=labels, ordered=False)
-        elif style == "median":
-            y = list()
-            if n_bins == 2:
-                median = df["NGS_log_norm"].median()
-                for row in df.iterrows():
-                    r = row[1]
-                    y.append("low" if r["NGS_log_norm"] < median else "high")
-            elif n_bins == 3:
-                perc1 = df["NGS_log_norm"].quantile(q=0.33)
-                perc2 = df["NGS_log_norm"].quantile(q=0.66)
-                for row in df.iterrows():
-                    r = row[1]
-                    if r["NGS_log_norm"] < perc1:
-                        y.append("low")
-                    elif r["NGS_log_norm"] > perc2:
-                        y.append("high")
-                    else:
-                        y.append("mid")
-            y = pd.Series(y)
-
-        return y
 
     if dataset_name == "Alnaji2019":
         train = ["Alnaji2019_Cal07", "Alnaji2019_NC", "Alnaji2019_Perth"]
