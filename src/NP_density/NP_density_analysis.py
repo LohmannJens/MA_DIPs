@@ -100,6 +100,7 @@ def map_positions_to_density(data: dict, density_data: dict)-> dict:
 
         :return: counts positions found in NGS data
     '''
+    plt.rc("font", size=14)
     NGS_dict = dict()
     for k, v in data.items():
         # create a dict for each segment using Start and End
@@ -265,7 +266,7 @@ if __name__ == "__main__":
     map_dens_to_dens("Cal07", load_Lee_density_data(Cal07_dens_path), Cal07_dens_data)
     NGS_count_dict = map_positions_to_density(all_reads_dict, Cal07_dens_data)
     compare_position_with_density(NGS_count_dict, Cal07_dens_data, all_reads_dict)
-        
+    '''
     #    WSN data from Mendes 2021
     WSN_count_file = os.path.join(DATAPATH, "Boussier2020", "Supplemental_Table_S2.xlsx")
     WSN_reads_dict = load_WSN_data(WSN_count_file)
@@ -274,5 +275,4 @@ if __name__ == "__main__":
     map_dens_to_dens("WSN", load_Lee_density_data(WSN_dens_path), WSN_dens_data)
     WSN_NGS_count_dict = map_positions_to_density(WSN_reads_dict, WSN_dens_data)
     compare_position_with_density(WSN_NGS_count_dict, WSN_dens_data, WSN_reads_dict)
-    
-
+    '''
