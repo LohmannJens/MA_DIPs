@@ -76,7 +76,9 @@ def check_stat_parameters(df: object)-> None:
 def check_duplicates(df: object)-> None:
     '''
         For the Segment, Start, End combinations that occur more than once this
-        function checks how many of them have the same label
+        function checks how many of them have the same label. Distinguish these
+        groups more by checking if the matches are both from a PR8 data set or
+        not.
         :param df: data frame including all data points
 
         :return: None
@@ -87,20 +89,47 @@ def check_duplicates(df: object)-> None:
 
     df["class"] = set_labels(df, "median", 3)
 
-    eq = 0
-    a = 0
+    PR8_l = ["Pelz", "Kupke", "Alnaji2021"]
+
+    all = 0
+    equal = 0
+    unequal = 0
+    equal_PR8 = 0
+    equal_not_PR8 = 0
+    unequal_PR8 = 0
+    unequal_not_PR8 = 0
     for d in dupl:
         l_list = df.loc[df["DI"] == d]["class"].tolist()
+        d_list = df.loc[df["DI"] == d]["dataset_name"].tolist()
         if len(l_list) == 2:
-            a = a + 1
+            all = all + 1
             if l_list[0] == l_list[1]:
-                eq = eq + 1
+                equal = equal + 1
+                if d_list[0] in PR8_l and d_list[1] in PR8_l:
+                    equal_PR8 = equal_PR8 + 1
+                else:
+                    equal_not_PR8 = equal_not_PR8 + 1
+            else:
+                unequal = unequal + 1
+                if d_list[0] in PR8_l and d_list[1] in PR8_l:
+                    unequal_PR8 = unequal_PR8 + 1
+                else:
+                    unequal_not_PR8 = unequal_not_PR8 + 1
+                
+    print(f"{all=}")
+    print(f"++{unequal=}")
+    print(f"++++{unequal_PR8=}")
+    print(f"++++{unequal_not_PR8=}")
+    print(f"++{equal=}")
+    print(f"++++{equal_PR8=}")
+    print(f"++++{equal_not_PR8=}")
 
-    print(eq/a)
+    print(f"{equal/all}")
 
 
 if __name__ == "__main__":
     all_df = load_all_sets()
-#    check_distributions(all_df)
- #   check_stat_parameters(all_df)
+    check_distributions(all_df)
+    check_stat_parameters(all_df)
     check_duplicates(all_df)
+
