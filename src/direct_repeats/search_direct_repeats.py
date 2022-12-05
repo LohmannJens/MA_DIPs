@@ -132,6 +132,7 @@ def direct_repeats_analysis(seq_dict: dict, mode: int, top: bool=False, correcti
         :param savepath: allows the user to give a path for saving
         :return: None
     '''
+    plt.rc("font", size=12)
     for k, v in seq_dict.items():
         fig, axs = plt.subplots(4, 2, figsize=(5, 10), tight_layout=True)
         j = 0
