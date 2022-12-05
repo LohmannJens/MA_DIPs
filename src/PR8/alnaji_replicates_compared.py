@@ -11,6 +11,7 @@ import matplotlib.pyplot as plt
 from scipy import stats
 from matplotlib_venn import venn3
 from decimal import Decimal, ROUND_HALF_UP
+from sklearn.linear_model import LinearRegression
 
 sys.path.insert(0, "..")
 sys.path.insert(0, "../relative_occurrence_nucleotides")
@@ -21,7 +22,7 @@ from utils import RESULTSPATH, SEGMENTS, COLORS
 from utils import load_alnaji_2021, get_sequence, get_stat_symbol, create_sequence_library, load_hpi14_alnaji, load_full_alnaji2021
 from composition_junction_site import count_nucleotide_occurrence_overall, nucleotide_occurrence_analysis
 from search_direct_repeats import count_direct_repeats_overall, include_correction
-from regression_length_occurrence import linear_regression_analysis
+from regression_length_occurrence import linear_regression_analysis, format_dataset_for_plotting
 
 
 def venn_different_timepoints(data: dict)-> None:
@@ -88,7 +89,7 @@ def compare_nucleotide_occurrence(df: object, strain: str, author: str="")-> Non
         if (n_below == 0 or n_above == 0):
             continue
 
-        x = np.arange(0.8, 9.8, dtype=np.float64)
+        x = np.arange(0.8, 10.8, dtype=np.float64)
 
         for i, nuc in enumerate(below_start.keys()):
             h_below_s = below_start[nuc]/ (n_below)
@@ -303,11 +304,23 @@ def analyze_over_timepoints(df)-> None:
     plt.close()
 
     # plot of slope (m) of linear regressions against time
-    m = [0.00015513, 0.0001925, 0.00016276, 0.00013319, 0.00013276]
-    t = [3, 6, 14, 14, 24]
+    t_x = [3, 6, 14, 14, 24]
+    m = list()
+    err = list()
+    for t in timepoints:
+        t_df = df[df["Timepoint"] == t]
+        m_temp = list()
+        for r in ["Rep1", "Rep2", "Rep3"]:
+            tr_df = t_df[t_df["Replicate"] == r]
+            x, y, _, _ = format_dataset_for_plotting(tr_df, "PR8")
+            model = LinearRegression().fit(x.reshape((-1, 1)), y)
+            m_temp.append(model.coef_)
+        m.append(np.mean(m_temp))
+        err.append(np.std(m_temp))
 
     fig, ax = plt.subplots(1, 1, figsize=(5, 5), tight_layout=True)
-    ax.plot(t, m)
+    ax.plot(t_x, m)
+    ax.errorbar(t_x, m, yerr=err)
 
     ax.set_xlabel("time")
     ax.set_ylabel("slope of regression")
