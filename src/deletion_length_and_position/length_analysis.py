@@ -103,6 +103,7 @@ def plot_start_and_end_positions(data: dict)-> None:
 
         axs[0].set_title(f"Location of start and end of deletion site on full sequences for {k}")
 
+        plt.rc("font", size=16)
         save_path = os.path.join(RESULTSPATH, "deletion_length_and_position", f"{k}_start_and_end_positions.png")
         plt.savefig(save_path)
         plt.close()

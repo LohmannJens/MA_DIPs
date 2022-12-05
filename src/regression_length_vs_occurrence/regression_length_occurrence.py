@@ -138,6 +138,7 @@ def fit_models_and_plot_data(x: list, y: list, y_exp: list, err: list, k: str, a
     if author != "":
         fname = f"{author}_{fname}"
     save_path = os.path.join(RESULTSPATH, "regression_length_vs_occurrence", fname)
+    plt.rc("font", size=12)
     plt.savefig(save_path)
     plt.close()
 
