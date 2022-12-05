@@ -283,15 +283,17 @@ def analyze_over_timepoints(df)-> None:
     x = [1, 2, 3, 4, 5, 6, 7, 8]
     for t in timepoints:
         t_df = df[df["Timepoint"] == t]
-        # TODO: also group by replicate and calculate error
-        grouped = t_df.groupby(["Segment"])
+        grouped = t_df.groupby(["Segment", "Replicate"])
         counts = grouped.sum()["NGS_read_count"]
         counts = counts/sum(counts)
 
         y = list()
+        err = list()
         for s in SEGMENTS:
-            y.append(counts[s])
-        ax.plot(x, y, label=t)
+            y.append(counts[s].sum())
+            err.append(counts[s].std())
+        ax.scatter(x, y, label=t)
+        ax.errorbar(x, y, yerr=err)
     
     ax.set_xlabel(SEGMENTS)
     ax.legend()
