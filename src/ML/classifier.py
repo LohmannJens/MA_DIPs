@@ -231,27 +231,30 @@ def feature_comparision(df: object, d_name: str, n_bins: int, label_style: str)-
 
     clf_names = ["logistic_regression", "svc", "random_forest"]
     data_dict = dict()
-    data_dict["param"] = ["base", "DI_length", "Direct_repeat", "Segment", "junction", "all"]
+    comb = ["base", "DI_length", "Direct_repeat", "Segment", "Junction", "all"]
+    data_dict["param"] = comb
+
     for clf_name in clf_names:
         print(clf_name)
         data_dict[clf_name] = list()
         clf = select_classifier(clf_name)
-
         base_features = ["Start", "End"]
-        data_dict[clf_name].append(test_model(df, clf, base_features, d_name, n_bins, label_style))
 
-        for f in ["DI_Length", "Direct_repeat", "Segment", "Junction"]:
-            if f == "DI_Length":
-                data_dict[clf_name].append(test_model(df, clf, base_features + [f], d_name, n_bins, label_style))
+        for f in comb:
+            if f == "base":
+                features = base_features
+            elif f == "DI_Length":
+                features = base_features + [f]
             elif f == "Direct_repeat":
-                data_dict[clf_name].append(test_model(df, clf, base_features + [f], d_name, n_bins, label_style))
+                features = base_features + [f]
             elif f == "Segment":
-                data_dict[clf_name].append(test_model(df, clf, base_features + segment_cols, d_name, n_bins, label_style))
+                features = base_features + segment_cols
             elif f == "Junction":
-                data_dict[clf_name].append(test_model(df, clf, base_features + junction_cols, d_name, n_bins, label_style))
-
-        all_features = base_features + ["DI_Length", "Direct_repeat"] + segment_cols + junction_cols
-        data_dict[clf_name].append(test_model(df, clf, all_features, d_name, n_bins, label_style))
+                features = base_features + junction_cols
+            elif f == "all":
+                features = base_features + ["DI_Length", "Direct_repeat"] + segment_cols + junction_cols
+            acc = test_model(df, clf, features, d_name, n_bins, label_style)
+            data_dict[clf_name].append(acc)
 
     o_df = pd.DataFrame(data_dict)
     print(o_df)
