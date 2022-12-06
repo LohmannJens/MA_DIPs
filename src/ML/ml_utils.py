@@ -96,13 +96,13 @@ def select_classifier(clf_name: str)-> object:
         exit()
     return clf
 
-def set_labels(df: object, style: str, n_bins: int, labels: list=[])-> object:
+def set_labels(df: object, n_bins: int, style: str, labels: list=[])-> object:
     '''
         Sets the labels for the classifer. Can be done by using pd.cut() or by
         using the median/33-percentil as split.
         :param df: data frame including the data
-        :param style: declares how to create the labels
         :param n_bins: number of bins to use
+        :param style: declares how to create the labels
         :param labels: list with labels to use, using 'pd.cut()'
 
         :return: pandas Series including the labels
@@ -131,12 +131,14 @@ def set_labels(df: object, style: str, n_bins: int, labels: list=[])-> object:
 
     return y
 
-def select_datasets(df, dataset_name: str, features: list, n_bins: int)-> (object, object, object, object):
+def select_datasets(df, dataset_name: str, features: list, n_bins: int, label_style: str)-> (object, object, object, object):
     '''
         Selects training a test data by a given name.
         :param df: pandas data frame including all data sets and features
         :param dataset_name: string indicating which data sets to include
         :param features: list with all features, that should be selected
+        :param n_bins: number of classes to create
+        :param label_style: declares how to create the labels/classes
 
         :return: tuple with 4 entries, where each is a pandas data frame
                     X:     input data for training
@@ -160,16 +162,17 @@ def select_datasets(df, dataset_name: str, features: list, n_bins: int)-> (objec
     if n_bins == 3:
         labels.insert(1, "mid")
 
+    labeling_style = "pd.cut"
     labeling_style = "median"
 
     t_df = df.loc[df["dataset_name"].isin(train)].copy().reset_index()
     X = t_df[features]
-    y = set_labels(t_df, labeling_style, n_bins, labels)
+    y = set_labels(t_df, n_bins, label_style, labels)
 
     if len(val) != 0:
         v_df = df.loc[df["dataset_name"].isin(val)].copy().reset_index()
         X_val = v_df[features]
-        y_val = set_labels(v_df, labeling_style, n_bins, labels)
+        y_val = set_labels(v_df, n_bins, label_style, labels)
     else:
         X_val = pd.DataFrame()
         y_val = pd.DataFrame()

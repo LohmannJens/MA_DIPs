@@ -109,13 +109,14 @@ def get_direct_repeat_length(row)-> int:
     return n
 
 
-def test_classifiers(df: object, dataset_name: str, n_bins: int)-> None:
+def test_classifiers(df: object, dataset_name: str, n_bins: int, label_style: str)-> None:
     '''
         Tests three different classifiers on a given dataset.
         :param df: data frame containing all data sets
         :param dataset_name: string indicating which datasets to use as train/
                              test and validation data set
-        :param n_bins:
+        :param n_bins: number of classes to create
+        :param label_style: declares how to create the labels/classes
 
         :return: None
     '''
@@ -131,7 +132,7 @@ def test_classifiers(df: object, dataset_name: str, n_bins: int)-> None:
     feature_cols = feature_cols + segment_cols + junction_start_cols + junction_end_cols
 
     # Selecting train/test and validation data sets and slice data set to get X and y
-    X, y, X_val, y_val = select_datasets(df, dataset_name, feature_cols, n_bins)
+    X, y, X_val, y_val = select_datasets(df, dataset_name, feature_cols, n_bins, label_style)
 
     # Testing different classifiers
     clf_names = ["logistic_regression", "svc", "random_forest"]
@@ -187,7 +188,7 @@ def test_classifiers(df: object, dataset_name: str, n_bins: int)-> None:
     o_df.to_latex(path, index=False, float_format="%.2f", longtable=True)
 
 
-def test_model(df: object, clf: object, f_list: list, d_name: str, n_bins: int)-> float:
+def test_model(df: object, clf: object, f_list: list, d_name: str, n_bins: int, label_style: str)-> float:
     '''
         Fits given data to a given classifier class and returns the accuracy.
         Is used to test different feature combinations.
@@ -195,10 +196,12 @@ def test_model(df: object, clf: object, f_list: list, d_name: str, n_bins: int)-
         :param clf: classifier class (from scikit-learn)
         :param f_list: list of features to use for testing
         :param d_name: string indicating which data sets to use
+        :param n_bins: number of classes to create
+        :param label_style: declares how to create the labels/classes
 
         :return: Accuracy of the prediciton
     '''
-    X, y, X_val, y_val, = select_datasets(df, d_name, f_list, n_bins)
+    X, y, X_val, y_val, = select_datasets(df, d_name, f_list, n_bins, label_style)
     clf.fit(X, y)
     y_pred = clf.predict(X_val)
     acc = accuracy_score(y_pred, y_val)
@@ -207,12 +210,14 @@ def test_model(df: object, clf: object, f_list: list, d_name: str, n_bins: int)-
     return acc
 
 
-def feature_comparision(df: object, d_name: str, n_bins: int)-> None:
+def feature_comparision(df: object, d_name: str, n_bins: int, label_style: str)-> None:
     '''
         Test different combinations of the given features.
         :param df: data frame containing all data sets
         :param d_name: string indicating which datasets to use as train/
                              test and validation data set
+        :param n_bins: number of classes to create
+        :param label_style: declares how to create the labels/classes
 
         :return: None
     '''  
@@ -233,20 +238,20 @@ def feature_comparision(df: object, d_name: str, n_bins: int)-> None:
         clf = select_classifier(clf_name)
 
         base_features = ["Start", "End"]
-        data_dict[clf_name].append(test_model(df, clf, base_features, d_name, n_bins))
+        data_dict[clf_name].append(test_model(df, clf, base_features, d_name, n_bins, label_style))
 
         for f in ["DI_Length", "Direct_repeat", "Segment", "Junction"]:
             if f == "DI_Length":
-                data_dict[clf_name].append(test_model(df, clf, base_features + [f], d_name, n_bins))
+                data_dict[clf_name].append(test_model(df, clf, base_features + [f], d_name, n_bins, label_style))
             elif f == "Direct_repeat":
-                data_dict[clf_name].append(test_model(df, clf, base_features + [f], d_name, n_bins))
+                data_dict[clf_name].append(test_model(df, clf, base_features + [f], d_name, n_bins, label_style))
             elif f == "Segment":
-                data_dict[clf_name].append(test_model(df, clf, base_features + segment_cols, d_name, n_bins))
+                data_dict[clf_name].append(test_model(df, clf, base_features + segment_cols, d_name, n_bins, label_style))
             elif f == "Junction":
-                data_dict[clf_name].append(test_model(df, clf, base_features + junction_cols, d_name, n_bins))
+                data_dict[clf_name].append(test_model(df, clf, base_features + junction_cols, d_name, n_bins, label_style))
 
         all_features = base_features + ["DI_Length", "Direct_repeat"] + segment_cols + junction_cols
-        data_dict[clf_name].append(test_model(df, clf, all_features, d_name, n_bins))
+        data_dict[clf_name].append(test_model(df, clf, all_features, d_name, n_bins, label_style))
 
     o_df = pd.DataFrame(data_dict)
     print(o_df)
@@ -258,9 +263,12 @@ if __name__ == "__main__":
     warnings.simplefilter(action="ignore", category=FutureWarning)
     # Loading the dataset
     df = load_all_sets()
+    n_bins = 2
     n_bins = 3
+    label_style = "pd.cut"
+    label_style = "median"
     datasets = ["Alnaji2019", "PR8"]
     for d in datasets:
-        test_classifiers(df, d, n_bins)
-        feature_comparision(df, d, n_bins)
+        test_classifiers(df, d, n_bins, label_style)
+        feature_comparision(df, d, n_bins, label_style)
 
