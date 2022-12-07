@@ -39,7 +39,7 @@ def check_distributions(df: object)-> None:
         axs[1].set_xlabel("log(NGS count)")
         axs[1].set_ylabel("# occurrences")
         axs[1].set_title(f"log(NGS) distribution for {name}")
-
+    
         save_path = os.path.join(RESULTSPATH, "ML", f"distribution_{name}.png")
         plt.savefig(save_path)
         plt.close()
@@ -83,11 +83,14 @@ def check_duplicates(df: object)-> None:
 
         :return: None
     '''
+    n_bins = 3
+    label_style = "median"
+
     df["DI"] = df["Segment"] + "_" + df["Start"].map(str) + "_" + df["End"].map(str)
     entries = df["DI"].tolist()
     dupl = [e for e in entries if entries.count(e) > 1]
 
-    df["class"] = set_labels(df, "median", 3)
+    df["class"] = set_labels(df, n_bins, label_style)
 
     PR8_l = ["Pelz", "Kupke", "Alnaji2021"]
 
@@ -98,10 +101,17 @@ def check_duplicates(df: object)-> None:
     equal_not_PR8 = 0
     unequal_PR8 = 0
     unequal_not_PR8 = 0
+    diff_list = list()
+    scatter1_list = list()
+    scatter2_list = list()
     for d in dupl:
         l_list = df.loc[df["DI"] == d]["class"].tolist()
         d_list = df.loc[df["DI"] == d]["dataset_name"].tolist()
+        ngs_list =  df.loc[df["DI"] == d]["NGS_log_norm"].tolist()
         if len(l_list) == 2:
+            diff_list.append(abs(ngs_list[0] - ngs_list[1]))
+            scatter1_list.append(ngs_list[0])
+            scatter2_list.append(ngs_list[1])
             all = all + 1
             if l_list[0] == l_list[1]:
                 equal = equal + 1
@@ -126,10 +136,97 @@ def check_duplicates(df: object)-> None:
 
     print(f"{equal/all}")
 
+    print(np.mean(diff_list))
+
+    fig, axs = plt.subplots(1, 1, figsize=(5, 5), tight_layout=True)
+    axs.scatter(scatter1_list, scatter2_list)
+    axs.plot([0, 1], [0, 1], c="r", linewidth=0.5, linestyle="--")
+    if n_bins == 2:
+        m = df["NGS_log_norm"].median()
+        axs.hlines(m, 0, 1)
+        axs.vlines(m, 0, 1)
+    elif n_bins == 3:
+        perc1 = df["NGS_log_norm"].quantile(q=0.33)
+        axs.hlines(perc1, 0, 1)
+        axs.vlines(perc1, 0, 1)
+        perc2 = df["NGS_log_norm"].quantile(q=0.66)
+        axs.hlines(perc2, 0, 1)
+        axs.vlines(perc2, 0, 1)
+        
+    axs.set_xlabel("normalized NGS count of d1")
+    axs.set_ylabel("normalized NGS count of d2")
+    axs.set_title("comparing normalized NGS count for duplicates")
+
+    save_path = os.path.join(RESULTSPATH, "ML", f"compare_duplicates_scatter.png")
+    plt.savefig(save_path)
+    plt.close()
+
+
+def check_label_split(df: object)-> None:
+    '''
+        Checks postion of the splitting lines for the different approaches and 
+        compares them to the NGS counts for all given datasets.
+        :param df: data frame including all data sets
+
+        :return: None
+    '''
+    dataset_names = df["dataset_name"].unique().tolist()
+    dataset_names.append("all")
+    for name in dataset_names:
+        if name == "all":
+            n_df = df
+        else:
+            n_df = df[df["dataset_name"] == name]
+
+        fig, axs = plt.subplots(2, 2, figsize=(10, 10), tight_layout=True)
+        for i in [0, 1]:
+            if i == 0:
+                n_bins = 2
+                l = ["high", "low"]
+            elif i == 1:
+                n_bins = 3
+                l = ["high", "mid", "low"]
+            for j in [0, 1]:
+                if j == 0:
+                    label_style = "median"
+                elif j == 1:
+                    label_style = "pd.cut"
+
+                axs[i,j].hist(n_df["NGS_log_norm"], bins=100)
+                axs[i,j].set_xlabel("log(NGS count)")
+                axs[i,j].set_ylabel("# occurrences")
+
+                x_max = axs[i,j].get_ylim()[1]
+                if n_bins == 2:
+                    if j == 0:
+                        m = n_df["NGS_log_norm"].median()
+                    elif j == 1:
+                        _, bins = pd.cut(n_df["NGS_log_norm"], bins=n_bins, labels=l, retbins=True, ordered=False)
+                        m = bins[1]
+                    axs[i,j].vlines(m, 0, x_max, color="red")
+                elif n_bins == 3:
+                    if j == 0:
+                        perc1 = n_df["NGS_log_norm"].quantile(q=0.33)
+                        perc2 = n_df["NGS_log_norm"].quantile(q=0.66)
+                    elif j == 1:
+                        _, bins = pd.cut(n_df["NGS_log_norm"], bins=n_bins, labels=l, retbins=True, ordered=False)
+                        perc1 = bins[1]
+                        perc2 = bins[2]
+
+                    axs[i,j].vlines(perc1, 0, x_max, color="yellow")
+                    axs[i,j].vlines(perc2, 0, x_max, color="green")
+
+                axs[i,j].set_title(f"{label_style} (bins={n_bins})")
+    
+        save_path = os.path.join(RESULTSPATH, "ML", f"check_labels_{name}.png")
+        plt.savefig(save_path)
+        plt.close()
+
 
 if __name__ == "__main__":
     all_df = load_all_sets()
     check_distributions(all_df)
     check_stat_parameters(all_df)
     check_duplicates(all_df)
+    check_label_split(all_df)
 
