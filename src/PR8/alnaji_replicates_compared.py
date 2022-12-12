@@ -322,7 +322,7 @@ def analyze_over_timepoints(df)-> None:
     ax.plot(t_x, m)
     ax.errorbar(t_x, m, yerr=err)
 
-    ax.set_xlabel("time")
+    ax.set_xlabel("time [h]")
     ax.set_ylabel("slope of regression")
 
     save_path = os.path.join(RESULTSPATH, "PR8", "Alnaji2021_slope_over_time.png")
