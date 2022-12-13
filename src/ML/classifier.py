@@ -266,11 +266,16 @@ if __name__ == "__main__":
     warnings.simplefilter(action="ignore", category=FutureWarning)
     # Loading the dataset
     df = load_all_sets()
+    drop_duplicates = True
     n_bins = 2
     n_bins = 3
     label_style = "pd.cut"
     label_style = "median"
     datasets = ["Alnaji2019", "PR8"]
+    if drop_duplicates:
+        df["DI"] = df["Segment"] + "_" + df["Start"].map(str) + "_" + df["End"].map(str)
+        df.drop_duplicates("DI", keep=False, inplace=True, ignore_index=True)
+
     for d in datasets:
         test_classifiers(df, d, n_bins, label_style)
         feature_comparision(df, d, n_bins, label_style)
