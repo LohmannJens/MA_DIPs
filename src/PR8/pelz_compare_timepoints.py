@@ -48,23 +48,21 @@ if __name__ == "__main__":
     df = pd.read_excel(path, na_values="", keep_default_na=False)
     df["class"] = df.apply(assign_label, axis=1)
 
-    t_x = [1, 2, 3, 4, 5, 6, 7, 8, 9]
-    t_x = np.arange(1, 22)
+    t_x = [4.1, 4.6, 5.0, 7.0, 7.6, 8.1, 8.6, 9.1, 11.5, 12.6, 13.0, 16.0, 16.6, 17.1, 19.6, 20.6, 21.0, 21.6, 23.1, 23.6, 24.0, 24.6]
     m = list()
-    for t in t_x:
-        t_df = df.iloc[:, [0, 1, 2, t+3, -1]].copy()
+    for i in np.arange(1, 23):
+        t_df = df.iloc[:, [0, 1, 2, i+3, -1]].copy()
         t_df = t_df.loc[t_df["class"].isin(["de_novo_loss", "de_novo_gain"])]
         t_df.columns = ["Segment", "Start", "End", "NGS_read_count", "class"]
 
         x, y, _, _ = format_dataset_for_plotting(t_df, "PR8")
         model = LinearRegression().fit(x.reshape((-1, 1)), y)
-        m.append(model.coef_)
+        m.append(model.coef_[0])
 
     fig, ax = plt.subplots(1, 1, figsize=(5, 5), tight_layout=True)
     ax.plot(t_x, m)
     ax.set_xlabel("number of measurement")
     ax.set_ylabel("slope of regression")
-    ax.vlines([6, 10, 13, 16, 21], ymin=min(m), ymax=max(m), colors="red")
 
     save_path = os.path.join(RESULTSPATH, "PR8", "Pelz_slope_over_time.png")
     plt.savefig(save_path)
