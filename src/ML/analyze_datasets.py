@@ -41,6 +41,7 @@ def check_distributions(df: object)-> None:
         axs[1].set_title(f"log(NGS) distribution for {name}")
     
         save_path = os.path.join(RESULTSPATH, "ML", f"distribution_{name}.png")
+        plt.rc("font", size=14)
         plt.savefig(save_path)
         plt.close()
 
@@ -158,6 +159,7 @@ def check_duplicates(df: object)-> None:
     axs.set_title("comparing normalized NGS count for duplicates")
 
     save_path = os.path.join(RESULTSPATH, "ML", f"compare_duplicates_scatter.png")
+    plt.rc("font", size=14)
     plt.savefig(save_path)
     plt.close()
 
@@ -213,12 +215,13 @@ def check_label_split(df: object)-> None:
                         perc1 = bins[1]
                         perc2 = bins[2]
 
-                    axs[i,j].vlines(perc1, 0, x_max, color="yellow")
+                    axs[i,j].vlines(perc1, 0, x_max, color="orange")
                     axs[i,j].vlines(perc2, 0, x_max, color="green")
 
                 axs[i,j].set_title(f"{label_style} (bins={n_bins})")
     
         save_path = os.path.join(RESULTSPATH, "ML", f"check_labels_{name}.png")
+        plt.rc("font", size=20)
         plt.savefig(save_path)
         plt.close()
 
