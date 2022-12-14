@@ -70,7 +70,7 @@ def check_stat_parameters(df: object)-> None:
     r_df = r_df.set_index("Datasetname")
     
     path = os.path.join(RESULTSPATH, "ML", "stat_param_datasets.tex")
-    r_df.to_latex(path, index=False, float_format="%.2f", longtable=True)
+    r_df.to_latex(path, float_format="%.2f")
 
 
 def check_duplicates(df: object)-> None:
