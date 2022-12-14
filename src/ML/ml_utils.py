@@ -9,12 +9,114 @@ import sys
 import numpy as np
 import pandas as pd
 
-from sklearn.linear_model import LogisticRegression
-from sklearn.svm import SVC
-from sklearn.ensemble import RandomForestClassifier
+from sklearn.preprocessing import OneHotEncoder
 
 sys.path.insert(0, "..")
-from utils import load_pelz_dataset, load_kupke, load_full_alnaji2021, load_short_reads, load_alnaji_excel
+from utils import load_pelz_dataset, load_kupke, load_full_alnaji2021, load_short_reads, load_alnaji_excel, get_sequence, get_seq_len
+
+sys.path.insert(0, "../direct_repeats")
+from search_direct_repeats import calculate_direct_repeat
+
+### feature generation ###
+
+def segment_ohe(df: object)-> (object, list):
+    '''
+        Converts the column with segment names into an one hot encoding.
+        :param df: data frame including a row called 'Segment'
+        :return: Tuple with two entries:
+                    data frame including original data and OHE data
+                    list with the column names of the OHE
+    '''
+    ohe = OneHotEncoder()
+    segment_df = pd.DataFrame(ohe.fit_transform(df[["Segment"]]).toarray())
+    ohe_cols = ohe.get_feature_names_out().tolist()
+    segment_df.columns = ohe_cols
+    df = df.join(segment_df)
+    return df, ohe_cols
+
+def junction_site_ohe(df: object, position: str)-> (object, list):
+    '''
+        Gets the sequence around the start or end of a given junction site and
+        converts the sequence into an one hot encoding.
+        :param df: data frame including Start, End, Strain, and Segment
+        :param position: is either 'Start' or 'End' to indicate which site
+        :return: Tuple with two entries:
+                    data frame including original data and OHE data
+                    list with the column names of the OHE
+    '''
+    # defining static parameters
+    CHARS = 'ACGU'
+    CHARS_COUNT = len(CHARS)
+    n = df.shape[0]
+    res = np.zeros((n, CHARS_COUNT * 10), dtype=np.uint8)
+
+    # getting sequence window for each row and do OHE
+    for row in df.iterrows():
+        r = row[1]
+        s = r[position]
+        seq = get_sequence(r["Strain"], r["Segment"])
+        seq = seq[s-5:s+5]
+        i = row[0]
+        # Write down OHE in numpy array
+        for j, char in enumerate(seq):
+            pos = CHARS.rfind(char)
+            res[i][j*CHARS_COUNT+pos] = 1
+
+    # format as data frame and create columns names of OHE
+    encoded_df = pd.DataFrame(res)
+    col_names = [f"{position}_{i}_{ch}" for i in range(1, 11) for ch in CHARS]
+    encoded_df.columns = col_names
+    df = df.join(encoded_df)
+
+    return df, col_names
+
+def get_dirna_length(row: list)-> int:
+    '''
+        Calculates the length of the DI RNA sequence given a row of a data
+        frame with the necessary data.
+        :param row: data frame row including Strain, Segment, Start, and End
+        :return: length of DI RNA sequence
+    '''
+    seq_len = get_seq_len(row["Strain"], row["Segment"])
+    return row["Start"] + (seq_len - row["End"] + 1)
+
+def get_direct_repeat_length(row)-> int:
+    '''
+        Calculates the length of the direct repeat given a row of a data frame
+        with the necessary data.
+        :param row: data frame row including Strain, Segment, Start, and End
+        :return: length of direct repeat
+    '''
+    seq = get_sequence(row["Strain"], row["Segment"])
+    s = row["Start"]
+    e = row["End"]
+    n, _ = calculate_direct_repeat(seq, s, e, 15, 1)
+    return n
+
+def get_3_to_5_ratio(row)-> float:
+    '''
+        Calculates the proportion of the 3' sequence to the 5' sequence given
+        a row of a data frame.
+        :param row: data frame row including Strain, Segment, Start, and End
+        :return: ratio of 3' to 5' sequence length
+    '''
+    seq_len = get_seq_len(row["Strain"], row["Segment"])
+    len3 = row["Start"]
+    len5 = seq_len - row["End"] + 1
+    return len3/len5
+
+def get_length_proportion(row)-> float:
+    '''
+        Calculates the proportion of the length of the DI RNA sequence to the
+        full length sequence given a row of a data frame.
+        :param row: data frame row including Strain, Segment, Start, and End
+        :return: ratio of DI RNA lenght to full length sequence
+    '''
+    seq_len = get_seq_len(row["Strain"], row["Segment"])
+    dirna_len = row["Start"] + (seq_len - row["End"] + 1)
+    return dirna_len/seq_len
+
+### others ###
 
 def load_all_sets()-> object:
     '''
