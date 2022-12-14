@@ -165,10 +165,12 @@ def feature_comparision(df: object, d_name: str, n_bins: int, label_style: str)-
     df, junction_start_cols = junction_site_ohe(df, "Start")
     df, junction_end_cols = junction_site_ohe(df, "End")
     junction_cols = junction_start_cols + junction_end_cols
+    df["3_5_ratio"] = df.apply(get_3_to_5_ratio, axis=1)
+    df["length_proportion"] = df.apply(get_length_proportion, axis=1)
 
     clf_names = ["logistic_regression", "svc", "random_forest"]
     data_dict = dict()
-    comb = ["base", "DI_length", "Direct_repeat", "Segment", "Junction", "all"]
+    comb = ["base", "DI_length", "Direct_repeat", "Segment", "Junction", "3_5_ratio", "length_proportion","all"]
     data_dict["param"] = comb
 
     for clf_name in clf_names:
@@ -188,8 +190,13 @@ def feature_comparision(df: object, d_name: str, n_bins: int, label_style: str)-
                 features = base_features + segment_cols
             elif f == "Junction":
                 features = base_features + junction_cols
+            elif f == "3_5_ratio":
+                features = base_features + [f]
+            elif f == "length_proportion":
+                features = base_features + [f]
             elif f == "all":
-                features = base_features + ["DI_Length", "Direct_repeat"] + segment_cols + junction_cols
+                single_cols = ["DI_Length", "Direct_repeat", "3_5_ratio", "length_proportion"]
+                features = base_features + single_cols + segment_cols + junction_cols
             acc = test_model(df, clf, features, d_name, n_bins, label_style)
             data_dict[clf_name].append(acc)
 
