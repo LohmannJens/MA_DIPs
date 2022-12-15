@@ -10,11 +10,11 @@ import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
 
-from sklearn.model_selection import KFold 
+from sklearn.model_selection import KFold, GridSearchCV, StratifiedKFold
 from sklearn.linear_model import LogisticRegression
 from sklearn.svm import SVC
 from sklearn.ensemble import RandomForestClassifier
-from sklearn.metrics import accuracy_score, RocCurveDisplay, confusion_matrix
+from sklearn.metrics import accuracy_score, RocCurveDisplay, confusion_matrix, make_scorer, precision_score, recall_score
 
 from ml_utils import load_all_sets, select_datasets, segment_ohe, junction_site_ohe, get_dirna_length, get_direct_repeat_length, get_3_to_5_ratio, get_length_proportion
 
@@ -22,24 +22,54 @@ sys.path.insert(0, "..")
 from utils import RESULTSPATH
 
 
-def select_classifier(clf_name: str)-> object:
+def select_classifier(clf_name: str, grid_search: bool=False)-> object:
     '''
         Selects a scikit-learn classifier by a given name. Is implemented in an
         extra function to use the same parameters in each usage of one of the
         classifiers.
         :param clf_name: name of the classifier
+        :param grid_search: Bool indicating if a grid search will be performed
+
         :return: Selected classifier as class implemented in scikit-learn
     '''
     if clf_name == "logistic_regression":
-        clf = LogisticRegression(max_iter=4000)
+        if grid_search:
+            clf = LogisticRegression(max_iter=10000, solver="saga", l1_ratio=0.5)
+            param_grid = {
+                "penalty": ["l1", "l2", "elasticnet"], 
+                "C" : [0.01, 0.1, 1.0],
+            }
+        else:
+            clf = LogisticRegression(penalty="l1", C=0.1, solver="saga", max_iter=10000)
+            param_grid = dict()
     elif clf_name == "svc":
-        clf = SVC(gamma=2, C=1)
+        if grid_search:
+            clf = SVC(gamma=2, C=1)
+            param_grid = {
+                "C" : [0.01, 0.1, 1.0],
+                "kernel" : ["linear", "rbf", "sigmoid"],
+                "gamma" : ["scale", "auto", 2],
+            }
+        else:
+            clf = SVC(gamma="auto", C=0.01, kernel="rbf") # alnaji, acc=0.36
+            clf = SVC(gamma="scale", C=1.0, kernel="sigmoid") # PR8, acc=0.39
+            param_grid = dict()
     elif clf_name == "random_forest":
-        clf = RandomForestClassifier(max_depth=5, n_estimators=10, max_features=1)
+        if grid_search:
+            clf = RandomForestClassifier()
+            param_grid = {
+                "min_samples_split": [3, 5, 10], 
+                "n_estimators" : [100, 300],
+                "max_depth": [3, 5, 15, 25],
+                "max_features": [3, 5, 10, 20]
+            }
+        else:
+            clf = RandomForestClassifier(n_estimators=300, max_depth=3, min_samples_split=10, max_features=5)
+            param_grid = dict()
     else:
         print(f"classifier {clf_name} unknown!")
         exit()
-    return clf
+    return clf, param_grid
 
 
 def test_classifiers(df: object, dataset_name: str, n_bins: int, label_style: str)-> None:
@@ -53,6 +83,8 @@ def test_classifiers(df: object, dataset_name: str, n_bins: int, label_style: st
 
         :return: None
     '''
+    perform_grid_search = False
+
     # add features
     feature_cols = ["Start", "End"]
     df, segment_cols = segment_ohe(df)
@@ -68,52 +100,40 @@ def test_classifiers(df: object, dataset_name: str, n_bins: int, label_style: st
     df["length_proportion"] = df.apply(get_length_proportion, axis=1)
     feature_cols.append("length_proportion")
 
-    # Selecting train/test and validation data sets and slice data set to get X and y
+    # Selecting train/test and validation data sets
     X, y, X_val, y_val = select_datasets(df, dataset_name, feature_cols, n_bins, label_style)
 
     # Testing different classifiers
     clf_names = ["logistic_regression", "svc", "random_forest"]
     data_dict = dict()
-    data_dict["param"] = ["k-fold avg. accurracy", "validation mean"]
+    data_dict["param"] = ["validation accuracy"]
     for clf_name in clf_names:
         print(clf_name)
         data_dict[clf_name] = list()
         # setting up classifier and k-fold validation
-        kf = KFold(n_splits=5, random_state=None)
-        clf = select_classifier(clf_name)
+        clf, param_grid = select_classifier(clf_name, grid_search=perform_grid_search)
+        skf = StratifiedKFold(n_splits=5)
+        scorers = {"accuracy_score": make_scorer(accuracy_score)}
 
-        # test classifier using k-fold validation
-        acc_score = list()
-        for train_index, test_index in kf.split(X):
-            X_train, X_test = X.iloc[train_index, :], X.iloc[test_index, :]
-            y_train, y_test = y[train_index], y[test_index]
+        # perform grid search for best parameters
+        grid_search = GridSearchCV(clf, param_grid, scoring=scorers, cv=skf, return_train_score=True, refit="accuracy_score")
+        grid_search.fit(X, y)
 
-            clf.fit(X_train,y_train)
-            pred_values = clf.predict(X_test)
-            acc = accuracy_score(pred_values, y_test)
-            acc_score.append(acc)
-
-        # print results of k-fold
-        avg_acc_score = sum(acc_score)/len(acc_score)
-        print("Avg accuracy k-fold: {}".format(avg_acc_score))
-        data_dict[clf_name].append(avg_acc_score)
+        if perform_grid_search:
+            print(grid_search.best_params_)
 
         # fit on overall model and create confusion matrix for validation set
-        clf.fit(X, y)
-        if len(X_val.index) != 0:
-            predicted_val = clf.predict(X_val)
-            acc_score = accuracy_score(predicted_val, y_val)
-            confusion_m = confusion_matrix(predicted_val, y_val)
-        else:
-            predicted = clf.predict(X)
-            acc_score = accuracy_score(predicted, y)
-            confusion_m = confusion_matrix(predicted, y)
+        predicted_val = grid_search.predict(X_val)
+        acc_score = accuracy_score(predicted_val, y_val)
+        confusion_m = confusion_matrix(predicted_val, y_val)
+
+        print(acc_score)
         print(confusion_m)
         data_dict[clf_name].append(acc_score)
 
         # if two classes given create a ROC
         if len(y.unique()) == 2:
-            RocCurveDisplay.from_estimator(clf, X, y)
+            RocCurveDisplay.from_estimator(grid_search, X, y)
             plt.plot([0,1], [0,1])
 
             path = os.path.join(RESULTSPATH, "ML", f"{clf_name}_{dataset_name}_roc_curve.png")
@@ -176,26 +196,24 @@ def feature_comparision(df: object, d_name: str, n_bins: int, label_style: str)-
     for clf_name in clf_names:
         print(clf_name)
         data_dict[clf_name] = list()
-        clf = select_classifier(clf_name)
+        clf, _ = select_classifier(clf_name)
         base_features = ["Start", "End"]
+        single_cols = ["DI_Length", "Direct_repeat", "3_5_ratio", "length_proportion"]
 
         for f in comb:
             if f == "base":
                 features = base_features
-            elif f == "DI_Length":
+                if clf_name == "random_forest":
+                    clf.set_params(max_features=2)
+            elif f in single_cols:
                 features = base_features + [f]
-            elif f == "Direct_repeat":
-                features = base_features + [f]
+                if clf_name == "random_forest":
+                    clf.set_params(max_features=3)
             elif f == "Segment":
                 features = base_features + segment_cols
             elif f == "Junction":
                 features = base_features + junction_cols
-            elif f == "3_5_ratio":
-                features = base_features + [f]
-            elif f == "length_proportion":
-                features = base_features + [f]
             elif f == "all":
-                single_cols = ["DI_Length", "Direct_repeat", "3_5_ratio", "length_proportion"]
                 features = base_features + single_cols + segment_cols + junction_cols
             acc = test_model(df, clf, features, d_name, n_bins, label_style)
             data_dict[clf_name].append(acc)
