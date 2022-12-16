@@ -68,7 +68,7 @@ def calculate_direct_repeat(seq: str, s: int, e: int, w_len: int, m: int)-> (int
     return counter, overlap_seq
 
 
-def count_direct_repeats_overall(df: object, seq: str ,mode: int)-> (dict, dict):
+def count_direct_repeats_overall(df: object, seq: str, mode: int)-> (dict, dict):
     '''
         calculates the number of direct repeats for each data point.
         :param df: dataframe with sequence and junction site data
