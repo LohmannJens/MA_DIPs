@@ -13,7 +13,9 @@ import matplotlib.pyplot as plt
 from sklearn.model_selection import KFold, GridSearchCV, StratifiedKFold
 from sklearn.linear_model import LogisticRegression
 from sklearn.svm import SVC
-from sklearn.ensemble import RandomForestClassifier
+from sklearn.ensemble import RandomForestClassifier, AdaBoostClassifier
+from sklearn.neural_network import MLPClassifier
+from sklearn.naive_bayes import GaussianNB
 from sklearn.metrics import accuracy_score, RocCurveDisplay, confusion_matrix, make_scorer, precision_score, recall_score
 
 from ml_utils import load_all_sets, select_datasets, segment_ohe, junction_site_ohe, get_dirna_length, get_direct_repeat_length, get_3_to_5_ratio, get_length_proportion
@@ -66,6 +68,33 @@ def select_classifier(clf_name: str, grid_search: bool=False)-> object:
         else:
             clf = RandomForestClassifier(n_estimators=300, max_depth=3, min_samples_split=10, max_features=5)
             param_grid = dict()
+    elif clf_name == "mlp":
+        if grid_search:
+            clf = MLPClassifier()
+            param_grid = {
+                "hidden_layer_sizes": [(50,), (100,), (250,)], 
+                "alpha" : [0.001, 0.0001, 0.00001]
+            }
+        else:
+            clf = MLPClassifier(alpha=0.001, hidden_layer_sizes=(100,), max_iter=1000)
+            param_grid = dict()
+    elif clf_name == "ada_boost":
+        clf = AdaBoostClassifier(n_estimators=25, learning_rate=0.1)
+        if grid_search:
+            param_grid = {
+                "n_estimators": [25, 50, 100,], 
+                "learning_rate" : [0.1, 0.5, 1.0],
+            }
+        else:
+            param_grid = dict()
+    elif clf_name == "naive_bayes":
+        clf = GaussianNB(var_smoothing=0.0000000001)
+        if grid_search:
+            param_grid = {
+                "var_smoothing": [0.000000001, 0.0000000001, 0.0000000001]
+            }
+        else:
+            param_grid = dict()
     else:
         print(f"classifier {clf_name} unknown!")
         exit()
@@ -104,7 +133,7 @@ def test_classifiers(df: object, dataset_name: str, n_bins: int, label_style: st
     X, y, X_val, y_val = select_datasets(df, dataset_name, feature_cols, n_bins, label_style)
 
     # Testing different classifiers
-    clf_names = ["logistic_regression", "svc", "random_forest"]
+    clf_names = ["logistic_regression", "svc", "random_forest", "mlp", "ada_boost", "naive_bayes"]
     data_dict = dict()
     data_dict["param"] = ["validation accuracy"]
     for clf_name in clf_names:
@@ -189,6 +218,7 @@ def feature_comparision(df: object, d_name: str, n_bins: int, label_style: str)-
     df["length_proportion"] = df.apply(get_length_proportion, axis=1)
 
     clf_names = ["logistic_regression", "svc", "random_forest"]
+    clf_names = ["mlp", "ada_boost", "naive_bayes"]
     data_dict = dict()
     comb = ["base", "DI_length", "Direct_repeat", "Segment", "Junction", "3_5_ratio", "length_proportion","all"]
     data_dict["param"] = comb
@@ -239,6 +269,6 @@ if __name__ == "__main__":
         df.drop_duplicates("DI", keep=False, inplace=True, ignore_index=True)
 
     for d in datasets:
-        test_classifiers(df, d, n_bins, label_style)
+ #       test_classifiers(df, d, n_bins, label_style)
         feature_comparision(df, d, n_bins, label_style)
 
