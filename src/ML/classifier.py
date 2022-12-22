@@ -18,7 +18,7 @@ from sklearn.neural_network import MLPClassifier
 from sklearn.naive_bayes import GaussianNB
 from sklearn.metrics import accuracy_score, RocCurveDisplay, confusion_matrix, make_scorer, precision_score, recall_score
 
-from ml_utils import load_all_sets, select_datasets, segment_ohe, junction_site_ohe, get_dirna_length, get_direct_repeat_length, get_3_to_5_ratio, get_length_proportion
+from ml_utils import load_all_sets, select_datasets, segment_ohe, junction_site_ohe, get_dirna_length, get_direct_repeat_length, get_3_to_5_ratio, get_length_proportion, full_sequence_ohe
 
 sys.path.insert(0, "..")
 from utils import RESULTSPATH
@@ -128,6 +128,8 @@ def test_classifiers(df: object, dataset_name: str, n_bins: int, label_style: st
     feature_cols.append("3_5_ratio")
     df["length_proportion"] = df.apply(get_length_proportion, axis=1)
     feature_cols.append("length_proportion")
+#    df, sequence_cols = full_sequence_ohe(df)
+ #   feature_cols = feature_cols + sequence_cols
 
     # Selecting train/test and validation data sets
     X, y, X_val, y_val = select_datasets(df, dataset_name, feature_cols, n_bins, label_style)
@@ -192,7 +194,7 @@ def test_model(df: object, clf: object, f_list: list, d_name: str, n_bins: int, 
     y_pred = clf.predict(X_val)
     acc = accuracy_score(y_pred, y_val)
     confusion_m = confusion_matrix(y_pred, y_val)
-    print(confusion_m)
+   # print(confusion_m)
     return acc
 
 
@@ -216,11 +218,11 @@ def feature_comparision(df: object, d_name: str, n_bins: int, label_style: str)-
     junction_cols = junction_start_cols + junction_end_cols
     df["3_5_ratio"] = df.apply(get_3_to_5_ratio, axis=1)
     df["length_proportion"] = df.apply(get_length_proportion, axis=1)
+#    df, sequence_cols = full_sequence_ohe(df)
 
-    clf_names = ["logistic_regression", "svc", "random_forest"]
-    clf_names = ["mlp", "ada_boost", "naive_bayes"]
+    clf_names = ["logistic_regression", "svc", "random_forest", "mlp", "ada_boost", "naive_bayes"]
     data_dict = dict()
-    comb = ["base", "DI_length", "Direct_repeat", "Segment", "Junction", "3_5_ratio", "length_proportion","all"]
+    comb = ["base", "DI_length", "Direct_repeat", "Segment", "Junction", "3_5_ratio", "length_proportion" ,"all"]
     data_dict["param"] = comb
 
     for clf_name in clf_names:
@@ -243,6 +245,8 @@ def feature_comparision(df: object, d_name: str, n_bins: int, label_style: str)-
                 features = base_features + segment_cols
             elif f == "Junction":
                 features = base_features + junction_cols
+            elif f == "Sequence":
+                features = base_features + sequence_cols
             elif f == "all":
                 features = base_features + single_cols + segment_cols + junction_cols
             acc = test_model(df, clf, features, d_name, n_bins, label_style)
@@ -269,6 +273,7 @@ if __name__ == "__main__":
         df.drop_duplicates("DI", keep=False, inplace=True, ignore_index=True)
 
     for d in datasets:
- #       test_classifiers(df, d, n_bins, label_style)
+        print(f"#### {d} ####")
+        test_classifiers(df, d, n_bins, label_style)
         feature_comparision(df, d, n_bins, label_style)
 

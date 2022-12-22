@@ -51,12 +51,10 @@ def junction_site_ohe(df: object, position: str)-> (object, list):
     res = np.zeros((n, CHARS_COUNT * 10), dtype=np.uint8)
 
     # getting sequence window for each row and do OHE
-    for row in df.iterrows():
-        r = row[1]
+    for i, r in df.iterrows():
         s = r[position]
         seq = get_sequence(r["Strain"], r["Segment"])
         seq = seq[s-5:s+5]
-        i = row[0]
         # Write down OHE in numpy array
         for j, char in enumerate(seq):
             pos = CHARS.rfind(char)
@@ -65,6 +63,39 @@ def junction_site_ohe(df: object, position: str)-> (object, list):
     # format as data frame and create columns names of OHE
     encoded_df = pd.DataFrame(res)
     col_names = [f"{position}_{i}_{ch}" for i in range(1, 11) for ch in CHARS]
+    encoded_df.columns = col_names
+    df = df.join(encoded_df)
+
+    return df, col_names
+
+def full_sequence_ohe(df: object)-> (object, list):
+    '''
+        Gets the whole sequence as an one hot encoding. Sequences get
+        normalized to the longest sequence length by adding * at the end
+        :param df: data frame including Start, End, Strain, and Segment
+        :return: Tuple with two entries:
+                    data frame including original data and OHE data
+                    list with the column names of the OHE
+    '''
+    # defining static parameters
+    CHARS = 'ACGU'
+    CHARS_COUNT = len(CHARS)
+    MAX_LEN = 2361 # B Lee
+    n = df.shape[0]
+    res = np.zeros((n, CHARS_COUNT * MAX_LEN), dtype=np.uint8)
+
+    # getting sequence window for each row and do OHE
+    for i, r in df.iterrows():
+        seq = get_sequence(r["Strain"], r["Segment"])
+        seq = seq + "*" * (MAX_LEN - len(seq))
+        # Write down OHE in numpy array
+        for j, char in enumerate(seq):
+            pos = CHARS.rfind(char)
+            res[i][j*CHARS_COUNT+pos] = 1
+
+    # format as data frame and create columns names of OHE
+    encoded_df = pd.DataFrame(res)
+    col_names = [f"{i}_{ch}" for i in range(1, MAX_LEN+1) for ch in CHARS]
     encoded_df.columns = col_names
     df = df.join(encoded_df)
 
