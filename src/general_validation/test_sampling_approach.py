@@ -34,24 +34,31 @@ def test_sampling_approach(seq_dict: dict)-> None:
             seq = get_sequence(k, s)
 
             means = list()
-            dir_rep = list()
             n = 100
-            rounds = np.arange(1, 10000, n)
-            
-            dir_rep_dict = dict()
-            for r in rounds:
-                sampling_data = generate_sampling_data(seq, start, end, n)
-                new_dict, _ = count_direct_repeats_overall(sampling_data, seq, 1)
-                dir_rep_dict = {i: dir_rep_dict.get(i, 0) + new_dict.get(i, 0) for i in set(dir_rep_dict).union(new_dict)}
-                num = sum(dir_rep_dict.values())
-                means.append(sum([key * value for key, value in dir_rep_dict.items()])/num)
+            i = 0
+            starts = list()
+            std = 0
 
+            # using std as stopping criteria
+            # is in first round 0.0 thats why i is also checked
+      #      while (i < 10) or (std > 1.0):
+            while True:
+                sampling_data = generate_sampling_data(seq, start, end, n)
+                starts = starts + sampling_data["Start"].tolist()
+                means.append(sum(starts)/len(starts))
+                std = np.std(means)
+                i = i + 1
+                if len(means) > 1:
+                    # difference is 0.001 %
+                    if abs(means[-1] - means[-2]) < np.mean(means) * 0.00001:
+                        break
+
+            rounds = np.arange(n, i*n+1, n)
             axs.scatter(rounds, means, label=s)
-            axs.set_xlabel("rounds")
+            axs.set_xlabel("samples")
             axs.set_ylabel("relative occurrence")
             axs.set_title(f"{s} (n={n})")
             axs.legend()
-            plt.ylim([0,1])
 
         plt.show()
 
