@@ -209,26 +209,6 @@ def load_all_sets()-> object:
 
     return df
 
-def select_classifier(clf_name: str)-> object:
-    '''
-        Selects a scikit-learn classifier by a given name. Is implemented in an
-        extra function to use the same parameters in each usage of one of the 
-        classifiers.
-        :param clf_name: name of the classifier
-
-        :return: Selected classifier as class implemented in scikit-learn
-    '''
-    if clf_name == "logistic_regression":
-        clf = LogisticRegression(max_iter=4000)
-    elif clf_name == "svc":
-       clf = SVC(gamma=2, C=1)
-    elif clf_name == "random_forest":
-        clf = RandomForestClassifier(max_depth=5, n_estimators=10, max_features=1)
-    else:
-        print(f"classifier {clf_name} unknown!")
-        exit()
-    return clf
-
 def set_labels(df: object, n_bins: int, style: str, labels: list=[])-> object:
     '''
         Sets the labels for the classifer. Can be done by using pd.cut() or by
@@ -294,9 +274,6 @@ def select_datasets(df, dataset_name: str, features: list, n_bins: int, label_st
     labels = ["low", "high"]
     if n_bins == 3:
         labels.insert(1, "mid")
-
-    labeling_style = "pd.cut"
-    labeling_style = "median"
 
     t_df = df.loc[df["dataset_name"].isin(train)].copy().reset_index()
     X = t_df[features]
