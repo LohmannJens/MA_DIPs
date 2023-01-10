@@ -1,5 +1,5 @@
 '''
-    Tests three different classifers on different data sets. Also tests which
+    Tests different classifers on different data sets. Also tests which
     combination of features is the best.
 '''
 import os
