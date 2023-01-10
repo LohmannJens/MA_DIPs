@@ -114,7 +114,10 @@ def extended_footprint_search(strain: str)-> (float, float, float):
     return mean, rand_mean, p, pd.DataFrame(positions)
 
 
-def plot_motif_positions_on_sequence(df: object, ngs_df: object, strain: str)-> None:
+def plot_motif_positions_on_sequence(df: pd.DataFrame,
+                                     ngs_df: pd.DataFrame,
+                                     strain: str
+                                     )-> None:
     '''
         Gets the positions of the found motif and plots them on the full length
         sequence together with the NGS count.

@@ -18,7 +18,10 @@ from utils import DATAPATH, RESULTSPATH, SEGMENTS
 from utils import load_alnaji_excel, load_short_reads, get_stat_symbol
 
 
-def slice_dataset(seg_df, energy_df, seg)-> object, object:
+def slice_dataset(seg_df: pd.DataFrame,
+                  energy_df: pd.DataFrame,
+                  seg: str
+                  )-> pd.DataFrame, pd.DataFrame:
     '''
         Crops the dataset to only include the start sites of the DI candidates
         :param seg_df: data frame including start positions
@@ -39,7 +42,11 @@ def slice_dataset(seg_df, energy_df, seg)-> object, object:
     return seg_df, energy_df
 
 
-def plot_deletions_with_delta_G(d: dict, w_s: int, s_s: int, sliced: bool=False)-> None:
+def plot_deletions_with_delta_G(d: dict,
+                                w_s: int,
+                                s_s: int,
+                                sliced: bool=False
+                                )-> None:
     '''
         Loads the deletion start and end points and the estimated delta G and
         Plots them together in one plot.
@@ -93,7 +100,11 @@ def plot_deletions_with_delta_G(d: dict, w_s: int, s_s: int, sliced: bool=False)
         plt.close()
 
 
-def create_boxplots(d: dict, w_s: int, s_s: int, sliced: bool=False)-> None:
+def create_boxplots(d: dict,
+                    w_s: int,
+                    s_s: int,
+                    sliced: bool=False
+                    )-> None:
     '''
         Loads the deletion start and end points and the estimated delta G and
         Plots them together in one plot.
@@ -162,7 +173,10 @@ def create_boxplots(d: dict, w_s: int, s_s: int, sliced: bool=False)-> None:
     plt.close()
 
 
-def create_scatterplots(d: dict, w_s: int, s_s: int)-> None:
+def create_scatterplots(d: dict,
+                        w_s: int,
+                        s_s: int
+                        )-> None:
     '''
         Loads the deletion start and end points and the estimated delta G and
         Plots the delta G against the NGS count in a scatter plot. Also does a

@@ -109,7 +109,9 @@ def plot_start_and_end_positions(data: dict)-> None:
         plt.close()
 
 
-def start_vs_end_lengths(data: dict, limit: int=0)-> None:
+def start_vs_end_lengths(data: dict,
+                         limit: int=0
+                         )-> None:
     '''
         Plots the length of the start against the length of the end of the DI
         RNA sequences as a scatter plot.

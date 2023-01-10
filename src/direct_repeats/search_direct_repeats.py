@@ -21,7 +21,12 @@ from utils import RESULTSPATH, SEGMENTS, COLORS, NUCLEOTIDES, QUANT, N_SAMPLES
 from utils import load_alnaji_excel, load_short_reads, get_sequence, get_stat_symbol, generate_sampling_data, create_sequence_library
 
 
-def calculate_direct_repeat(seq: str, s: int, e: int, w_len: int, m: int)-> (int, str):
+def calculate_direct_repeat(seq: str,
+                            s: int,
+                            e: int,
+                            w_len: int,
+                            m: int
+                            )-> (int, str):
     '''
         counts the number of overlapping nucleotides directly before start and
         end of junction site --> direct repeats
@@ -68,7 +73,10 @@ def calculate_direct_repeat(seq: str, s: int, e: int, w_len: int, m: int)-> (int
     return counter, overlap_seq
 
 
-def count_direct_repeats_overall(df: object, seq: str, mode: int)-> (dict, dict):
+def count_direct_repeats_overall(df: pd.DataFrame,
+                                 seq: str,
+                                 mode: int
+                                 )-> (dict, dict):
     '''
         calculates the number of direct repeats for each data point.
         :param df: dataframe with sequence and junction site data
@@ -121,7 +129,12 @@ def include_correction(nuc_overlap_dict: dict)-> dict:
     return new
 
 
-def direct_repeats_analysis(seq_dict: dict, mode: int, top: bool=False, correction: bool=False, author: str="")-> None:
+def direct_repeats_analysis(seq_dict: dict,
+                            mode: int,
+                            top: bool=False,
+                            correction: bool=False,
+                            author: str=""
+                            )-> None:
     '''
         Calculates the direct repeats of all sequences of the Pelz dataset.
         :param seq_dict: dictionary with the sequences

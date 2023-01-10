@@ -22,9 +22,18 @@ from search_direct_repeats import direct_repeats_analysis
 from regression_length_occurrence import linear_regression_analysis
 
 
-def venn_different_datasets(df1: object, df2: object, df3: object, labels: list)-> None:
+def venn_different_datasets(df1: pd.DataFrame,
+                            df2: pd.DataFrame,
+                            df3: pd.DataFrame,
+                            labels: list
+                            )-> None:
     '''
-        
+        Creates a venn diagramm for the three PR8 datasets.
+        :param df1: first data frame
+        :param df1: second data frame
+        :param df1: third data frame
+        :param labels: list with the labels of the datasets
+
         :return: None
     '''
     set1 = set(df1["DI"])

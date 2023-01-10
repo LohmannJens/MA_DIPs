@@ -59,7 +59,10 @@ def venn_different_timepoints(data: dict)-> None:
         plt.close()
 
 
-def compare_nucleotide_occurrence(df: object, strain: str, author: str="")-> None:
+def compare_nucleotide_occurrence(df: pd.DataFrame,
+                                  strain: str,
+                                  author: str=""
+                                  )-> None:
     '''
         gets the sequences dataset and calculates the occurrence of each
         nucleotide at the start and end deletion site.
@@ -144,7 +147,12 @@ def compare_nucleotide_occurrence(df: object, strain: str, author: str="")-> Non
         plt.close()
 
 
-def compare_direct_repeats(df: dict, strain: str, mode: int, correction: bool, author: str="")-> None:
+def compare_direct_repeats(df: pd.DataFrame,
+                           strain: str,
+                           mode: int,
+                           correction: bool,
+                           author: str=""
+                           )-> None:
     '''
         gets the sequences for all four strains and calculates the overlap of 
         the nucleotides at the junction site.
@@ -223,7 +231,6 @@ def compare_direct_repeats(df: dict, strain: str, mode: int, correction: bool, a
         else:
             i += 1
 
-
     corr = "_corr" if correction else ""    
     fname = f"{author}_{strain}_mode{mode}_compare_direct_repeats{corr}.png"
     savepath = os.path.join(RESULTSPATH, "PR8", fname)
@@ -231,7 +238,10 @@ def compare_direct_repeats(df: dict, strain: str, mode: int, correction: bool, a
     plt.close()
 
 
-def slice_by_occurrence(df: object, thresh: int, below: bool)-> object:
+def slice_by_occurrence(df: pd.DataFrame,
+                        thresh: int,
+                        below: bool
+                        )-> pd.DataFrame:
     '''
         Allows to slice a dataset by the number of occurrences for each DI
         candidate. Counts the number of occurrences for each DI Name and then
@@ -266,7 +276,7 @@ def slice_by_occurrence(df: object, thresh: int, below: bool)-> object:
     return return_df
 
 
-def analyze_over_timepoints(df)-> None:
+def analyze_over_timepoints(df: pd.DataFrame)-> None:
     '''
         Analyzes the Alnaji 2021 data set over the 5 timepoints it has. First
         Shows the distribution of the segments along all five timepoints.

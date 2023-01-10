@@ -18,7 +18,9 @@ from utils import DATAPATH, RESULTSPATH, SEGMENTS
 from utils import load_alnaji_excel, load_short_reads, get_sequence, join_lineages, create_sequence_library
 
 
-def get_sequence_id(strain: str, seg: str)-> str:
+def get_sequence_id(strain: str,
+                    seg: str
+                    )-> str:
     '''
         Returns the sequence ID/name of a given segment of a strain.
         :param strain: name of the strain

@@ -20,7 +20,7 @@ from plot_fimo_motifs_against_sequence import get_fimo_folders, load_fimo_files
 W_SIZE = 50
 
 
-def get_motif_overlap(row: object)-> str:
+def get_motif_overlap(row: pd.Series)-> str:
     '''
         Gets the row of a fimo.tsv file. Checks if the motif is fully on the
         start or end part of the sequence or if it is on both parts.
@@ -38,7 +38,7 @@ def get_motif_overlap(row: object)-> str:
         return "end"
 
 
-def get_motif_overlap_remains(row: object)-> str:
+def get_motif_overlap_remains(row: pd.Series)-> str:
     '''
         Gets the row of a fimo.tsv file. Checks if the motif is fully on the
         start or end part of the sequence or if it is on both parts. This
@@ -58,7 +58,7 @@ def get_motif_overlap_remains(row: object)-> str:
         return "end"
 
 
-def calc_motif_start(row: object)-> int:
+def calc_motif_start(row: pd.Series)-> int:
     '''
         Calculates the start position of the motif in reference to the full
         length sequence.
@@ -76,7 +76,7 @@ def calc_motif_start(row: object)-> int:
     return s
 
 
-def calc_motif_end(row: object)-> int:
+def calc_motif_end(row: pd.Series)-> int:
     '''
         Calculates the end position of the motif in reference to the full
         length sequence.
@@ -94,7 +94,9 @@ def calc_motif_end(row: object)-> int:
     return e
 
 
-def check_strains_and_segments(df: object, motif: str)-> None:
+def check_strains_and_segments(df: pd.DataFrame,
+                               motif: str
+                               )-> None:
     '''
         Groups data frame by strain and segment to see the distribution of a 
         given motif on these. Does this once including duplicates and once
@@ -113,7 +115,9 @@ def check_strains_and_segments(df: object, motif: str)-> None:
     print(grouped_cleaned_df.groupby(["strain", "segment"]).size().reset_index())
 
 
-def check_positional_distribution(df: object, motif: str)-> None:
+def check_positional_distribution(df: pd.DataFrame,
+                                  motif: str
+                                  )-> None:
     '''
         Groups data frame by motif position in reference to 'start', 'end' and
         'overlap'. Does this once including duplicates and once whtout. Prints
@@ -132,7 +136,10 @@ def check_positional_distribution(df: object, motif: str)-> None:
     print(grouped_cleaned_df.groupby(["motif_overlap"]).size().reset_index())
 
 
-def compare_DIPs_of_motifs(df, m1, m2)-> None:
+def compare_DIPs_of_motifs(df: pd.DataFrame,
+                           m1: str,
+                           m2: str
+                           )-> None:
     '''
         Gets the name of two motifs and creates a venn diagramm for the DI
         candidates that belong to those two. Shows the overlap the two given

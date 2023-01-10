@@ -29,7 +29,12 @@ def delete_folder(folder: str)-> bool:
         return False
 
 
-def write_sequence(record: object, strain: str, segment: str, folder: str, control: bool=False)-> None:
+def write_sequence(record: SeqRecord,
+                   strain: str,
+                   segment: str,
+                   folder: str,
+                   control: bool=False
+                   )-> None:
     '''
         gets RNA sequence as Biopython SeqRecord and writes it into three
         files. One for all sequences, one for the strains and one for the
@@ -107,7 +112,11 @@ def create_cropped_seq_files(d: dict)-> None:
             write_sequence(record, k, seg, root_folder)
 
 
-def create_windows_del_site_files(d: dict, n: int, combine: bool, only_remain: bool)-> None:
+def create_windows_del_site_files(d: dict,
+                                  n: int,
+                                  combine: bool,
+                                  only_remain: bool
+                                  )-> None:
     '''
         Creates FASTA files for a n wide window around the start and end of the
         sequences of the different strains and segments. 
@@ -163,7 +172,9 @@ def create_windows_del_site_files(d: dict, n: int, combine: bool, only_remain: b
                 write_sequence(record, k, seg, root_folder)
 
 
-def create_high_NGS_dataset(d: dict, thresh: int)-> None:
+def create_high_NGS_dataset(d: dict,
+                            thresh: int
+                            )-> None:
     '''
         Creates FASTA files for the cropped sequences of the different strains
         and segments. Cropped sequences are the ones that exclude the deletion

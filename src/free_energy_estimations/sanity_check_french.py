@@ -14,7 +14,6 @@ from utils import get_sequence
 from French_sliding_window import run_tloop_analysis
 
 
-
 if __name__ == "__main__":
     rna = "AGUAGAAACAAGGGUAUUUUUCUUUACUAGUCCGGUUGUUUUGGUUGCCACUAGUCUACCCUGCUUUUGCU"
     filename = "sanity_1_1.csv"

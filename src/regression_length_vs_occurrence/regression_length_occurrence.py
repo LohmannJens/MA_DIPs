@@ -20,7 +20,10 @@ from utils import DATAPATH, RESULTSPATH, SEGMENTS
 from utils import get_seq_len, load_alnaji_excel, load_short_reads
 
 
-def format_dataset_for_plotting(df, dataset_name: str, del_indices: list=[])-> (list, list, list):
+def format_dataset_for_plotting(df: pd.DataFrame,
+                                dataset_name: str,
+                                del_indices: list=[]
+                                )-> (list, list, list):
     '''
         formats the dataset to have it ready for plotting and doing the linear
         regression.
@@ -62,7 +65,14 @@ def format_dataset_for_plotting(df, dataset_name: str, del_indices: list=[])-> (
     return np.array(x), np.array(y) / np.array(y).sum(), err, segments
 
 
-def fit_models_and_plot_data(x: list, y: list, y_exp: list, err: list, k: str, author: str="", segments: list=[])-> None:
+def fit_models_and_plot_data(x: list,
+                             y: list,
+                             y_exp: list,
+                             err: list,
+                             k: str,
+                             author: str="",
+                             segments: list=[]
+                             )-> None:
     '''
         Creates the linear and exponential model for the given data and plots
         the results.
@@ -143,7 +153,7 @@ def fit_models_and_plot_data(x: list, y: list, y_exp: list, err: list, k: str, a
     plt.close()
 
 
-def clean_for_exp_analysis(y_exp: list) -> list:
+def clean_for_exp_analysis(y_exp: list)-> list:
     '''
         cleans the data to make an exponential regression possible. THis means
         to replace 0 with values very close to 0.
@@ -160,12 +170,17 @@ def clean_for_exp_analysis(y_exp: list) -> list:
     return y_exp
 
 
-def linear_regression_analysis(strain: str, df: object, del_indices: list=[], author: str=    "") -> None:
+def linear_regression_analysis(strain: str,
+                               df: pd.DataFrame,
+                               del_indices: list=[],
+                               author: str=""
+                               )-> None:
     '''
         Runs the linear regression analysis
         :param strain: name of the influenza strain
         :param df: data frame with the necessary data
-        :param dst: path to the save destination
+        :param del_indices: indices for datapoints to exclude in analysis
+        :param author: authors name, used to distinguish PR8 datasets
 
         :return: None
     '''

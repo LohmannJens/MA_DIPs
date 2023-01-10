@@ -14,7 +14,9 @@ from utils import  DATAPATH, SEGMENTS
 from utils import get_sequence
 
 
-def run_tloop_analysis(rna: str, filename: str)-> None:
+def run_tloop_analysis(rna: str,
+                       filename: str
+                       )-> None:
     '''
         Loops over a given RNA sequence and calculates the delta G for a
         possible t loop at each position. The output can also be the delta

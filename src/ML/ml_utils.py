@@ -18,7 +18,7 @@ from search_direct_repeats import calculate_direct_repeat
 
 ### feature generation ###
 
-def segment_ohe(df: object)-> (object, list):
+def segment_ohe(df: pd.DataFrame)-> (pd.DataFrame, list):
     '''
         Converts the column with segment names into an one hot encoding.
         :param df: data frame including a row called 'Segment'
@@ -34,7 +34,9 @@ def segment_ohe(df: object)-> (object, list):
     df = df.join(segment_df)
     return df, ohe_cols
 
-def junction_site_ohe(df: object, position: str)-> (object, list):
+def junction_site_ohe(df: pd.DataFrame,
+                      position: str
+                      )-> (pd.DataFrame, list):
     '''
         Gets the sequence around the start or end of a given junction site and
         converts the sequence into an one hot encoding.
@@ -69,7 +71,7 @@ def junction_site_ohe(df: object, position: str)-> (object, list):
 
     return df, col_names
 
-def full_sequence_ohe(df: object)-> (object, list):
+def full_sequence_ohe(df: pd.DataFrame)-> (pd.DataFrame, list):
     '''
         Gets the whole sequence as an one hot encoding. Sequences get
         normalized to the longest sequence length by adding * at the end
@@ -103,7 +105,7 @@ def full_sequence_ohe(df: object)-> (object, list):
 
     return df, col_names
 
-def get_dirna_length(row: list)-> int:
+def get_dirna_length(row: pd.Series)-> int:
     '''
         Calculates the length of the DI RNA sequence given a row of a data
         frame with the necessary data.
@@ -114,7 +116,7 @@ def get_dirna_length(row: list)-> int:
     seq_len = get_seq_len(row["Strain"], row["Segment"])
     return row["Start"] + (seq_len - row["End"] + 1)
 
-def get_direct_repeat_length(row)-> int:
+def get_direct_repeat_length(row: pd.Series)-> int:
     '''
         Calculates the length of the direct repeat given a row of a data frame
         with the necessary data.
@@ -128,7 +130,7 @@ def get_direct_repeat_length(row)-> int:
     n, _ = calculate_direct_repeat(seq, s, e, 15, 1)
     return n
 
-def get_3_to_5_ratio(row)-> float:
+def get_3_to_5_ratio(row: pd.Series)-> float:
     '''
         Calculates the proportion of the 3' sequence to the 5' sequence given
         a row of a data frame.
@@ -141,7 +143,7 @@ def get_3_to_5_ratio(row)-> float:
     len5 = seq_len - row["End"] + 1
     return len3/len5
 
-def get_length_proportion(row)-> float:
+def get_length_proportion(row: pd.Series)-> float:
     '''
         Calculates the proportion of the length of the DI RNA sequence to the
         full length sequence given a row of a data frame.
@@ -155,13 +157,13 @@ def get_length_proportion(row)-> float:
 
 ### others ###
 
-def get_duplicate_info(df: object)-> object:
+def get_duplicate_info(df: pd.DataFrame)-> pd.DataFrame:
     '''
         Adds a new column to a given data frame, that shows if the DI
         candidate is a duplicate (1) or not (0). 
         :param df: data frame
 
-        :return: data frame with a new column called 'Duplicate'
+        :return: Data frame with a new column called 'Duplicate'
     '''
     df["DI"] = df["Segment"] + "_" + df["Start"].astype(str) + "_" + df["End"].astype(str)
     t_df = pd.DataFrame(df.groupby(["DI"]).size())
@@ -175,12 +177,12 @@ def get_duplicate_info(df: object)-> object:
 
     return df
 
-def load_all_sets()-> object:
+def load_all_sets()-> pd.DataFrame:
     '''
         Loads all data sets together in one data frame. Provides the columns
         Segment, Start, End, NGS_read_count and dataset_name.
 
-        :return: pandas data frame including all available data sets
+        :return: Data frame including all available data sets
     '''
     def log_and_norm(df):
         df["NGS_read_count"] = df["NGS_read_count"].astype(float)
@@ -257,18 +259,24 @@ def load_all_sets()-> object:
 
     return df
 
-def duplicates_set_labels(df, col)-> list:
+def duplicates_set_labels(df: pd.DataFrame,
+                          col: str
+                          )-> pd.Series:
     '''
         Sets the labels for the classifier if the duplicates should be
         predicted.
         :param df: data frame
         :param col: name of the column to use as y value
 
-        :return: list containing the labels (0 and 1)
+        :return: pandas Series containing the labels (0 and 1)
     '''
     return df[col]
 
-def ngs_set_labels(df: object, n_bins: int, style: str, labels: list=[])-> object:
+def ngs_set_labels(df: pd.DataFrame,
+                   n_bins: int,
+                   style: str,
+                   labels: list=[]
+                   )-> pd.Series:
     '''
         Sets the labels for the classifer. Can be done by using pd.cut() or by
         using the median/33-percentil as split.
@@ -303,13 +311,13 @@ def ngs_set_labels(df: object, n_bins: int, style: str, labels: list=[])-> objec
 
     return y
 
-def select_datasets(df: object,
+def select_datasets(df: pd.DataFrame,
                     dataset_name: str,
                     features: list,
                     n_bins: int,
                     label_style: str,
                     y_column: str
-                    )-> (object, object, object, object):
+                    )-> (pd.DataFrame, pd.Series, pd.DataFrame, pd.Series):
     '''
         Selects training a test data by a given name.
         :param df: pandas data frame including all data sets and features

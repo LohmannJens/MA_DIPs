@@ -19,7 +19,10 @@ from utils import DATAPATH, SEGMENTS
 from utils import load_alnaji_excel, load_short_reads, get_sequence, create_sequence_library
 
 
-def write_sequence(seq, name: str, folder: str)-> None:
+def write_sequence(seq: SeqRecord,
+                   name: str,
+                   folder: str
+                   )-> None:
     '''
         gets RNA sequence as Biopython SeqRecord and writes it into three
         files. One for all sequences, one for the strains and one for the
@@ -37,7 +40,9 @@ def write_sequence(seq, name: str, folder: str)-> None:
         SeqIO.write(seq, f, "fasta")
 
 
-def random_crop_sequence(s: str, n: int)-> str:
+def random_crop_sequence(s: str,
+                         n: int
+                         )-> str:
     '''
         Creates a random deletion site by cropping a given sequence at a random
         point.
@@ -51,7 +56,10 @@ def random_crop_sequence(s: str, n: int)-> str:
     return seq
 
 
-def create_cropped_seq_files(d: dict, shuffle: bool=False, random: bool=False)-> None:
+def create_cropped_seq_files(d: dict,
+                             shuffle: bool=False,
+                             random: bool=False
+                             )-> None:
     '''
         Creates FASTA files for the cropped sequences of the different strains
         and segments. Cropped sequences are the ones that exclude the deletion
@@ -85,8 +93,6 @@ def create_cropped_seq_files(d: dict, shuffle: bool=False, random: bool=False)->
             s = r["Start"]
             e = r["End"]
             NGS = r["NGS_read_count"]
-            if k == "B_LEE":
-                k = "BLEE"
             id = f"{k}_{seg}_{s}_{e}_{NGS}"
 
             if shuffle:

@@ -18,7 +18,9 @@ sys.path.insert(0, "../direct_repeats")
 from search_direct_repeats import count_direct_repeats_overall
 
 
-def test_sampling_approach(seq_dict: dict, author: str="")-> None:
+def test_sampling_approach(seq_dict: dict,
+                           author: str=""
+                           )-> None:
     '''
         Tests the sampling approach by generating increasingly bigger sets and
         comparing the mean of the start positions. When the difference of the

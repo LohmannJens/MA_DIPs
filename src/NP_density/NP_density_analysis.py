@@ -91,7 +91,9 @@ def load_WSN_data(dir: str)-> dict:
     return data
 
 
-def map_positions_to_density(data: dict, density_data: dict)-> dict:
+def map_positions_to_density(data: dict,
+                             density_data: dict
+                             )-> dict:
     '''
         Maps the NP density to the start and end position of the deletion
         sites.
@@ -140,7 +142,10 @@ def map_positions_to_density(data: dict, density_data: dict)-> dict:
     return NGS_dict
 
 
-def map_dens_to_dens(strain: str, dens_1: dict, dens_2: dict)-> None:
+def map_dens_to_dens(strain: str,
+                     dens_1: dict,
+                     dens_2: dict
+                     )-> None:
     '''
         Plots the NP density of two different papers as source together.
         :param data: dict with information about start and end position
@@ -169,7 +174,10 @@ def map_dens_to_dens(strain: str, dens_1: dict, dens_2: dict)-> None:
         plt.close()
 
 
-def compare_position_with_density(data: dict, density_data: dict, all_reads: dict)-> None:
+def compare_position_with_density(data: dict,
+                                  density_data: dict,
+                                  all_reads: dict
+                                  )-> None:
     '''
         Checks how many of the junction sites are at a position of low NP
         density.

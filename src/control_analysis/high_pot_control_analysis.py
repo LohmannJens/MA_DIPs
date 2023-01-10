@@ -47,7 +47,9 @@ def load_top_DI_RNA_pelz()-> object:
     return data
 
 
-def get_sequence_around_site(segments: list, points: list)-> list:
+def get_sequence_around_site(segments: list,
+                             points: list
+                             )-> list:
     '''
 
     '''
@@ -58,7 +60,7 @@ def get_sequence_around_site(segments: list, points: list)-> list:
     return sequences
 
 
-def analyse_top_DI_RNA(df: object)-> None:
+def analyse_top_DI_RNA(df: pd.DataFrame)-> None:
     '''
         Gets a data frame of DI RNA and calculates the lengths of the resulting
         fragments. Also does the sequence overlap analysis in the two different

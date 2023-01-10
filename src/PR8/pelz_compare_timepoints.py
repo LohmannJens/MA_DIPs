@@ -19,7 +19,7 @@ sys.path.insert(0, "../regression_length_vs_occurrence")
 from regression_length_occurrence import format_dataset_for_plotting
 
 
-def assign_label(row)-> str:
+def assign_label(row: pd.Series)-> str:
     '''
         Give the different de novo and gain/loss labels to a row of the pelz
         data set.

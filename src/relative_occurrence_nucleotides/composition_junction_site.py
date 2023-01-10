@@ -20,7 +20,9 @@ from utils import RESULTSPATH, SEGMENTS, COLORS, NUCLEOTIDES, QUANT, N_SAMPLES
 from utils import load_alnaji_excel, load_short_reads, get_sequence, get_stat_symbol, generate_sampling_data, create_sequence_library
 
 
-def count_nucleotide_occurrence(seq: str, p: int)-> dict:
+def count_nucleotide_occurrence(seq: str,
+                                p: int
+                                )-> dict:
     '''
         Counts the number of nucleotides next to a given point.
         Goes 5 steps in both directions.
@@ -38,7 +40,9 @@ def count_nucleotide_occurrence(seq: str, p: int)-> dict:
     return r_dict
 
 
-def count_nucleotide_occurrence_overall(df: object, seq: str)-> (dict, dict):
+def count_nucleotide_occurrence_overall(df: pd.DataFrame,
+                                        seq: str
+                                        )-> (dict, dict):
     '''
         Counts the occurrence of each nucleotide at different positions around
         the junction site
@@ -65,7 +69,10 @@ def count_nucleotide_occurrence_overall(df: object, seq: str)-> (dict, dict):
     return count_start_dict, count_end_dict
 
 
-def nucleotide_occurrence_analysis(seq_dict: dict, seg: str, author: str="")-> None:
+def nucleotide_occurrence_analysis(seq_dict: dict,
+                                   seg: str,
+                                   author: str=""
+                                   )-> None:
     '''
         gets the sequences for all four strains and calculates the occurrence
         of each nucleotide at the start and end deletion site.

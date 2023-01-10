@@ -109,7 +109,10 @@ def structure_dataframe(path: str)-> object:
     return df
 
 
-def plot_deltaG_length(df: object, path: str, d_set: str)-> None:
+def plot_deltaG_length(df: pd.DataFrame,
+                       path: str,
+                       d_set: str
+                       )-> None:
     '''
         Plots delta G against the sequence length as a scatter plot
         :param df: data frame with the data
@@ -135,7 +138,10 @@ def plot_deltaG_length(df: object, path: str, d_set: str)-> None:
     plt.close()
 
 
-def plot_deltaG_NGS(df: object, path: str, normalize: bool)-> None:
+def plot_deltaG_NGS(df: pd.DataFrame,
+                    path: str,
+                    normalize: bool
+                    )-> None:
     '''
         Plots delta G against NGS count as a scatter plot.
         :param df: data frame with the data
@@ -164,7 +170,10 @@ def plot_deltaG_NGS(df: object, path: str, normalize: bool)-> None:
     plt.close()
 
 
-def plot_delta_G_observed_expected(df: object, path: str, mode: str)-> None:
+def plot_delta_G_observed_expected(df: pd.DataFrame,
+                                   path: str,
+                                   mode: str
+                                   )-> None:
     '''
         Plots delta G against delta G of randomly shuffled or randomly cut
         sequences.
@@ -201,7 +210,10 @@ def plot_delta_G_observed_expected(df: object, path: str, mode: str)-> None:
     plt.close()
 
 
-def create_difference_boxplots(df: object, path: str, mode: str)-> None:
+def create_difference_boxplots(df: pd.DataFrame,
+                               path: str,
+                               mode: str
+                               )-> None:
     '''
         Creates boxplots for the difference of the delta G against the expected
         values. Is done for the random and shuffled approach and saved in one
@@ -242,7 +254,9 @@ def create_difference_boxplots(df: object, path: str, mode: str)-> None:
     plt.close()
 
 
-def count_bound_bases(df: object, sec_struct: str)-> int:
+def count_bound_bases(df: pd.DataFrame,
+                      sec_struct: str
+                      )-> int:
     '''
         Checks if a nucleotide is bound or not and counts the overall bound
         bases over the whole data set.
@@ -273,7 +287,10 @@ def count_bound_bases(df: object, sec_struct: str)-> int:
     return bound_bases
 
 
-def check_secondary_structures(all_reads_dict, df, path)-> None:
+def check_secondary_structures(all_reads_dict: dict,
+                               df: pd.DataFrame,
+                               path: str
+                               )-> None:
     '''
         Gets the junction site data and the secondary structures of the
         segments. Counts the number of bound nucleotides for each strain and
@@ -287,8 +304,6 @@ def check_secondary_structures(all_reads_dict, df, path)-> None:
     fig, axs = plt.subplots(4, 1, figsize=(20, 10), tight_layout=True)
 
     for i, (k, v) in enumerate(all_reads_dict.items()):
-        if k == "B_LEE":
-            k = "BLee"
         for idx, seg in enumerate(SEGMENTS):
             sec_struct = df.loc[(df["segment"] == seg) & (df["strain"] == k)]["sec_structure"].tolist()[0]
             seg_df = v[v["Segment"] == seg]

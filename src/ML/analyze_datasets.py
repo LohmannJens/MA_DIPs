@@ -12,7 +12,8 @@ sys.path.insert(0, "..")
 from utils import DATAPATH, RESULTSPATH
 from ml_utils import load_all_sets, set_labels
 
-def check_distributions(df: object)-> None:
+
+def check_distributions(df: pd.DataFrame)-> None:
     '''
         Checks the distribution of the NGS counts for all given datasets.
         Creates a histogram for that. A second one is using the log() function.
@@ -46,7 +47,7 @@ def check_distributions(df: object)-> None:
         plt.close()
 
 
-def check_stat_parameters(df: object)-> None:
+def check_stat_parameters(df: pd.DataFrame)-> None:
     '''
         Checks statistics for all data sets (like mean, max, min, etc). Creates
         a LaTeX table as a result and saves it.
@@ -74,7 +75,7 @@ def check_stat_parameters(df: object)-> None:
     r_df.to_latex(path, float_format="%.2f")
 
 
-def check_duplicates(df: object)-> None:
+def check_duplicates(df: pd.DataFrame)-> None:
     '''
         For the Segment, Start, End combinations that occur more than once this
         function checks how many of them have the same label. Distinguish these
@@ -164,7 +165,7 @@ def check_duplicates(df: object)-> None:
     plt.close()
 
 
-def check_label_split(df: object)-> None:
+def check_label_split(df: pd.DataFrame)-> None:
     '''
         Checks postion of the splitting lines for the different approaches and 
         compares them to the NGS counts for all given datasets.

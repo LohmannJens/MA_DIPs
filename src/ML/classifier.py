@@ -24,7 +24,9 @@ sys.path.insert(0, "..")
 from utils import RESULTSPATH
 
 
-def select_classifier(clf_name: str, grid_search: bool=False)-> object:
+def select_classifier(clf_name: str,
+                      grid_search: bool=False
+                      )-> object, dict:
     '''
         Selects a scikit-learn classifier by a given name. Is implemented in an
         extra function to use the same parameters in each usage of one of the
@@ -32,7 +34,8 @@ def select_classifier(clf_name: str, grid_search: bool=False)-> object:
         :param clf_name: name of the classifier
         :param grid_search: Bool indicating if a grid search will be performed
 
-        :return: Selected classifier as class implemented in scikit-learn
+        :return: 1. Selected classifier as class implemented in scikit-learn
+                 2. parameter grid, if grid search is True, else empty dict
     '''
     if clf_name == "logistic_regression":
         if grid_search:
@@ -101,7 +104,7 @@ def select_classifier(clf_name: str, grid_search: bool=False)-> object:
     return clf, param_grid
 
 
-def test_classifiers(df: object,
+def test_classifiers(df: pd.DataFrame,
                      dataset_name: str,
                      n_bins: int,
                      label_style: str,
@@ -182,7 +185,7 @@ def test_classifiers(df: object,
     o_df.to_latex(path, index=False, float_format="%.2f", longtable=True)
 
 
-def test_model(df: object,
+def test_model(df: pd.DataFrame,
                clf: object,
                f_list: list,
                d_name: str,
@@ -211,7 +214,7 @@ def test_model(df: object,
     return acc
 
 
-def feature_comparision(df: object,
+def feature_comparision(df: pd.DataFrame,
                         d_name: str,
                         n_bins: int,
                         label_style: str,
