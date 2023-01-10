@@ -18,9 +18,16 @@ from utils import DATAPATH, RESULTSPATH, SEGMENTS
 from utils import load_alnaji_excel, load_short_reads, get_stat_symbol
 
 
-def slice_dataset(seg_df, energy_df, seg):
+def slice_dataset(seg_df, energy_df, seg)-> object, object:
     '''
+        Crops the dataset to only include the start sites of the DI candidates
+        :param seg_df: data frame including start positions
+        :param energy_df: data frame including free energy information
+        :param seg: segment name
 
+        :return: sliced data frames
+                    seg_df: sliced seg_df from input
+                    energy_df: sliced energy_df from input
     '''
     slice_index = dict({"PB1": 700, "PB2": 500,
                   "PA": 700, "HA": 500,
