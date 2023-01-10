@@ -105,7 +105,9 @@ def test_classifiers(df: object,
                      dataset_name: str,
                      n_bins: int,
                      label_style: str,
-                     y_column: str="NGS_log_norm")-> None:
+                     y_column: str,
+                     perform_grid_search: bool
+                     )-> None:
     '''
         Tests three different classifiers on a given dataset.
         :param df: data frame containing all data sets
@@ -113,11 +115,11 @@ def test_classifiers(df: object,
                              test and validation data set
         :param n_bins: number of classes to create
         :param label_style: declares how to create the labels/classes
+        :param y_column: indicates the columne where to take the y values from
+        :param perform_grid_search: True if a grid search should be performed
 
         :return: None
     '''
-    perform_grid_search = False
-
     # add features
     feature_cols = ["Start", "End"]
     df, segment_cols = segment_ohe(df)
@@ -180,7 +182,14 @@ def test_classifiers(df: object,
     o_df.to_latex(path, index=False, float_format="%.2f", longtable=True)
 
 
-def test_model(df: object, clf: object, f_list: list, d_name: str, n_bins: int, label_style: str, y_column: str="NGS_log_norm")-> float:
+def test_model(df: object,
+               clf: object,
+               f_list: list,
+               d_name: str,
+               n_bins: int,
+               label_style: str,
+               y_column: str
+               )-> float:
     '''
         Fits given data to a given classifier class and returns the accuracy.
         Is used to test different feature combinations.
@@ -190,6 +199,7 @@ def test_model(df: object, clf: object, f_list: list, d_name: str, n_bins: int, 
         :param d_name: string indicating which data sets to use
         :param n_bins: number of classes to create
         :param label_style: declares how to create the labels/classes
+        :param y_column: indicates the columne where to take the y values from
 
         :return: Accuracy of the prediciton
     '''
@@ -201,7 +211,12 @@ def test_model(df: object, clf: object, f_list: list, d_name: str, n_bins: int, 
     return acc
 
 
-def feature_comparision(df: object, d_name: str, n_bins: int, label_style: str, y_column: str="NGS_log_norm")-> None:
+def feature_comparision(df: object,
+                        d_name: str,
+                        n_bins: int,
+                        label_style: str,
+                        y_column: str
+                        )-> None:
     '''
         Test different combinations of the given features.
         :param df: data frame containing all data sets
@@ -209,6 +224,7 @@ def feature_comparision(df: object, d_name: str, n_bins: int, label_style: str, 
                              test and validation data set
         :param n_bins: number of classes to create
         :param label_style: declares how to create the labels/classes
+        :param y_column: indicates the columne where to take the y values from
 
         :return: None
     '''  
@@ -270,6 +286,8 @@ if __name__ == "__main__":
     # label_style
     # y_column
     # dataset
+    # grid_search
+    # test_classifiers <-> feature_comparision
 
     # Loading the dataset
     df = load_all_sets()
@@ -285,6 +303,7 @@ if __name__ == "__main__":
     y_column = "int_dup"
     y_column = "Duplicate"
     y_column = "NGS_log_norm"
+    perform_grid_search = False
 
     if drop_duplicates:
         df["DI"] = df["Segment"] + "_" + df["Start"].map(str) + "_" + df["End"].map(str)
@@ -292,6 +311,6 @@ if __name__ == "__main__":
 
     for d in datasets:
         print(f"#### {d} ####")
-        test_classifiers(df, d, n_bins, label_style, y_column)
+        test_classifiers(df, d, n_bins, label_style, y_column, perform_grid_search)
         feature_comparision(df, d, n_bins, label_style, y_column)
 

@@ -22,6 +22,7 @@ def segment_ohe(df: object)-> (object, list):
     '''
         Converts the column with segment names into an one hot encoding.
         :param df: data frame including a row called 'Segment'
+
         :return: Tuple with two entries:
                     data frame including original data and OHE data
                     list with the column names of the OHE
@@ -39,6 +40,7 @@ def junction_site_ohe(df: object, position: str)-> (object, list):
         converts the sequence into an one hot encoding.
         :param df: data frame including Start, End, Strain, and Segment
         :param position: is either 'Start' or 'End' to indicate which site
+        
         :return: Tuple with two entries:
                     data frame including original data and OHE data
                     list with the column names of the OHE
@@ -72,6 +74,7 @@ def full_sequence_ohe(df: object)-> (object, list):
         Gets the whole sequence as an one hot encoding. Sequences get
         normalized to the longest sequence length by adding * at the end
         :param df: data frame including Start, End, Strain, and Segment
+        
         :return: Tuple with two entries:
                     data frame including original data and OHE data
                     list with the column names of the OHE
@@ -105,6 +108,7 @@ def get_dirna_length(row: list)-> int:
         Calculates the length of the DI RNA sequence given a row of a data
         frame with the necessary data.
         :param row: data frame row including Strain, Segment, Start, and End
+        
         :return: length of DI RNA sequence
     '''
     seq_len = get_seq_len(row["Strain"], row["Segment"])
@@ -115,6 +119,7 @@ def get_direct_repeat_length(row)-> int:
         Calculates the length of the direct repeat given a row of a data frame
         with the necessary data.
         :param row: data frame row including Strain, Segment, Start, and End
+        
         :return: length of direct repeat
     '''
     seq = get_sequence(row["Strain"], row["Segment"])
@@ -128,6 +133,7 @@ def get_3_to_5_ratio(row)-> float:
         Calculates the proportion of the 3' sequence to the 5' sequence given
         a row of a data frame.
         :param row: data frame row including Strain, Segment, Start, and End
+        
         :return: ratio of 3' to 5' sequence length
     '''
     seq_len = get_seq_len(row["Strain"], row["Segment"])
@@ -140,6 +146,7 @@ def get_length_proportion(row)-> float:
         Calculates the proportion of the length of the DI RNA sequence to the
         full length sequence given a row of a data frame.
         :param row: data frame row including Strain, Segment, Start, and End
+        
         :return: ratio of DI RNA lenght to full length sequence
     '''
     seq_len = get_seq_len(row["Strain"], row["Segment"])
@@ -150,7 +157,11 @@ def get_length_proportion(row)-> float:
 
 def get_duplicate_info(df: object)-> object:
     '''
+        Adds a new column to a given data frame, that shows if the DI
+        candidate is a duplicate (1) or not (0). 
+        :param df: data frame
 
+        :return: data frame with a new column called 'Duplicate'
     '''
     df["DI"] = df["Segment"] + "_" + df["Start"].astype(str) + "_" + df["End"].astype(str)
     t_df = pd.DataFrame(df.groupby(["DI"]).size())
@@ -203,6 +214,7 @@ def load_all_sets()-> object:
 
     # load alnaji 2021 dataset
     alnaji2021 = load_full_alnaji2021()
+
     t_df = pd.DataFrame(alnaji2021.groupby(["DI"]).size())
     t_df = t_df.rename(columns={0: "Occurrences"})
     dupl_list = t_df[t_df["Occurrences"] > 1].index.values.tolist()
@@ -212,6 +224,7 @@ def load_all_sets()-> object:
     alnaji2021["int_dup"] = 0
     alnaji2021.loc[alnaji2021["DI"].isin(dupl_list), "int_dup"] = 1
     alnaji2021.drop(["DI"], axis=1, inplace=True)
+
     alnaji2021["dataset_name"] = "Alnaji2021"
     alnaji2021["Strain"] = "PR8"
     alnaji2021 = log_and_norm(alnaji2021)
@@ -220,18 +233,18 @@ def load_all_sets()-> object:
     # load four datasets of alnaji 2019
     alnaji2019 = load_short_reads(load_alnaji_excel())
     for k, v in alnaji2019.items():
-        v.drop(["Length"], axis=1, inplace=True)
         v["DI"] = v["Segment"] + "_" + v["Start"].astype(str) + "_" + v["End"].astype(str)
         t_df = pd.DataFrame(v.groupby(["DI"]).size())
         t_df = t_df.rename(columns={0: "Occurrences"})
         dupl_list = t_df[t_df["Occurrences"] > 1].index.values.tolist()
 
-        v["NGS_read_count"] = v["NGS_read_count"].astype(int)
         v = merge_duplicates(v)
         v["DI"] = v["Segment"] + "_" + v["Start"].astype(str) + "_" + v["End"].astype(str)
         v["int_dup"] = 0
         v.loc[v["DI"].isin(dupl_list), "int_dup"] = 1
-        v.drop(["DI"], axis=1, inplace=True)
+
+        v.drop(["DI", "Length"], axis=1, inplace=True)
+        v["NGS_read_count"] = v["NGS_read_count"].astype(int)
         v["dataset_name"] = f"Alnaji2019_{k}"
         v["Strain"] = k
         v = log_and_norm(v)
@@ -244,9 +257,14 @@ def load_all_sets()-> object:
 
     return df
 
-def duplicates_set_labels(df, col):
+def duplicates_set_labels(df, col)-> list:
     '''
+        Sets the labels for the classifier if the duplicates should be
+        predicted.
+        :param df: data frame
+        :param col: name of the column to use as y value
 
+        :return: list containing the labels (0 and 1)
     '''
     return df[col]
 
@@ -290,7 +308,7 @@ def select_datasets(df: object,
                     features: list,
                     n_bins: int,
                     label_style: str,
-                    y_column: str="NGS_log_norm"
+                    y_column: str
                     )-> (object, object, object, object):
     '''
         Selects training a test data by a given name.
@@ -299,6 +317,7 @@ def select_datasets(df: object,
         :param features: list with all features, that should be selected
         :param n_bins: number of classes to create
         :param label_style: declares how to create the labels/classes
+        :param y_column: indicates the columne where to take the y values from
 
         :return: tuple with 4 entries, where each is a pandas data frame
                     X:     input data for training
@@ -306,10 +325,6 @@ def select_datasets(df: object,
                     X_val: input data for validation
                     y_val: True labels for validation
     '''
-    dupl_col = "comb_dup"
-    dupl_col = "int_dup"
-    dupl_col = "Duplicate"
-
     if dataset_name == "Alnaji2019":
         train = ["Alnaji2019_Cal07", "Alnaji2019_NC", "Alnaji2019_Perth"]
         val = ["Alnaji2019_BLEE"]
