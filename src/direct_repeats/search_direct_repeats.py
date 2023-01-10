@@ -17,7 +17,7 @@ from scipy import stats
 from decimal import Decimal, ROUND_HALF_UP
 
 sys.path.insert(0, "..")
-from utils import RESULTSPATH, SEGMENTS, COLORS, NUCLEOTIDES, QUANT, S_ROUNDS
+from utils import RESULTSPATH, SEGMENTS, COLORS, NUCLEOTIDES, QUANT, N_SAMPLES
 from utils import load_alnaji_excel, load_short_reads, get_sequence, get_stat_symbol, generate_sampling_data, create_sequence_library
 
 
@@ -149,7 +149,7 @@ def direct_repeats_analysis(seq_dict: dict, mode: int, top: bool=False, correcti
 
             start = (int(v_s.Start.quantile(QUANT)), int(v_s.Start.quantile(1-QUANT)))
             end = (int(v_s.End.quantile(QUANT)), int(v_s.End.quantile(1-QUANT)))
-            sampling_data = generate_sampling_data(seq, start, end, n*S_ROUNDS)
+            sampling_data = generate_sampling_data(seq, start, end, N_SAMPLES)
             exp, _ = count_direct_repeats_overall(sampling_data, seq, mode)
 
             x = list(nuc_overlap_dict.keys())

@@ -16,7 +16,7 @@ from scipy import stats
 from decimal import Decimal, ROUND_HALF_UP
 
 sys.path.insert(0, "..")
-from utils import RESULTSPATH, SEGMENTS, COLORS, NUCLEOTIDES, QUANT, S_ROUNDS
+from utils import RESULTSPATH, SEGMENTS, COLORS, NUCLEOTIDES, QUANT, N_SAMPLES
 from utils import load_alnaji_excel, load_short_reads, get_sequence, get_stat_symbol, generate_sampling_data, create_sequence_library
 
 
@@ -88,9 +88,8 @@ def nucleotide_occurrence_analysis(seq_dict: dict, seg: str, author: str="")-> N
         # get expected values
         s = (int(v.Start.quantile(QUANT)), int(v.Start.quantile(1-QUANT)))
         e = (int(v.End.quantile(QUANT)), int(v.End.quantile(1-QUANT)))
-        n_sampling = n * S_ROUNDS
 
-        sampling_data = generate_sampling_data(seq, s, e, n_sampling)
+        sampling_data = generate_sampling_data(seq, s, e, N_SAMPLES)
         exp_s, exp_e = count_nucleotide_occurrence_overall(sampling_data, seq)
         
         fig, axs = plt.subplots(4, 2, figsize=(5, 10), tight_layout=True)
@@ -99,8 +98,8 @@ def nucleotide_occurrence_analysis(seq_dict: dict, seg: str, author: str="")-> N
         for idx, nuc in enumerate(count_start_dict.keys()):
             h_s = count_start_dict[nuc]/n
             h_e = count_end_dict[nuc]/n
-            y_exp_s = exp_s[nuc] / (n_sampling)
-            y_exp_e = exp_e[nuc] / (n_sampling)
+            y_exp_s = exp_s[nuc] / (N_SAMPLES)
+            y_exp_e = exp_e[nuc] / (N_SAMPLES)
 
             axs[idx, 0].bar(x, height=h_s, width=0.3, label=nuc, color=COLORS[nuc])
             axs[idx, 1].bar(x, height=h_e, width=0.3, label=nuc, color=COLORS[nuc])

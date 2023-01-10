@@ -12,7 +12,7 @@ import matplotlib.pyplot as plt
 from scipy import stats
 
 sys.path.insert(0, "..")
-from utils import DATAPATH, RESULTSPATH, SEGMENTS, QUANT, S_ROUNDS
+from utils import DATAPATH, RESULTSPATH, SEGMENTS, QUANT, N_SAMPLES
 from utils import get_seq_len, load_alnaji_excel, load_short_reads, get_stat_symbol, generate_sampling_data
 
 
@@ -303,9 +303,8 @@ def check_secondary_structures(all_reads_dict, df, path)-> None:
 
                 s = (int(seg_df.Start.quantile(QUANT)), int(seg_df.Start.quantile(1-QUANT)))
                 e = (int(seg_df.End.quantile(QUANT)), int(seg_df.End.quantile(1-QUANT)))
-                n_sampling = n * S_ROUNDS
 
-                sampling_df = generate_sampling_data(sec_struct, s, e, n_sampling)
+                sampling_df = generate_sampling_data(sec_struct, s, e, N_SAMPLES)
                 exp_bound = count_bound_bases(sampling_df, sec_struct)
                 exp_bound_ratio = exp_bound / (n_sampling*2)
 

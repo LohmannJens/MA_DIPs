@@ -20,7 +20,7 @@ import matplotlib.pyplot as plt
 from scipy import stats
 
 sys.path.insert(0, "..")
-from utils import DATAPATH, RESULTSPATH, SEGMENTS, QUANT, S_ROUNDS
+from utils import DATAPATH, RESULTSPATH, SEGMENTS, QUANT, N_SAMPLES
 from utils import load_alnaji_excel, load_short_reads, get_sequence, get_seq_len, get_stat_symbol, generate_sampling_data
 
 
@@ -204,8 +204,7 @@ def compare_position_with_density(data: dict, density_data: dict, all_reads: dic
                 seg_reads = all_reads[k].loc[all_reads[k]["Segment"] == s]
                 start = (int(seg_reads.Start.quantile(QUANT)), int(seg_reads.Start.quantile(1-QUANT)))
                 end = (int(seg_reads.End.quantile(QUANT)), int(seg_reads.End.quantile(1-QUANT)))
-                n_sampling = n * S_ROUNDS
-                sampling_data = generate_sampling_data(seq, start, end, n_sampling)
+                sampling_data = generate_sampling_data(seq, start, end, N_SAMPLES)
                 samp_pos = sampling_data["Start"].tolist() + sampling_data["End"].tolist()
                 
                 # grouping by NP high/low
@@ -266,7 +265,7 @@ if __name__ == "__main__":
     map_dens_to_dens("Cal07", load_Lee_density_data(Cal07_dens_path), Cal07_dens_data)
     NGS_count_dict = map_positions_to_density(all_reads_dict, Cal07_dens_data)
     compare_position_with_density(NGS_count_dict, Cal07_dens_data, all_reads_dict)
-    '''
+    
     #    WSN data from Mendes 2021
     WSN_count_file = os.path.join(DATAPATH, "Boussier2020", "Supplemental_Table_S2.xlsx")
     WSN_reads_dict = load_WSN_data(WSN_count_file)
@@ -275,4 +274,4 @@ if __name__ == "__main__":
     map_dens_to_dens("WSN", load_Lee_density_data(WSN_dens_path), WSN_dens_data)
     WSN_NGS_count_dict = map_positions_to_density(WSN_reads_dict, WSN_dens_data)
     compare_position_with_density(WSN_NGS_count_dict, WSN_dens_data, WSN_reads_dict)
-    '''
+    
