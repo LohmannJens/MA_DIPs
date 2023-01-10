@@ -101,7 +101,11 @@ def select_classifier(clf_name: str, grid_search: bool=False)-> object:
     return clf, param_grid
 
 
-def test_classifiers(df: object, dataset_name: str, n_bins: int, label_style: str)-> None:
+def test_classifiers(df: object,
+                     dataset_name: str,
+                     n_bins: int,
+                     label_style: str,
+                     y_column: str="NGS_log_norm")-> None:
     '''
         Tests three different classifiers on a given dataset.
         :param df: data frame containing all data sets
@@ -132,7 +136,7 @@ def test_classifiers(df: object, dataset_name: str, n_bins: int, label_style: st
  #   feature_cols = feature_cols + sequence_cols
 
     # Selecting train/test and validation data sets
-    X, y, X_val, y_val = select_datasets(df, dataset_name, feature_cols, n_bins, label_style)
+    X, y, X_val, y_val = select_datasets(df, dataset_name, feature_cols, n_bins, label_style, y_column)
 
     # Testing different classifiers
     clf_names = ["logistic_regression", "svc", "random_forest", "mlp", "ada_boost", "naive_bayes"]
@@ -176,7 +180,7 @@ def test_classifiers(df: object, dataset_name: str, n_bins: int, label_style: st
     o_df.to_latex(path, index=False, float_format="%.2f", longtable=True)
 
 
-def test_model(df: object, clf: object, f_list: list, d_name: str, n_bins: int, label_style: str)-> float:
+def test_model(df: object, clf: object, f_list: list, d_name: str, n_bins: int, label_style: str, y_column: str="NGS_log_norm")-> float:
     '''
         Fits given data to a given classifier class and returns the accuracy.
         Is used to test different feature combinations.
@@ -189,16 +193,15 @@ def test_model(df: object, clf: object, f_list: list, d_name: str, n_bins: int, 
 
         :return: Accuracy of the prediciton
     '''
-    X, y, X_val, y_val, = select_datasets(df, d_name, f_list, n_bins, label_style)
+    X, y, X_val, y_val, = select_datasets(df, d_name, f_list, n_bins, label_style, y_column)
     clf.fit(X, y)
     y_pred = clf.predict(X_val)
     acc = accuracy_score(y_pred, y_val)
     confusion_m = confusion_matrix(y_pred, y_val)
-   # print(confusion_m)
     return acc
 
 
-def feature_comparision(df: object, d_name: str, n_bins: int, label_style: str)-> None:
+def feature_comparision(df: object, d_name: str, n_bins: int, label_style: str, y_column: str="NGS_log_norm")-> None:
     '''
         Test different combinations of the given features.
         :param df: data frame containing all data sets
@@ -249,7 +252,7 @@ def feature_comparision(df: object, d_name: str, n_bins: int, label_style: str)-
                 features = base_features + sequence_cols
             elif f == "all":
                 features = base_features + single_cols + segment_cols + junction_cols
-            acc = test_model(df, clf, features, d_name, n_bins, label_style)
+            acc = test_model(df, clf, features, d_name, n_bins, label_style, y_column)
             data_dict[clf_name].append(acc)
 
     o_df = pd.DataFrame(data_dict)
@@ -260,20 +263,35 @@ def feature_comparision(df: object, d_name: str, n_bins: int, label_style: str)-
 
 if __name__ == "__main__":
     warnings.simplefilter(action="ignore", category=FutureWarning)
+
+# TODO: write argparse
+    # drop_duplicates
+    # n_bins
+    # label_style
+    # y_column
+    # dataset
+
     # Loading the dataset
     df = load_all_sets()
     drop_duplicates = True
+    drop_duplicates = False
     n_bins = 2
-    n_bins = 3
+ #   n_bins = 3
     label_style = "pd.cut"
     label_style = "median"
     datasets = ["Alnaji2019", "PR8"]
+    datasets = ["Alnaji2019"]
+    y_column = "comb_dup"
+    y_column = "int_dup"
+    y_column = "Duplicate"
+    y_column = "NGS_log_norm"
+
     if drop_duplicates:
         df["DI"] = df["Segment"] + "_" + df["Start"].map(str) + "_" + df["End"].map(str)
         df.drop_duplicates("DI", keep=False, inplace=True, ignore_index=True)
 
     for d in datasets:
         print(f"#### {d} ####")
-        test_classifiers(df, d, n_bins, label_style)
-        feature_comparision(df, d, n_bins, label_style)
+        test_classifiers(df, d, n_bins, label_style, y_column)
+        feature_comparision(df, d, n_bins, label_style, y_column)
 

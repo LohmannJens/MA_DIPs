@@ -1,7 +1,6 @@
 '''
     General functions and global parameters, that are used in different scripts
-    Functions include: loading of sequences, loading of datasets, ...
-    Parameters include: paths to results and data, Segments names, ...
+    of the ML part. Includes functions to load data and generate features.
 '''
 import os
 import sys
@@ -149,6 +148,22 @@ def get_length_proportion(row)-> float:
 
 ### others ###
 
+def get_duplicate_info(df: object)-> object:
+    '''
+
+    '''
+    df["DI"] = df["Segment"] + "_" + df["Start"].astype(str) + "_" + df["End"].astype(str)
+    t_df = pd.DataFrame(df.groupby(["DI"]).size())
+    t_df = t_df.rename(columns={0: "Occurrences"})
+    is_dupl_list = t_df[t_df["Occurrences"] > 1].index.values.tolist()
+
+    df["Duplicate"] = 0
+    df.loc[df["DI"].isin(is_dupl_list), "Duplicate"] = 1
+    df.drop(["DI"], axis=1, inplace=True)
+    df["comb_dup"] = ((df["Duplicate"] == 1) | (df["int_dup"] == 1))
+
+    return df
+
 def load_all_sets()-> object:
     '''
         Loads all data sets together in one data frame. Provides the columns
@@ -184,10 +199,19 @@ def load_all_sets()-> object:
     kupke = log_and_norm(kupke)
     df = pd.concat([df, kupke])
 
+    df["int_dup"] = 0
+
     # load alnaji 2021 dataset
     alnaji2021 = load_full_alnaji2021()
-    alnaji2021.drop(["DI", "Replicate", "Timepoint", "Class"], axis=1, inplace=True)
+    t_df = pd.DataFrame(alnaji2021.groupby(["DI"]).size())
+    t_df = t_df.rename(columns={0: "Occurrences"})
+    dupl_list = t_df[t_df["Occurrences"] > 1].index.values.tolist()
+
     alnaji2021 = merge_duplicates(alnaji2021)
+    alnaji2021["DI"] = alnaji2021["Segment"] + "_" + alnaji2021["Start"].astype(str) + "_" + alnaji2021["End"].astype(str)
+    alnaji2021["int_dup"] = 0
+    alnaji2021.loc[alnaji2021["DI"].isin(dupl_list), "int_dup"] = 1
+    alnaji2021.drop(["DI"], axis=1, inplace=True)
     alnaji2021["dataset_name"] = "Alnaji2021"
     alnaji2021["Strain"] = "PR8"
     alnaji2021 = log_and_norm(alnaji2021)
@@ -197,8 +221,17 @@ def load_all_sets()-> object:
     alnaji2019 = load_short_reads(load_alnaji_excel())
     for k, v in alnaji2019.items():
         v.drop(["Length"], axis=1, inplace=True)
+        v["DI"] = v["Segment"] + "_" + v["Start"].astype(str) + "_" + v["End"].astype(str)
+        t_df = pd.DataFrame(v.groupby(["DI"]).size())
+        t_df = t_df.rename(columns={0: "Occurrences"})
+        dupl_list = t_df[t_df["Occurrences"] > 1].index.values.tolist()
+
         v["NGS_read_count"] = v["NGS_read_count"].astype(int)
         v = merge_duplicates(v)
+        v["DI"] = v["Segment"] + "_" + v["Start"].astype(str) + "_" + v["End"].astype(str)
+        v["int_dup"] = 0
+        v.loc[v["DI"].isin(dupl_list), "int_dup"] = 1
+        v.drop(["DI"], axis=1, inplace=True)
         v["dataset_name"] = f"Alnaji2019_{k}"
         v["Strain"] = k
         v = log_and_norm(v)
@@ -207,9 +240,17 @@ def load_all_sets()-> object:
     df.reset_index(inplace=True)
     df.drop(["index"], axis=1, inplace=True)
 
+    df = get_duplicate_info(df)
+
     return df
 
-def set_labels(df: object, n_bins: int, style: str, labels: list=[])-> object:
+def duplicates_set_labels(df, col):
+    '''
+
+    '''
+    return df[col]
+
+def ngs_set_labels(df: object, n_bins: int, style: str, labels: list=[])-> object:
     '''
         Sets the labels for the classifer. Can be done by using pd.cut() or by
         using the median/33-percentil as split.
@@ -244,7 +285,13 @@ def set_labels(df: object, n_bins: int, style: str, labels: list=[])-> object:
 
     return y
 
-def select_datasets(df, dataset_name: str, features: list, n_bins: int, label_style: str)-> (object, object, object, object):
+def select_datasets(df: object,
+                    dataset_name: str,
+                    features: list,
+                    n_bins: int,
+                    label_style: str,
+                    y_column: str="NGS_log_norm"
+                    )-> (object, object, object, object):
     '''
         Selects training a test data by a given name.
         :param df: pandas data frame including all data sets and features
@@ -259,6 +306,9 @@ def select_datasets(df, dataset_name: str, features: list, n_bins: int, label_st
                     X_val: input data for validation
                     y_val: True labels for validation
     '''
+    dupl_col = "comb_dup"
+    dupl_col = "int_dup"
+    dupl_col = "Duplicate"
 
     if dataset_name == "Alnaji2019":
         train = ["Alnaji2019_Cal07", "Alnaji2019_NC", "Alnaji2019_Perth"]
@@ -277,12 +327,18 @@ def select_datasets(df, dataset_name: str, features: list, n_bins: int, label_st
 
     t_df = df.loc[df["dataset_name"].isin(train)].copy().reset_index()
     X = t_df[features]
-    y = set_labels(t_df, n_bins, label_style, labels)
+    if y_column == "NGS_log_norm":
+        y = ngs_set_labels(t_df, n_bins, label_style, labels)
+    else:
+        y = duplicates_set_labels(t_df, y_column)
 
     if len(val) != 0:
         v_df = df.loc[df["dataset_name"].isin(val)].copy().reset_index()
         X_val = v_df[features]
-        y_val = set_labels(v_df, n_bins, label_style, labels)
+        if y_column == "NGS_log_norm":
+            y_val = ngs_set_labels(v_df, n_bins, label_style, labels)
+        else:
+            y_val = duplicates_set_labels(v_df, y_column)
     else:
         X_val = pd.DataFrame()
         y_val = pd.DataFrame()
