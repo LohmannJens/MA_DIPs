@@ -205,6 +205,9 @@ def load_all_sets()-> pd.DataFrame:
 
     # load kupke dataset
     kupke = load_kupke(corrected=True)["PR8"]
+    # only load post samples to avoid duplicates
+    kupke = kupke[kupke.Infection == "post"]
+
     kupke.drop(["DI", "Length", "Infection", "Num_sample", "Correction"], axis=1, inplace=True)
     kupke = merge_duplicates(kupke)
     kupke["dataset_name"] = "Kupke"

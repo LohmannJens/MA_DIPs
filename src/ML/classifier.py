@@ -297,11 +297,11 @@ if __name__ == "__main__":
     drop_duplicates = True
     drop_duplicates = False
     n_bins = 2
- #   n_bins = 3
+    n_bins = 3
     label_style = "pd.cut"
     label_style = "median"
     datasets = ["Alnaji2019", "PR8"]
-    datasets = ["Alnaji2019"]
+ #   datasets = ["Alnaji2019"]
     y_column = "comb_dup"
     y_column = "int_dup"
     y_column = "Duplicate"
