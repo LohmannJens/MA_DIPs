@@ -50,6 +50,7 @@ def test_sampling_approach(seq_dict: dict,
             starts = list()
             n = 100
             i = 0
+            thresh = -1
 
             while True:
                 sampling_data = generate_sampling_data(seq, start, end, n)
@@ -58,20 +59,23 @@ def test_sampling_approach(seq_dict: dict,
                 i = i + 1
                 if len(means) > 1:
                     # difference is 0.1 %
-                    if abs(means[-1] - means[-2]) < np.mean(means) * 0.001:
+                    if abs(means[-1] - means[-2]) < np.mean(means) * 0.001 and thresh == -1:
+                        thresh = i
+                    if i == 20:
                         break
 
             rounds = np.arange(n, i*n+1, n)
             axs.scatter(rounds, means, label=s)
+            axs.scatter(thresh*n, means[thresh-1], c="black", marker="x")
 
         axs.set_xlabel("number of samples")
         axs.set_ylabel("mean of start positions")
         axs.set_title(f"{k}")
         axs.legend()
 
-        fname = f"{k}_testing_samling.png"
+        fname = f"{k}_testing_sampling.png"
         if author != "":
-            fname = f"{k}_{author}_testing_samling.png"
+            fname = f"{k}_{author}_testing_sampling.png"
         savepath = os.path.join(RESULTSPATH, "general_validation", fname)
         plt.savefig(savepath)
         plt.close()
