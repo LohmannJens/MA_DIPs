@@ -1,5 +1,7 @@
 '''
     Compares the timepoints 3hpi, 6hpi and 24hpi of Alnaji2021.
+
+    Also compares de novo and not de novo in Pelz.
 '''
 import os
 import sys
@@ -19,7 +21,7 @@ sys.path.insert(0, "../direct_repeats")
 sys.path.insert(0, "../regression_length_vs_occurrence")
 
 from utils import RESULTSPATH, SEGMENTS, COLORS
-from utils import load_alnaji_2021, get_sequence, get_stat_symbol, create_sequence_library, load_hpi14_alnaji, load_full_alnaji2021
+from utils import load_alnaji_2021, load_pelz_dataset, get_sequence, get_stat_symbol, create_sequence_library, load_hpi14_alnaji, load_full_alnaji2021
 from composition_junction_site import count_nucleotide_occurrence_overall, nucleotide_occurrence_analysis
 from search_direct_repeats import count_direct_repeats_overall, include_correction
 from regression_length_occurrence import linear_regression_analysis, format_dataset_for_plotting
@@ -61,6 +63,8 @@ def venn_different_timepoints(data: dict)-> None:
 
 def compare_nucleotide_occurrence(df: pd.DataFrame,
                                   strain: str,
+                                  gr1: str,
+                                  gr2: str,
                                   author: str=""
                                   )-> None:
     '''
@@ -70,7 +74,10 @@ def compare_nucleotide_occurrence(df: pd.DataFrame,
             - DI candidates that occurred in more than [n] replicates
             - DI candidates that occurred in less than [n] replicates
         :param seq_dict: dictionary with the sequences
-        :param seg: name of the strain is analyzed
+        :param strain: name of the strain is analyzed
+        :param gr1: name of group 1
+        :param gr2: name of group 2
+        :param author: name of the author corresponding to the data
 
         :return: None
     '''
@@ -78,58 +85,58 @@ def compare_nucleotide_occurrence(df: pd.DataFrame,
         fig, axs = plt.subplots(4, 2, figsize=(5, 10), tight_layout=True)
         seq = get_sequence(strain, s)
 
-        below_df = df.loc[(df["Group"] == "below") & (df["Segment"] == s)]
-        above_df = df.loc[(df["Group"] == "above") & (df["Segment"] == s)]
+        gr1_df = df.loc[(df["Group"] == gr1) & (df["Segment"] == s)]
+        gr2_df = df.loc[(df["Group"] == gr2) & (df["Segment"] == s)]
 
-        n_below = len(below_df)
-        n_above = len(above_df)
+        n_gr1 = len(gr1_df)
+        n_gr2 = len(gr2_df)
 
-        below_start, below_end = count_nucleotide_occurrence_overall(below_df, seq)
-        above_start, above_end = count_nucleotide_occurrence_overall(above_df, seq)
+        gr1_start, gr1_end = count_nucleotide_occurrence_overall(gr1_df, seq)
+        gr2_start, gr2_end = count_nucleotide_occurrence_overall(gr2_df, seq)
 
         # only plot results if at least one data point is available
         # for alnaji 2021 and thresh == 2 it is only PB2
-        if (n_below == 0 or n_above == 0):
+        if (n_gr1 == 0 or n_gr2 == 0):
             continue
 
         x = np.arange(0.8, 10.8, dtype=np.float64)
 
-        for i, nuc in enumerate(below_start.keys()):
-            h_below_s = below_start[nuc]/ (n_below)
-            h_below_e = below_end[nuc]/ (n_below)
-            h_above_s = above_start[nuc] / (n_above)
-            h_above_e = above_end[nuc] / (n_above)
+        for i, nuc in enumerate(gr1_start.keys()):
+            h_gr1_s = gr1_start[nuc]/ (n_gr1)
+            h_gr1_e = gr1_end[nuc]/ (n_gr1)
+            h_gr2_s = gr2_start[nuc] / (n_gr2)
+            h_gr2_e = gr2_end[nuc] / (n_gr2)
 
-            axs[i, 0].bar(x, height=h_below_s, width=0.3,
-                          label=f"{nuc} below", color=COLORS[nuc])
-            axs[i, 1].bar(x, height=h_below_e, width=0.3,
-                          label=f"{nuc} below", color=COLORS[nuc])
-            axs[i, 0].bar(x+0.4, height=h_above_s, width=0.3,
-                          label=f"{nuc} above", color=COLORS[nuc], alpha=0.5)
-            axs[i, 1].bar(x+0.4, height=h_above_e, width=0.3,
-                          label=f"{nuc} above", color=COLORS[nuc], alpha=0.5)
+            axs[i, 0].bar(x, height=h_gr1_s, width=0.3,
+                          label=f"{nuc} {gr1}", color=COLORS[nuc])
+            axs[i, 1].bar(x, height=h_gr1_e, width=0.3,
+                          label=f"{nuc} {gr1}", color=COLORS[nuc])
+            axs[i, 0].bar(x+0.4, height=h_gr2_s, width=0.3,
+                          label=f"{nuc} {gr2}", color=COLORS[nuc], alpha=0.5)
+            axs[i, 1].bar(x+0.4, height=h_gr2_e, width=0.3,
+                          label=f"{nuc} {gr2}", color=COLORS[nuc], alpha=0.5)
 
             # statisitcal testing
-            for j, (k, p) in enumerate(zip(below_start[nuc], h_above_s)):
-                result = stats.binomtest(int(k), n_below, p)
+            for j, (k, p) in enumerate(zip(gr1_start[nuc], h_gr2_s)):
+                result = stats.binomtest(int(k), n_gr1, p)
                 symbol = get_stat_symbol(result.pvalue)
-                axs[i, 0].annotate(symbol, (j+1, max(h_below_s[j], p)),
+                axs[i, 0].annotate(symbol, (j+1, max(h_gr1_s[j], p)),
                                    fontsize="x-small", ha="center", stretch="condensed")
-            for j, (k, p) in enumerate(zip(below_end[nuc], h_above_e)):
-                result = stats.binomtest(int(k), n_below, p)
+            for j, (k, p) in enumerate(zip(gr1_end[nuc], h_gr2_e)):
+                result = stats.binomtest(int(k), n_gr1, p)
                 symbol = get_stat_symbol(result.pvalue)
-                axs[i, 1].annotate(symbol, (j+1, max(h_below_e[j], p)),
+                axs[i, 1].annotate(symbol, (j+1, max(h_gr1_e[j], p)),
                                    fontsize="x-small", ha="center", stretch="condensed")
 
             for k in range(2):
                 axs[i, k].margins(x=0)
-                axs[i, k].set_xlim(left=0.5, right=9.5)
+                axs[i, k].set_xlim(left=0.5, right=10.5)
                 axs[i, k].set_ylim(top=0.8, bottom=0.0)
-                axs[i, k].set_xticks([1,2,3,4,5,6,7,8,9])
+                axs[i, k].set_xticks([1,2,3,4,5,6,7,8,9,10])
                 axs[i, k].set_xlabel("position at junction side")
                 axs[i, k].set_ylabel("relative occurrence")
-            axs[i, 0].add_patch(plt.Rectangle((5.5, 0), 4, 1, color="grey", alpha=0.3))
-            axs[i, 1].add_patch(plt.Rectangle((0.5, 0), 4, 1, color="grey", alpha=0.3))
+            axs[i, 0].add_patch(plt.Rectangle((5.5, 0), 5, 1, color="grey", alpha=0.3))
+            axs[i, 1].add_patch(plt.Rectangle((0.5, 0), 5, 1, color="grey", alpha=0.3))
   
         by_label = dict()
         for ax in axs:
@@ -151,6 +158,8 @@ def compare_direct_repeats(df: pd.DataFrame,
                            strain: str,
                            mode: int,
                            correction: bool,
+                           gr1: str,
+                           gr2: str,
                            author: str=""
                            )-> None:
     '''
@@ -162,6 +171,9 @@ def compare_direct_repeats(df: pd.DataFrame,
                      calculate_overlapping_nucleotides() check there for info
         :param correction: if True a correction calculation for the counts is
                            made
+        :param gr1: name of group 1
+        :param gr2: name of group 2
+        :param author: name of the author corresponding to the data
 
         :return: None
     '''
@@ -171,54 +183,54 @@ def compare_direct_repeats(df: pd.DataFrame,
     j = 0
     for s in SEGMENTS:
         seq = get_sequence(strain, s)
-        below_df = df.loc[(df["Group"] == "below") & (df["Segment"] == s)]
-        above_df = df.loc[(df["Group"] == "above") & (df["Segment"] == s)]
-        n_below = len(below_df)
-        n_above = len(above_df)
-        n = n_below + n_above
-        below_direct_repeats, _ = count_direct_repeats_overall(below_df, seq, mode)
-        above_direct_repeats, _ = count_direct_repeats_overall(above_df, seq, mode)
+        gr1_df = df.loc[(df["Group"] == gr1) & (df["Segment"] == s)]
+        gr2_df = df.loc[(df["Group"] == gr2) & (df["Segment"] == s)]
+        n_gr1 = len(gr1_df)
+        n_gr2 = len(gr2_df)
+        n = n_gr1 + n_gr2
+        gr1_direct_repeats, _ = count_direct_repeats_overall(gr1_df, seq, mode)
+        gr2_direct_repeats, _ = count_direct_repeats_overall(gr2_df, seq, mode)
 
         # only plot results if at least one data point is available
-        if (n_below <= 1 or n_above <= 1):
+        if (n_gr1 <= 1 or n_gr2 <= 1):
             continue
         
         if correction:
-            below_direct_repeats = include_correction(below_direct_repeats)       
-            above_direct_repeats = include_correction(above_direct_repeats)
+            gr1_direct_repeats = include_correction(gr1_direct_repeats)       
+            gr2_direct_repeats = include_correction(gr2_direct_repeats)
 
-        x = list(below_direct_repeats.keys())
-        below_h = np.array(list(below_direct_repeats.values()))
-        above_h = np.array(list(above_direct_repeats.values()))
+        x = list(gr1_direct_repeats.keys())
+        gr1_h = np.array(list(gr1_direct_repeats.values()))
+        gr2_h = np.array(list(gr2_direct_repeats.values()))
         
         # test statistical significance
-        f_below = list()
-        f_above = list()
+        f_gr1 = list()
+        f_gr2 = list()
         for a in x:
             if correction:
-                f_below.extend([a]*int(Decimal(below_direct_repeats[a]).to_integral_value(rounding=ROUND_HALF_UP)))
-                f_above.extend([a]*int(Decimal(above_direct_repeats[a]).to_integral_value(rounding=ROUND_HALF_UP)))
+                f_gr1.extend([a]*int(Decimal(gr1_direct_repeats[a]).to_integral_value(rounding=ROUND_HALF_UP)))
+                f_gr2.extend([a]*int(Decimal(gr2_direct_repeats[a]).to_integral_value(rounding=ROUND_HALF_UP)))
             else:
-                f_below.extend([a]*below_direct_repeats[a])
-                f_above.extend([a]*above_direct_repeats[a])
+                f_gr1.extend([a]*gr1_direct_repeats[a])
+                f_gr2.extend([a]*gr2_direct_repeats[a])
 
-        f_below = np.array(f_below)
-        f_above = np.array(f_above)
+        f_gr1 = np.array(f_gr1)
+        f_gr2 = np.array(f_gr2)
 
         # select statistical test here
         #stats_test = "mannwhitneyu"
         stats_test = "ks_2samp"
 
         if stats_test == "mannwhitneyu":
-           res = stats.mannwhitneyu(f_below, f_above)
+           res = stats.mannwhitneyu(f_gr1, f_gr2)
            symbol = get_stat_symbol(res.pvalue)
         elif stats_test == "ks_2samp":
-            stat, pvalue = stats.ks_2samp(f_below, f_above)
+            stat, pvalue = stats.ks_2samp(f_gr1, f_gr2)
             symbol = get_stat_symbol(pvalue)
         
         # plot results as barplot
-        axs[i, j].bar(x=x, height=below_h/below_h.sum(), width=-0.4, align="edge", label=f"below (n={n_below})")
-        axs[i, j].bar(x=x, height=above_h/above_h.sum(), width=0.4, align="edge", label=f"above (n={n_above})")
+        axs[i, j].bar(x=x, height=gr1_h/gr1_h.sum(), width=-0.4, align="edge", label=f"{gr1} (n={n_gr1})")
+        axs[i, j].bar(x=x, height=gr2_h/gr2_h.sum(), width=0.4, align="edge", label=f"{gr2} (n={n_gr2})")
         axs[i, j].set_xlabel("number of overlapping nucleotides")
         axs[i, j].set_ylabel("relative occurrence")
         axs[i, j].set_title(f"{s} (n={n}) {symbol}")
@@ -345,7 +357,7 @@ if __name__ == "__main__":
     data_dict = load_alnaji_2021()
     # check the overlap of the different timepoints
     venn_different_timepoints(data_dict)
-
+    '''
     # load full alnaji 2021 data set
     data_df = load_full_alnaji2021()
 
@@ -353,7 +365,6 @@ if __name__ == "__main__":
     analyze_over_timepoints(data_df)
 
     # Compare DI candidates that occur once to those that occur more often
-
     below_df = slice_by_occurrence(data_df, 2, below=True)
     above_df = slice_by_occurrence(data_df, 2, below=False)
     below_df = below_df.assign(Group = ["below"] * len(below_df.index))
@@ -362,11 +373,24 @@ if __name__ == "__main__":
     
     sequences_dict = create_sequence_library({"PR8": concat_df})
 
-    compare_nucleotide_occurrence(sequences_dict["PR8"], "PR8", author="Alnaji")
-    compare_direct_repeats(sequences_dict["PR8"], "PR8", mode=1, correction=True, author="Alnaji")
-    compare_direct_repeats(sequences_dict["PR8"], "PR8", mode=1, correction=False, author="Alnaji")
+    compare_nucleotide_occurrence(sequences_dict["PR8"], "PR8", "below", "above", author="Alnaji")
+    compare_direct_repeats(sequences_dict["PR8"], "PR8", 1, True, "below", "above", author="Alnaji")
+    compare_direct_repeats(sequences_dict["PR8"], "PR8", 1, False, "below", "above", author="Alnaji")
 
     # Linear regression analysis
     linear_regression_analysis(strain, above_df, author="AlnajiAbove")
     linear_regression_analysis(strain, below_df, author="AlnajiBelow")
-    
+    '''
+    # Pelz
+    df = load_pelz_dataset()[strain]
+    df.rename(columns={"class": "Group"}, inplace=True)
+
+    df["Group"].loc[df["Group"].isin(["de_novo_gain", "de_novo_loss"])] = "de_novo"
+    df["Group"].loc[df["Group"] != "de_novo"] = "pre"
+
+    sequences_dict = create_sequence_library({"PR8": df})
+
+    compare_nucleotide_occurrence(sequences_dict["PR8"], "PR8", "de_novo", "pre", author="Pelz")
+    compare_direct_repeats(sequences_dict["PR8"], "PR8", 1, True, "de_novo", "pre", author="Pelz")
+    compare_direct_repeats(sequences_dict["PR8"], "PR8", 1, False, "de_novo", "pre", author="Pelz")
+
