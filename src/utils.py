@@ -24,8 +24,7 @@ NUCLEOTIDES = list(["A", "C", "G", "U"])
 
 # parameters for the sampling
 QUANT = 0.1
-S_ROUNDS = 5
-N_SAMPLES = 1500
+N_SAMPLES = 2000
 
 def get_sequence(strain: str, seg: str, full: bool=False)-> object:
     '''
