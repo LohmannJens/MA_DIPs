@@ -240,13 +240,13 @@ def load_all_sets()-> pd.DataFrame:
         t_df = t_df.rename(columns={0: "Occurrences"})
         dupl_list = t_df[t_df["Occurrences"] > 1].index.values.tolist()
 
+        v["NGS_read_count"] = v["NGS_read_count"].astype(int)
         v = merge_duplicates(v)
         v["DI"] = v["Segment"] + "_" + v["Start"].astype(str) + "_" + v["End"].astype(str)
         v["int_dup"] = 0
         v.loc[v["DI"].isin(dupl_list), "int_dup"] = 1
 
-        v.drop(["DI", "Length"], axis=1, inplace=True)
-        v["NGS_read_count"] = v["NGS_read_count"].astype(int)
+        v.drop(["DI"], axis=1, inplace=True)
         v["dataset_name"] = f"Alnaji2019_{k}"
         v["Strain"] = k
         v = log_and_norm(v)
