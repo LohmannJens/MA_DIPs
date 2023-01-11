@@ -26,7 +26,7 @@ from utils import RESULTSPATH
 
 def select_classifier(clf_name: str,
                       grid_search: bool=False
-                      )-> object, dict:
+                      )-> (object, dict):
     '''
         Selects a scikit-learn classifier by a given name. Is implemented in an
         extra function to use the same parameters in each usage of one of the
