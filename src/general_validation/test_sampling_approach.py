@@ -11,11 +11,46 @@ import pandas as pd
 import matplotlib.pyplot as plt
 
 sys.path.insert(0, "..")
-from utils import RESULTSPATH, SEGMENTS, QUANT, S_ROUNDS
+from utils import RESULTSPATH, SEGMENTS, QUANT
 from utils import load_alnaji_excel, load_short_reads, get_sequence, get_stat_symbol, generate_sampling_data, create_sequence_library, load_kupke, load_alnaji_2021, load_pelz_dataset
 
 sys.path.insert(0, "../direct_repeats")
 from search_direct_repeats import count_direct_repeats_overall
+
+
+def plot_distribution(starts_dict: dict,
+                      name: str
+                      )-> None:
+    '''
+        Gets the sampled starting positions for each segment and shows the
+        distribution of them on the sequence.
+        :param starts_dict: segment as key and list with positions as value
+        :param name: prefix for the filename including straing (and author)
+
+        :return: None
+    '''
+    fig, axs = plt.subplots(4, 2, figsize=(5, 7), tight_layout=True)
+    i = 0
+    j = 0
+    for k, v in starts_dict.items():
+        if len(v) == 0 or min(v) == max(v):
+            continue
+        axs[i,j].hist(v, bins=max(v)-min(v))
+        axs[i,j].set_xlabel("position on sequence")
+        axs[i,j].set_ylabel("count")
+        axs[i,j].set_xlim(left=min(v), right=max(v))
+        axs[i,j].set_title(f"{k}")
+        
+        i = i + 1
+        if i == 4:
+            j = 1
+            i = 0
+
+    fig.suptitle("Distribution of randomly sampled start positions")
+    fname = f"{name}_distribution_sampling.png"
+    savepath = os.path.join(RESULTSPATH, "general_validation", fname)
+    plt.savefig(savepath)
+    plt.close()
 
 
 def test_sampling_approach(seq_dict: dict,
@@ -35,11 +70,12 @@ def test_sampling_approach(seq_dict: dict,
     plt.rc("font", size=12)
     for k, v in seq_dict.items():
         fig, axs = plt.subplots(1, 1, figsize=(5, 5), tight_layout=True)
-        label = k
+        starts_dict = dict()
         for s in SEGMENTS:
             v_s = v.loc[(v["Segment"] == s)]
             n = len(v_s.index)
             if n <= 1:
+                starts_dict[s] = list()
                 continue
 
             start = (int(v_s.Start.quantile(QUANT)), int(v_s.Start.quantile(1-QUANT)))
@@ -64,6 +100,8 @@ def test_sampling_approach(seq_dict: dict,
                     if i == 20:
                         break
 
+            starts_dict[s] = starts
+
             rounds = np.arange(n, i*n+1, n)
             axs.scatter(rounds, means, label=s)
             axs.scatter(thresh*n, means[thresh-1], c="black", marker="x")
@@ -73,12 +111,13 @@ def test_sampling_approach(seq_dict: dict,
         axs.set_title(f"{k}")
         axs.legend()
 
-        fname = f"{k}_testing_sampling.png"
-        if author != "":
-            fname = f"{k}_{author}_testing_sampling.png"
+        name = k if author == "" else f"{k}_{author}"
+        fname = f"{name}_testing_sampling.png"
         savepath = os.path.join(RESULTSPATH, "general_validation", fname)
         plt.savefig(savepath)
         plt.close()
+
+        plot_distribution(starts_dict, name)
 
 
 if __name__ == "__main__":
