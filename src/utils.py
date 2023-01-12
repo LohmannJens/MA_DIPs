@@ -161,10 +161,11 @@ def get_stat_symbol(p: float)-> str:
     else:
         return ""
 
-def load_pelz_dataset()-> dict:
+def load_pelz_dataset(de_novo: bool=False)-> dict:
     '''
         Loads the data from Pelz et al 2019 publication.
         Is structured the same way as data from alnaji 2019.
+        :param de_novo: if True only de novo candidates are taken
 
         :return: dictionary with one key, value pair
     '''
@@ -174,6 +175,11 @@ def load_pelz_dataset()-> dict:
                               header=0,
                               na_values=["", "None"],
                               keep_default_na=False)
+
+    if de_novo:
+        d = data_dict["PR8"]
+        d = d[d["class"].isin(["de_novo_loss", "de_novo_gain"])]
+        data_dict["PR8"] = d
 
     return data_dict
 
