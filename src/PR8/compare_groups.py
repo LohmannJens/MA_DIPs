@@ -1,7 +1,7 @@
 '''
     Compares the timepoints 3hpi, 6hpi and 24hpi of Alnaji2021.
 
-    Also compares de novo and not de novo in Pelz.
+    Also compares de novo and not de novo candidates in Pelz.
 '''
 import os
 import sys
@@ -357,7 +357,7 @@ if __name__ == "__main__":
     data_dict = load_alnaji_2021()
     # check the overlap of the different timepoints
     venn_different_timepoints(data_dict)
-    '''
+    
     # load full alnaji 2021 data set
     data_df = load_full_alnaji2021()
 
@@ -380,17 +380,19 @@ if __name__ == "__main__":
     # Linear regression analysis
     linear_regression_analysis(strain, above_df, author="AlnajiAbove")
     linear_regression_analysis(strain, below_df, author="AlnajiBelow")
-    '''
+    
     # Pelz
     df = load_pelz_dataset()[strain]
     df.rename(columns={"class": "Group"}, inplace=True)
 
-    df["Group"].loc[df["Group"].isin(["de_novo_gain", "de_novo_loss"])] = "de_novo"
-    df["Group"].loc[df["Group"] != "de_novo"] = "pre"
+    gr1 = "de_novo"
+    gr2 = "pre"
+    df["Group"].loc[df["Group"].isin(["de_novo_gain", "de_novo_loss"])] = gr1
+    df["Group"].loc[df["Group"] != "de_novo"] = gr2
 
     sequences_dict = create_sequence_library({"PR8": df})
 
-    compare_nucleotide_occurrence(sequences_dict["PR8"], "PR8", "de_novo", "pre", author="Pelz")
-    compare_direct_repeats(sequences_dict["PR8"], "PR8", 1, True, "de_novo", "pre", author="Pelz")
-    compare_direct_repeats(sequences_dict["PR8"], "PR8", 1, False, "de_novo", "pre", author="Pelz")
+    compare_nucleotide_occurrence(sequences_dict["PR8"], "PR8", gr1, gr2, author="Pelz")
+    compare_direct_repeats(sequences_dict["PR8"], "PR8", 1, True, gr1, gr2, author="Pelz")
+    compare_direct_repeats(sequences_dict["PR8"], "PR8", 1, False, gr1, gr2, author="Pelz")
 
