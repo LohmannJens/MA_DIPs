@@ -27,12 +27,43 @@ def generate_fastas(df: pd.DataFrame)-> None:
         :return: None
     '''
     root_folder = os.path.join(DATAPATH, "FIRM-AVP")
-    print(df["DelSequence"])
     for i, r in df.iterrows():
         id = r["Name"]
         seq = Seq(r["DelSequence"])
+        seq = seq.reverse_complement().translate()
         record = SeqRecord(seq, id)
+
         write_sequence(record, id, root_folder)
+
+
+def clean_output_files()-> None:
+    '''
+        In each of the generated FASTA files the sequence is merged into one
+        column by removing the newlines and the stop codons are removed.
+
+        :return: None
+    '''
+    # open each file in given folder
+    root_folder = os.path.join(DATAPATH, "FIRM-AVP")
+    for f in os.listdir(root_folder):
+        file = os.path.join(root_folder, f)
+        with open(file) as handle:
+            lines = handle.readlines()
+
+            new_lines = list()
+            newline = ""
+            for l in lines:
+                if l.startswith(">"):
+                    new_lines.append(l)
+                else:
+                    newline = newline + l.replace("\n", "")
+
+            newline = newline + "\n"
+            newline = newline.replace("*", "")
+            new_lines.append(newline)
+
+        with open(file, "w") as handle:
+            handle.writelines(new_lines)
 
 
 if __name__ == "__main__":
@@ -48,4 +79,5 @@ if __name__ == "__main__":
     seq_df = create_sequence_library({"PR8": full_df})
 
     generate_fastas(seq_df["PR8"])
+    clean_output_files()
 
