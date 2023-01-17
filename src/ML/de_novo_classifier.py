@@ -11,16 +11,11 @@ import pandas as pd
 import matplotlib.pyplot as plt
 
 from sklearn.model_selection import KFold, GridSearchCV, StratifiedKFold
-from sklearn.linear_model import LogisticRegression
-from sklearn.svm import SVC
-from sklearn.ensemble import RandomForestClassifier, AdaBoostClassifier
-from sklearn.neural_network import MLPClassifier
-from sklearn.naive_bayes import GaussianNB
-from sklearn.metrics import accuracy_score, RocCurveDisplay, confusion_matrix, make_scorer, precision_score, recall_score
+from sklearn.metrics import accuracy_score, confusion_matrix, make_scorer, precision_score, recall_score
 
 from classifier import select_classifier
 
-from ml_utils import load_all_sets, select_datasets, segment_ohe, junction_site_ohe, get_dirna_length, get_direct_repeat_length, get_3_to_5_ratio, get_length_proportion, full_sequence_ohe
+from ml_utils import select_datasets, segment_ohe, junction_site_ohe, get_dirna_length, get_direct_repeat_length, get_3_to_5_ratio, get_length_proportion, full_sequence_ohe
 
 sys.path.insert(0, "..")
 from utils import RESULTSPATH
@@ -45,8 +40,6 @@ def test_classifiers(df: pd.DataFrame,
         :return: None
     '''
     # add features
-    print(df)
-
     feature_cols = ["Start", "End"]
     df, segment_cols = segment_ohe(df)
     df["DI_Length"] = df.apply(get_dirna_length, axis=1)
