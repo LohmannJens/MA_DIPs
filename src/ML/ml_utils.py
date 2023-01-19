@@ -4,6 +4,7 @@
 '''
 import os
 import sys
+import RNA
 
 import numpy as np
 import pandas as pd
@@ -154,6 +155,17 @@ def get_length_proportion(row: pd.Series)-> float:
     seq_len = get_seq_len(row["Strain"], row["Segment"])
     dirna_len = row["Start"] + (seq_len - row["End"] + 1)
     return dirna_len/seq_len
+
+def get_delta_G(row: pd.Series)-> float:
+    '''
+        :param row: data frame row including Strain, Segment, Start, and End
+        
+        :return: ratio of DI RNA lenght to full length sequence
+    '''
+    seq = get_sequence(row["Strain"], row["Segment"])
+    del_seq = seq[:row["Start"]] + seq[row["End"]-1:]
+    mfe = RNA.fold_compound(del_seq).mfe()[1]
+    return mfe/len(del_seq)
 
 ### others ###
 

@@ -18,7 +18,7 @@ from sklearn.neural_network import MLPClassifier
 from sklearn.naive_bayes import GaussianNB
 from sklearn.metrics import accuracy_score, RocCurveDisplay, confusion_matrix, make_scorer, precision_score, recall_score
 
-from ml_utils import load_all_sets, select_datasets, segment_ohe, junction_site_ohe, get_dirna_length, get_direct_repeat_length, get_3_to_5_ratio, get_length_proportion, full_sequence_ohe
+from ml_utils import load_all_sets, select_datasets, segment_ohe, junction_site_ohe, get_dirna_length, get_direct_repeat_length, get_3_to_5_ratio, get_length_proportion, full_sequence_ohe, get_delta_G
 
 sys.path.insert(0, "..")
 from utils import RESULTSPATH
@@ -139,6 +139,8 @@ def test_classifiers(df: pd.DataFrame,
     feature_cols.append("length_proportion")
 #    df, sequence_cols = full_sequence_ohe(df)
  #   feature_cols = feature_cols + sequence_cols
+    df["delta_G"] = df.apply(get_delta_G, axis=1)
+    feature_cols.append("delta_G")
 
     # Selecting train/test and validation data sets
     X, y, X_val, y_val = select_datasets(df, dataset_name, feature_cols, n_bins, label_style, y_column)
