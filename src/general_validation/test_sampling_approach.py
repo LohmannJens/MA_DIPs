@@ -39,7 +39,7 @@ def plot_distribution(starts_dict: dict,
         axs[i,j].set_xlabel("position on sequence")
         axs[i,j].set_ylabel("count")
         axs[i,j].set_xlim(left=min(v), right=max(v))
-        axs[i,j].set_title(f"{k}")
+        axs[i,j].set_title(f"{name}")
         
         i = i + 1
         if i == 4:
@@ -108,11 +108,12 @@ def test_sampling_approach(seq_dict: dict,
 
         axs.set_xlabel("number of samples")
         axs.set_ylabel("mean of start positions")
-        axs.set_title(f"{k}")
+        name = k if author == "" else f"{author}_{k}"
+        axs.set_title(f"{name}")
         axs.legend()
 
-        name = k if author == "" else f"{k}_{author}"
         fname = f"{name}_testing_sampling.png"
+
         savepath = os.path.join(RESULTSPATH, "general_validation", fname)
         plt.savefig(savepath)
         plt.close()
@@ -124,7 +125,7 @@ if __name__ == "__main__":
     cleaned_data_dict = load_alnaji_excel()
     all_reads_dict = load_short_reads(cleaned_data_dict)
     sequence_list_dict = create_sequence_library(all_reads_dict)
-    test_sampling_approach(sequence_list_dict)
+    test_sampling_approach(sequence_list_dict, author="Alnaji2019")
 
     for name in ["Pelz", "Kupke", "Alnaji2021"]:
         if name == "Pelz":
