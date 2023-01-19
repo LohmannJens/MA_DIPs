@@ -12,6 +12,7 @@ import matplotlib.pyplot as plt
 
 from sklearn.model_selection import KFold, GridSearchCV, StratifiedKFold
 from sklearn.metrics import accuracy_score, confusion_matrix, make_scorer, precision_score, recall_score
+from sklearn.cluster import KMeans
 
 from classifier import select_classifier
 
@@ -186,6 +187,55 @@ def feature_comparision(df: pd.DataFrame,
     o_df.to_latex(path, index=False, float_format="%.2f", longtable=True)
 
 
+def run_clustering(df: pd.DataFrame,
+                   name: str
+                   )-> None:
+    '''
+
+    '''
+    # add features
+    feature_cols = ["Start", "End"]
+    df, segment_cols = segment_ohe(df)
+    df["DI_Length"] = df.apply(get_dirna_length, axis=1)
+    feature_cols.append("DI_Length")
+    df["Direct_repeat"] = df.apply(get_direct_repeat_length, axis=1)
+    feature_cols.append("Direct_repeat")
+    df, junction_start_cols = junction_site_ohe(df, "Start")
+    df, junction_end_cols = junction_site_ohe(df, "End")
+    feature_cols = feature_cols + segment_cols + junction_start_cols + junction_end_cols
+    df["3_5_ratio"] = df.apply(get_3_to_5_ratio, axis=1)
+    feature_cols.append("3_5_ratio")
+    df["length_proportion"] = df.apply(get_length_proportion, axis=1)
+    feature_cols.append("length_proportion")
+#    df, sequence_cols = full_sequence_ohe(df)
+ #   feature_cols = feature_cols + sequence_cols
+
+    # Selecting train/test and validation data sets
+    X = df[feature_cols]
+    y = df["class"]
+
+    kmeans = KMeans(n_clusters=4, random_state=0)
+
+    df["pred"] = kmeans.fit_predict(X)
+
+    grouped = df.groupby(["class", "pred"])
+    g_df = grouped.size().reset_index()
+
+    print(g_df)
+    m = np.zeros((4,4))
+    for i, c in enumerate(df["class"].unique()):
+        for j in range(0, 4):
+            try:
+                m[i, j] = g_df.loc[(g_df["class"] == c) & (g_df["pred"] == j)][0]
+            except:
+                continue
+
+    print(m)
+    final_df = pd.DataFrame(m)
+    final_df.index = df["class"].unique()
+    print(final_df)
+
+
 if __name__ == "__main__":
     warnings.simplefilter(action="ignore", category=FutureWarning)
 
@@ -198,6 +248,8 @@ if __name__ == "__main__":
     label_style = "median"
     perform_grid_search = False
 
-    test_classifiers(df, "Pelz", label_style, perform_grid_search)
-    feature_comparision(df, "Pelz", label_style)
+#    test_classifiers(df, "Pelz", label_style, perform_grid_search)
+ #   feature_comparision(df, "Pelz", label_style)
+
+    run_clustering(df, "Pelz")
 
