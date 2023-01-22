@@ -64,10 +64,6 @@ def load_fimo_files(folders: list):
 
 
 if __name__ == "__main__":
-    
-    #In thesis it was used like this
-    ##    python plot_fimo_motifs_against_sequence.py -d "seg1-3" -w
-
     p = argparse.ArgumentParser(description="plot position of xstreme motifs agains start and end points of junction site")
     p.add_argument("--cropped", "-c", action="store_true")
     p.add_argument("--data", "-d", type=str, help="define which data to use; should be 'all', 'IVA', or 'seg1-3'")

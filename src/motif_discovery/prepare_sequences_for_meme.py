@@ -172,47 +172,12 @@ def create_windows_del_site_files(d: dict,
                 write_sequence(record, k, seg, root_folder)
 
 
-def create_high_NGS_dataset(d: dict,
-                            thresh: int
-                            )-> None:
-    '''
-        Creates FASTA files for the cropped sequences of the different strains
-        and segments. Cropped sequences are the ones that exclude the deletion
-        site of the DI RNA.
-        :param d: dict containing sequence and deletion site info
-        :param thresh: threshold for NGS count to be included to primary data
-
-        :return: None
-    '''
-    root_folder = os.path.join(DATAPATH, "meme_suite", "alnaji2019", "high_ngs")
-    if os.path.exists(root_folder):
-        if delete_folder(root_folder):
-            shutil.rmtree(root_folder)
-        else:
-            return
-    os.makedirs(root_folder)
-
-    for k, v in d.items():
-        for r in v.iterrows():
-            r = r[1]
-            seq = r["DelSequence"]
-            seg = r["Segment"]
-            s = r["Start"]
-            e = r["End"]
-            record = SeqRecord(Seq(seq), id=f"{k}_{seg}_{s}_{e}")
-            if r["NGS_read_count"] < thresh:
-                write_sequence(record, k, seg, root_folder, control=True)
-            else:
-                write_sequence(record, k, seg, root_folder)
-
-
 if __name__ == "__main__":
     cleaned_data_dict = load_alnaji_excel()
     all_reads_dict = load_short_reads(cleaned_data_dict)
- #   create_full_seq_files(list(all_reads_dict.keys()))
+    create_full_seq_files(list(all_reads_dict.keys()))
 
     seq_library = create_sequence_library(all_reads_dict)
- #   create_cropped_seq_files(seq_library)
+    create_cropped_seq_files(seq_library)
     create_windows_del_site_files(seq_library, 50, False, True)
-  #  create_high_NGS_dataset(seq_library, 1000)
 
