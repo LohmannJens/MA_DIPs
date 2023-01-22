@@ -12,12 +12,90 @@ import pandas as pd
 from sklearn.preprocessing import OneHotEncoder
 
 sys.path.insert(0, "..")
+from utils import DATAPATH, SEGMENTS
 from utils import load_pelz_dataset, load_kupke, load_full_alnaji2021, load_short_reads, load_alnaji_excel, get_sequence, get_seq_len
 
 sys.path.insert(0, "../direct_repeats")
 from search_direct_repeats import calculate_direct_repeat
 
+### global paramters ###
+CHARS = 'ACGU'
+CHARS_COUNT = len(CHARS)
+MAX_LEN = 2361 # B Lee
+
+
 ### feature generation ###
+def generate_features(df: pd.DataFrame,
+                      features: list,
+                      load_precalc: bool
+                      )-> (pd.DataFrame, list):
+    '''
+        Main function to generate/load the features.
+        :param df: data frame including the deletion site data
+        :param features: list indicating which features to include
+        :param load_precalc: if True features are loaded from precalculated
+                             file
+
+        :return: data frame including the features,
+                 list with the names of the columns for the features
+    '''
+    if load_precalc:
+        # load precalculated data from file
+        path = os.path.join(DATAPATH, "ML", "precalc.csv")
+        df = pd.read_csv(path)
+
+        # select correct columns from a file?
+        feature_cols = ["Start", "End"]
+        if "Segment" in features:
+            segment_cols = [f"Segment_{s}" for s in SEGMENTS]
+            feature_cols = feature_cols + segment_cols
+        if "DI_Length" in features:
+            feature_cols.append("DI_Length")
+        if "Direct_repeat" in features:
+            feature_cols.append("Direct_repeat")
+        if "Junction" in features:
+            start_cols = [f"Start_{i}_{ch}" for i in range(1, 11) for ch in CHARS]
+            end_cols = [f"End_{i}_{ch}" for i in range(1, 11) for ch in CHARS]
+            feature_cols = feature_cols + start_cols + end_cols
+        if "3_5_ratio" in features:
+            feature_cols.append("3_5_ratio")
+        if "length_proportion" in features:
+            feature_cols.append("length_proportion")
+        if "full_sequence" in features:
+            sequence_cols = [f"{i}_{ch}" for i in range(1, MAX_LEN+1) for ch in CHARS]
+            feature_cols = feature_cols + sequence_cols
+        if "delta_G" in features:
+            feature_cols.append("delta_G")
+
+    else:
+        feature_cols = ["Start", "End"]
+        if "Segment" in features:
+            df, segment_cols = segment_ohe(df)
+            feature_cols = feature_cols + segment_cols
+        if "DI_Length" in features:
+            df["DI_Length"] = df.apply(get_dirna_length, axis=1)
+            feature_cols.append("DI_Length")
+        if "Direct_repeat" in features:
+            df["Direct_repeat"] = df.apply(get_direct_repeat_length, axis=1)
+            feature_cols.append("Direct_repeat")
+        if "Junction" in features:
+            df, junction_start_cols = junction_site_ohe(df, "Start")
+            df, junction_end_cols = junction_site_ohe(df, "End")
+            feature_cols = feature_cols + junction_start_cols + junction_end_cols
+        if "3_5_ratio" in features:
+            df["3_5_ratio"] = df.apply(get_3_to_5_ratio, axis=1)
+            feature_cols.append("3_5_ratio")
+        if "length_proportion" in features:
+            df["length_proportion"] = df.apply(get_length_proportion, axis=1)
+            feature_cols.append("length_proportion")
+        if "full_sequence" in features:
+            df, sequence_cols = full_sequence_ohe(df)
+            feature_cols = feature_cols + sequence_cols
+        if "delta_G" in features:
+            df["delta_G"] = df.apply(get_delta_G, axis=1)
+            feature_cols.append("delta_G")
+
+    return df, feature_cols
 
 def segment_ohe(df: pd.DataFrame)-> (pd.DataFrame, list):
     '''
@@ -48,9 +126,7 @@ def junction_site_ohe(df: pd.DataFrame,
                     data frame including original data and OHE data
                     list with the column names of the OHE
     '''
-    # defining static parameters
-    CHARS = 'ACGU'
-    CHARS_COUNT = len(CHARS)
+    # initializing matrix
     n = df.shape[0]
     res = np.zeros((n, CHARS_COUNT * 10), dtype=np.uint8)
 
@@ -82,10 +158,7 @@ def full_sequence_ohe(df: pd.DataFrame)-> (pd.DataFrame, list):
                     data frame including original data and OHE data
                     list with the column names of the OHE
     '''
-    # defining static parameters
-    CHARS = 'ACGU'
-    CHARS_COUNT = len(CHARS)
-    MAX_LEN = 2361 # B Lee
+    # defining initializing matrix
     n = df.shape[0]
     res = np.zeros((n, CHARS_COUNT * MAX_LEN), dtype=np.uint8)
 

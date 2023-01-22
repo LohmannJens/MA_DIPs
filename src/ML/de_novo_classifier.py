@@ -16,7 +16,7 @@ from sklearn.cluster import KMeans
 
 from classifier import select_classifier
 
-from ml_utils import select_datasets, segment_ohe, junction_site_ohe, get_dirna_length, get_direct_repeat_length, get_3_to_5_ratio, get_length_proportion, full_sequence_ohe
+from ml_utils import select_datasets, generate_features
 
 sys.path.insert(0, "..")
 from utils import RESULTSPATH
@@ -41,21 +41,8 @@ def test_classifiers(df: pd.DataFrame,
         :return: None
     '''
     # add features
-    feature_cols = ["Start", "End"]
-    df, segment_cols = segment_ohe(df)
-    df["DI_Length"] = df.apply(get_dirna_length, axis=1)
-    feature_cols.append("DI_Length")
-    df["Direct_repeat"] = df.apply(get_direct_repeat_length, axis=1)
-    feature_cols.append("Direct_repeat")
-    df, junction_start_cols = junction_site_ohe(df, "Start")
-    df, junction_end_cols = junction_site_ohe(df, "End")
-    feature_cols = feature_cols + segment_cols + junction_start_cols + junction_end_cols
-    df["3_5_ratio"] = df.apply(get_3_to_5_ratio, axis=1)
-    feature_cols.append("3_5_ratio")
-    df["length_proportion"] = df.apply(get_length_proportion, axis=1)
-    feature_cols.append("length_proportion")
-#    df, sequence_cols = full_sequence_ohe(df)
- #   feature_cols = feature_cols + sequence_cols
+    features = ["DI_length", "Direct_repeat", "Segment", "Junction", "3_5_ratio", "length_    proportion" ,"full_sequence", "delta_G"]
+    df, feature_cols = generate_features(df, features, load_precalc=False)
 
     # Selecting train/test and validation data sets
     X = df[feature_cols]
