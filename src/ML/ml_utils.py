@@ -271,7 +271,7 @@ def load_all_sets()-> pd.DataFrame:
     '''
     def log_and_norm(df):
         df["NGS_read_count"] = df["NGS_read_count"].astype(float)
-        df = df[df["NGS_read_count"] > 0]
+        df = df[df["NGS_read_count"] > 0].copy()
         df["NGS_log"] = np.log(df["NGS_read_count"]).astype(float)
         df["NGS_norm"] = df["NGS_read_count"]/max(df["NGS_read_count"])
         df["NGS_log_norm"] = df["NGS_log"]/max(df["NGS_log"])
