@@ -10,7 +10,7 @@ import matplotlib.pyplot as plt
 
 sys.path.insert(0, "..")
 from utils import DATAPATH, RESULTSPATH
-from ml_utils import load_all_sets, set_labels
+from ml_utils import load_all_sets, ngs_set_labels
 
 
 def check_distributions(df: pd.DataFrame)-> None:
@@ -29,7 +29,7 @@ def check_distributions(df: pd.DataFrame)-> None:
         else:
             n_df = df[df["dataset_name"] == name]
 
-        fig, axs = plt.subplots(2, 1, figsize=(4, 7), tight_layout=True)
+        fig, axs = plt.subplots(1, 2, figsize=(9, 4), tight_layout=True)
 
         axs[0].hist(n_df["NGS_read_count"], bins=100)
         axs[0].set_xlabel("NGS count")
@@ -92,7 +92,7 @@ def check_duplicates(df: pd.DataFrame)-> None:
     entries = df["DI"].tolist()
     dupl = [e for e in entries if entries.count(e) > 1]
 
-    df["class"] = set_labels(df, n_bins, label_style)
+    df["class"] = ngs_set_labels(df, n_bins, label_style)
 
     PR8_l = ["Pelz", "Kupke", "Alnaji2021"]
 
