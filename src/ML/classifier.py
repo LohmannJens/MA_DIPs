@@ -124,8 +124,9 @@ def test_classifiers(df: pd.DataFrame,
         :return: None
     '''
     # add features
-    features = ["DI_length", "Direct_repeat", "Segment", "Junction", "3_5_ratio", "length_proportion" ,"full_sequence", "delta_G"]
-    df, feature_cols = generate_features(df, features, load_precalc=False)
+    features = ["DI_length", "Direct_repeat", "Segment", "Junction", "3_5_ratio", "length_proportion", "full_sequence", "delta_G"]
+    features = ["DI_length", "Direct_repeat", "Segment", "Junction", "3_5_ratio", "length_proportion", "delta_G"]
+    df, feature_cols = generate_features(df, features, load_precalc=True)
 
     # Selecting train/test and validation data sets
     X, y, X_val, y_val = select_datasets(df, dataset_name, feature_cols, n_bins, label_style, y_column)
@@ -133,7 +134,7 @@ def test_classifiers(df: pd.DataFrame,
     # Testing different classifiers
     clf_names = ["logistic_regression", "svc", "random_forest", "mlp", "ada_boost", "naive_bayes"]
     data_dict = dict()
-    data_dict["param"] = ["validation accuracy"]
+    data_dict["param"] = ["accuracy"]
     for clf_name in clf_names:
         print(clf_name)
         data_dict[clf_name] = list()
@@ -221,6 +222,12 @@ def feature_comparision(df: pd.DataFrame,
     data_dict = dict()
     comb = ["base", "DI_length", "Direct_repeat", "Segment", "Junction", "3_5_ratio", "length_proportion" ,"all"]
     data_dict["param"] = comb
+    segment_cols = [f"Segment_{s}" for s in SEGMENTS]
+    start_cols = [f"Start_{i}_{ch}" for i in range(1, 11) for ch in CHARS]
+    end_cols = [f"End_{i}_{ch}" for i in range(1, 11) for ch in CHARS]
+    junction_cols = start_cols + end_cols
+    sequence_cols = [f"{i}_{ch}" for i in range(1, MAX_LEN+1) for ch in CHARS]
+
     # add features
     df, _ = generate_features(df, comb, load_precalc=False)
 
@@ -279,7 +286,6 @@ if __name__ == "__main__":
     label_style = "pd.cut"
     label_style = "median"
     datasets = ["Alnaji2019", "PR8"]
-    datasets = ["Alnaji2019"]
     y_column = "comb_dup"
     y_column = "int_dup"
     y_column = "Duplicate"
