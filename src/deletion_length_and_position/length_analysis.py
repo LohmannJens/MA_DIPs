@@ -18,6 +18,7 @@ import os
 import sys
 import json
 
+import numpy as np
 import matplotlib.pyplot as plt
 
 from scipy import stats
@@ -51,7 +52,8 @@ def plot_deletion_lengths(data: dict)-> None:
         fig, axs = plt.subplots(8, 1, figsize=(10, 20), tight_layout=True)
         for i, s in enumerate(SEGMENTS):
             if len(count_dict[s].keys()) > 1:
-                axs[i].hist(count_dict[s].keys(), weights=count_dict[s].values(), bins=100, label=s)
+                m = round(np.mean(list(count_dict[s].keys())), 2)
+                axs[i].hist(count_dict[s].keys(), weights=count_dict[s].values(), bins=100, label=f"{s} (mean={m})")
                 axs[i].set_xlim(left=0)
                 axs[i].set_xlabel("deletion length")
                 axs[i].set_ylabel("NGS count")
