@@ -16,12 +16,13 @@ from sklearn.svm import SVC
 from sklearn.ensemble import RandomForestClassifier, AdaBoostClassifier
 from sklearn.neural_network import MLPClassifier
 from sklearn.naive_bayes import GaussianNB
-from sklearn.metrics import accuracy_score, RocCurveDisplay, confusion_matrix, make_scorer, precision_score, recall_score
+from sklearn.metrics import accuracy_score, RocCurveDisplay, confusion_matrix, make_scorer, precision_score, recall_score, roc_curve, roc_auc_score
 
 from ml_utils import load_all_sets, select_datasets, generate_features
+from ml_utils import CHARS, CHARS_COUNT, MAX_LEN
 
 sys.path.insert(0, "..")
-from utils import DATAPATH, RESULTSPATH
+from utils import DATAPATH, RESULTSPATH, SEGMENTS
 
 
 def select_classifier(clf_name: str,
@@ -147,6 +148,8 @@ def test_classifiers(df: pd.DataFrame,
         grid_search = GridSearchCV(clf, param_grid, scoring=scorers, cv=skf, return_train_score=True, refit="accuracy_score")
         grid_search.fit(X, y)
 
+        print(f"training acc.:\t{grid_search.best_score_}")
+
         if perform_grid_search:
             print(grid_search.best_params_)
 
@@ -155,15 +158,20 @@ def test_classifiers(df: pd.DataFrame,
         acc_score = accuracy_score(predicted_val, y_val)
         confusion_m = confusion_matrix(predicted_val, y_val)
 
-        print(acc_score)
+        print(f"validation acc.:{acc_score}")
         print(confusion_m)
         data_dict[clf_name].append(acc_score)
 
         # if two classes given create a ROC
         if len(y.unique()) == 2:
-            RocCurveDisplay.from_estimator(grid_search, X, y)
-            plt.plot([0,1], [0,1])
+            #set up plotting area
+            fig, axs = plt.subplots(1, 1, figsize=(5, 5), tight_layout=True)
 
+            y_shuffled = y_val.sample(frac=1, random_state=42, ignore_index=True).to_numpy()
+
+            RocCurveDisplay.from_estimator(grid_search, X_val, y_val, name=clf_name, ax=axs)
+            RocCurveDisplay.from_estimator(grid_search, X_val, y_shuffled, name="shuffled", ax=axs)
+            plt.plot([0,1], [0,1])
             path = os.path.join(RESULTSPATH, "ML", f"{clf_name}_{dataset_name}_roc_curve.png")
             plt.savefig(path)
             plt.close()
@@ -282,10 +290,11 @@ if __name__ == "__main__":
     drop_duplicates = True
     drop_duplicates = False
     n_bins = 2
-    n_bins = 3
+#    n_bins = 3
     label_style = "pd.cut"
     label_style = "median"
     datasets = ["Alnaji2019", "PR8"]
+    datasets = ["Alnaji2021"]
     y_column = "comb_dup"
     y_column = "int_dup"
     y_column = "Duplicate"
@@ -299,4 +308,4 @@ if __name__ == "__main__":
     for d in datasets:
         print(f"#### {d} ####")
         test_classifiers(df, d, n_bins, label_style, y_column, perform_grid_search)
-        feature_comparision(df, d, n_bins, label_style, y_column)
+   #     feature_comparision(df, d, n_bins, label_style, y_column)

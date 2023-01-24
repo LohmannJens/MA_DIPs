@@ -10,6 +10,7 @@ import numpy as np
 import pandas as pd
 
 from sklearn.preprocessing import OneHotEncoder
+from sklearn.model_selection import train_test_split
 
 sys.path.insert(0, "..")
 from utils import DATAPATH, SEGMENTS
@@ -427,6 +428,10 @@ def select_datasets(df: pd.DataFrame,
     elif dataset_name == "PR8":
         train = ["Pelz", "Alnaji2021"]
         val = ["Kupke"]
+    elif dataset_name == "Alnaji2021":
+        train = ["Alnaji2021"]
+        val = []
+
     else:
         train = ["Alnaji2019_Cal07", "Alnaji2019_NC", "Alnaji2019_Perth",
                  "Alnaji2019_BLEE", "Pelz", "Alnaji2021", "Kupke"]
@@ -453,6 +458,11 @@ def select_datasets(df: pd.DataFrame,
     else:
         X_val = pd.DataFrame()
         y_val = pd.DataFrame()
+    if dataset_name == "Alnaji2021":
+        X, X_val, y, y_val = train_test_split(X, y, test_size=0.2, random_state=42)
+
+    print(y.value_counts())
+    print(y_val.value_counts())
 
     return X, y, X_val, y_val
 
