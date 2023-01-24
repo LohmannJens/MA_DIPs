@@ -127,7 +127,7 @@ def start_vs_end_lengths(data: dict,
         packaging_signals = json.load(f)
 
     for k, v in data.items():
-        fig, axs = plt.subplots(4, 2, figsize=(5, 10), tight_layout=True)
+        fig, axs = plt.subplots(2, 4, figsize=(12, 6), tight_layout=True)
         j = 0
         for i, s in enumerate(SEGMENTS):
             v_s = v[v["Segment"] == s].copy()
@@ -135,33 +135,33 @@ def start_vs_end_lengths(data: dict,
                 start = v_s["Start"]
                 v_s["End_L"] = v_s["Length"] - v_s["Start"]
 
-                axs[i%4,j].scatter(v_s["Start"], v_s["End_L"], s=1.0)
-                axs[i%4,j].plot([0, 1], [0, 1], transform=axs[i%4,j].transAxes, c="r", linewidth=0.5, linestyle="--")
+                axs[j,i%4].scatter(v_s["Start"], v_s["End_L"], s=1.0)
+                axs[j,i%4].plot([0, 1], [0, 1], transform=axs[j,i%4].transAxes, c="r", linewidth=0.5, linestyle="--")
 
                 if limit == 0:
                     max_p = max(v_s["Start"].max(), v_s["End_L"].max())
                 else:
                     max_p = limit
-                    axs[i%4,j].set_xlim(0, max_p)
-                    axs[i%4,j].set_ylim(0, max_p)
+                    axs[j,i%4].set_xlim(0, max_p)
+                    axs[j,i%4].set_ylim(0, max_p)
                     v_s = v_s[(v_s["Start"] <= max_p) & (v_s["End_L"] <= max_p)]
 
                 pearson = stats.pearsonr(v_s["Start"], v_s["End_L"])
 
-                axs[i%4,j].set_xlim(left=0, right=max_p)
-                axs[i%4,j].set_xticks([0,max_p])
-                axs[i%4,j].set_yticks([0,max_p])
-                axs[i%4,j].set_aspect("equal", "box")
+                axs[j,i%4].set_xlim(left=0, right=max_p)
+                axs[j,i%4].set_xticks([0,max_p])
+                axs[j,i%4].set_yticks([0,max_p])
+                axs[j,i%4].set_aspect("equal", "box")
 
                 signals = packaging_signals[s]
-                axs[i%4,j].add_patch(plt.Rectangle((0, 0), max_p, signals["incorporation_start"], color="grey", alpha = 0.5, ls="None"))
-                axs[i%4,j].add_patch(plt.Rectangle((0, 0), signals["incorporation_end"], max_p, color="grey", alpha = 0.5, ls="None"))
-                axs[i%4,j].add_patch(plt.Rectangle((0, 0), max_p, signals["bundling_start"], color="lightgrey", alpha = 0.5, ls="None"))
-                axs[i%4,j].add_patch(plt.Rectangle((0, 0), signals["bundling_end"], max_p, color="lightgrey", alpha = 0.5, ls="None"))
+                axs[j,i%4].add_patch(plt.Rectangle((0, 0), max_p, signals["incorporation_start"], color="grey", alpha = 0.5, ls="None"))
+                axs[j,i%4].add_patch(plt.Rectangle((0, 0), signals["incorporation_end"], max_p, color="grey", alpha = 0.5, ls="None"))
+                axs[j,i%4].add_patch(plt.Rectangle((0, 0), max_p, signals["bundling_start"], color="lightgrey", alpha = 0.5, ls="None"))
+                axs[j,i%4].add_patch(plt.Rectangle((0, 0), signals["bundling_end"], max_p, color="lightgrey", alpha = 0.5, ls="None"))
 
-            axs[i%4,j].set_title(f"{s} (n={v_s.shape[0]}) r={pearson[0]:.2}")
-            axs[i%4,j].set_xlabel("start")
-            axs[i%4,j].set_ylabel("end")
+            axs[j,i%4].set_title(f"{s} (n={v_s.shape[0]}) r={pearson[0]:.2}")
+            axs[j,i%4].set_xlabel("start")
+            axs[j,i%4].set_ylabel("end")
 
             if i == 3:
                 j = 1
