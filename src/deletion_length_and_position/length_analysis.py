@@ -44,9 +44,9 @@ def plot_deletion_lengths(data: dict)-> None:
 
         for i, r in value.iterrows():
             if r["Length"] in count_dict[r["Segment"]]:
-                count_dict[r["Segment"]][r["Length"]] += r["NGS_read_count"]
+                count_dict[r["Segment"]][r["Length"]] += 1
             else:
-                count_dict[r["Segment"]][r["Length"]] = r["NGS_read_count"]
+                count_dict[r["Segment"]][r["Length"]] = 1
 
         # create a subplot for each key, value pair in count_dict
         fig, axs = plt.subplots(8, 1, figsize=(10, 20), tight_layout=True)
@@ -56,7 +56,7 @@ def plot_deletion_lengths(data: dict)-> None:
                 axs[i].hist(count_dict[s].keys(), weights=count_dict[s].values(), bins=100, label=f"{s} (mean={m})")
                 axs[i].set_xlim(left=0)
                 axs[i].set_xlabel("deletion length")
-                axs[i].set_ylabel("NGS count")
+                axs[i].set_ylabel("# occurrences")
                 axs[i].legend()
 
         axs[0].set_title(f"Deletion length of the eight segments for {key} as histogram")
@@ -83,13 +83,13 @@ def plot_start_and_end_positions(data: dict)-> None:
             end_dict[s] = dict()
         for i, r in v.iterrows():
             if r["Start"] in start_dict[r["Segment"]]:
-                start_dict[r["Segment"]][r["Start"]] += r["NGS_read_count"]
+                start_dict[r["Segment"]][r["Start"]] += 1
             else:
-                start_dict[r["Segment"]][r["Start"]] = r["NGS_read_count"]
+                start_dict[r["Segment"]][r["Start"]] = 1
             if r["End"] in end_dict[r["Segment"]]:
-                end_dict[r["Segment"]][r["End"]] += r["NGS_read_count"]
+                end_dict[r["Segment"]][r["End"]] += 1
             else:
-                end_dict[r["Segment"]][r["End"]] = r["NGS_read_count"]
+                end_dict[r["Segment"]][r["End"]] = 1
         
         # create a subplot for each key, value pair in count_dict
         fig, axs = plt.subplots(8, 1, figsize=(10, 20), tight_layout=True)
@@ -100,7 +100,7 @@ def plot_start_and_end_positions(data: dict)-> None:
 
                 axs[i].set_xlim(left=0)
                 axs[i].set_xlabel("sequence position")
-                axs[i].set_ylabel("NGS count")
+                axs[i].set_ylabel("# occurrences")
                 axs[i].legend()
 
         axs[0].set_title(f"Location of start and end of deletion site on full sequences for {k}")
