@@ -43,7 +43,7 @@ def generate_features(df: pd.DataFrame,
     if load_precalc:
         # load precalculated data from file
         path = os.path.join(DATAPATH, "ML", "precalc.csv")
-        df = pd.read_csv(path)
+        df = pd.read_csv(path, na_values=["", "None"], keep_default_na=False)
 
         # select correct columns from a file?
         feature_cols = ["Start", "End"]
@@ -114,6 +114,31 @@ def segment_ohe(df: pd.DataFrame)-> (pd.DataFrame, list):
     df = df.join(segment_df)
     return df, ohe_cols
 
+def get_dirna_length(row: pd.Series)-> int:
+    '''
+        Calculates the length of the DI RNA sequence given a row of a data
+        frame with the necessary data.
+        :param row: data frame row including Strain, Segment, Start, and End
+        
+        :return: length of DI RNA sequence
+    '''
+    seq_len = get_seq_len(row["Strain"], row["Segment"])
+    return row["Start"] + (seq_len - row["End"] + 1)
+
+def get_direct_repeat_length(row: pd.Series)-> int:
+    '''
+        Calculates the length of the direct repeat given a row of a data frame
+        with the necessary data.
+        :param row: data frame row including Strain, Segment, Start, and End
+        
+        :return: length of direct repeat
+    '''
+    seq = get_sequence(row["Strain"], row["Segment"])
+    s = row["Start"]
+    e = row["End"]
+    n, _ = calculate_direct_repeat(seq, s, e, 15, 1)
+    return n
+
 def junction_site_ohe(df: pd.DataFrame,
                       position: str
                       )-> (pd.DataFrame, list):
@@ -149,6 +174,31 @@ def junction_site_ohe(df: pd.DataFrame,
 
     return df, col_names
 
+def get_3_to_5_ratio(row: pd.Series)-> float:
+    '''
+        Calculates the proportion of the 3' sequence to the 5' sequence given
+        a row of a data frame.
+        :param row: data frame row including Strain, Segment, Start, and End
+        
+        :return: ratio of 3' to 5' sequence length
+    '''
+    seq_len = get_seq_len(row["Strain"], row["Segment"])
+    len3 = row["Start"]
+    len5 = seq_len - row["End"] + 1
+    return len3/len5
+
+def get_length_proportion(row: pd.Series)-> float:
+    '''
+        Calculates the proportion of the length of the DI RNA sequence to the
+        full length sequence given a row of a data frame.
+        :param row: data frame row including Strain, Segment, Start, and End
+        
+        :return: ratio of DI RNA lenght to full length sequence
+    '''
+    seq_len = get_seq_len(row["Strain"], row["Segment"])
+    dirna_len = row["Start"] + (seq_len - row["End"] + 1)
+    return dirna_len/seq_len
+
 def full_sequence_ohe(df: pd.DataFrame)-> (pd.DataFrame, list):
     '''
         Gets the whole sequence as an one hot encoding. Sequences get
@@ -179,56 +229,6 @@ def full_sequence_ohe(df: pd.DataFrame)-> (pd.DataFrame, list):
     df = df.join(encoded_df)
 
     return df, col_names
-
-def get_dirna_length(row: pd.Series)-> int:
-    '''
-        Calculates the length of the DI RNA sequence given a row of a data
-        frame with the necessary data.
-        :param row: data frame row including Strain, Segment, Start, and End
-        
-        :return: length of DI RNA sequence
-    '''
-    seq_len = get_seq_len(row["Strain"], row["Segment"])
-    return row["Start"] + (seq_len - row["End"] + 1)
-
-def get_direct_repeat_length(row: pd.Series)-> int:
-    '''
-        Calculates the length of the direct repeat given a row of a data frame
-        with the necessary data.
-        :param row: data frame row including Strain, Segment, Start, and End
-        
-        :return: length of direct repeat
-    '''
-    seq = get_sequence(row["Strain"], row["Segment"])
-    s = row["Start"]
-    e = row["End"]
-    n, _ = calculate_direct_repeat(seq, s, e, 15, 1)
-    return n
-
-def get_3_to_5_ratio(row: pd.Series)-> float:
-    '''
-        Calculates the proportion of the 3' sequence to the 5' sequence given
-        a row of a data frame.
-        :param row: data frame row including Strain, Segment, Start, and End
-        
-        :return: ratio of 3' to 5' sequence length
-    '''
-    seq_len = get_seq_len(row["Strain"], row["Segment"])
-    len3 = row["Start"]
-    len5 = seq_len - row["End"] + 1
-    return len3/len5
-
-def get_length_proportion(row: pd.Series)-> float:
-    '''
-        Calculates the proportion of the length of the DI RNA sequence to the
-        full length sequence given a row of a data frame.
-        :param row: data frame row including Strain, Segment, Start, and End
-        
-        :return: ratio of DI RNA lenght to full length sequence
-    '''
-    seq_len = get_seq_len(row["Strain"], row["Segment"])
-    dirna_len = row["Start"] + (seq_len - row["End"] + 1)
-    return dirna_len/seq_len
 
 def get_delta_G(row: pd.Series)-> float:
     '''
@@ -460,9 +460,6 @@ def select_datasets(df: pd.DataFrame,
         y_val = pd.DataFrame()
     if dataset_name == "Alnaji2021":
         X, X_val, y, y_val = train_test_split(X, y, test_size=0.2, random_state=42)
-
-    print(y.value_counts())
-    print(y_val.value_counts())
 
     return X, y, X_val, y_val
 

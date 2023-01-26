@@ -4,6 +4,9 @@
 '''
 import os
 import sys
+import logging
+import argparse
+import datetime
 import warnings
 
 import numpy as np
@@ -107,6 +110,7 @@ def select_classifier(clf_name: str,
 
 def test_classifiers(df: pd.DataFrame,
                      dataset_name: str,
+                     folder: str,
                      n_bins: int,
                      label_style: str,
                      y_column: str,
@@ -125,19 +129,30 @@ def test_classifiers(df: pd.DataFrame,
         :return: None
     '''
     # add features
-    features = ["DI_length", "Direct_repeat", "Segment", "Junction", "3_5_ratio", "length_proportion", "full_sequence", "delta_G"]
-    features = ["DI_length", "Direct_repeat", "Segment", "Junction", "3_5_ratio", "length_proportion", "delta_G"]
+    features = ["Segment", "DI_Length", "Direct_repeat","Junction", "3_5_ratio", "length_proportion", "full_sequence", "delta_G"]
+    features = ["Segment", "DI_Length", "Direct_repeat","Junction", "3_5_ratio", "length_proportion", "delta_G"]
     df, feature_cols = generate_features(df, features, load_precalc=True)
+
+    features_out = "\n\t".join(features)
+    logging.info(f"\nUsed features:\n\t{features_out}\n#####\n")
 
     # Selecting train/test and validation data sets
     X, y, X_val, y_val = select_datasets(df, dataset_name, feature_cols, n_bins, label_style, y_column)
 
+    logging.info("Distribution of labels:")
+    logging.info(y.value_counts())
+    logging.info(y_val.value_counts())
+    logging.info("#####\n")
+
     # Testing different classifiers
     clf_names = ["logistic_regression", "svc", "random_forest", "mlp", "ada_boost", "naive_bayes"]
+    clf_names = ["svc", "random_forest", "mlp", "ada_boost", "naive_bayes"]
     data_dict = dict()
     data_dict["param"] = ["accuracy"]
     for clf_name in clf_names:
         print(clf_name)
+        logging.info(f"\n### {clf_name} ###")
+
         data_dict[clf_name] = list()
         # setting up classifier and k-fold validation
         clf, param_grid = select_classifier(clf_name, grid_search=perform_grid_search)
@@ -149,9 +164,11 @@ def test_classifiers(df: pd.DataFrame,
         grid_search.fit(X, y)
 
         print(f"training acc.:\t{grid_search.best_score_}")
+        logging.info(f"training acc.:\t{grid_search.best_score_}")
 
         if perform_grid_search:
             print(grid_search.best_params_)
+            logging.info(grid_search.best_params_)
 
         # fit on overall model and create confusion matrix for validation set
         predicted_val = grid_search.predict(X_val)
@@ -160,6 +177,8 @@ def test_classifiers(df: pd.DataFrame,
 
         print(f"validation acc.:{acc_score}")
         print(confusion_m)
+        logging.info(f"validation acc.:{acc_score}")
+        logging.info(confusion_m)
         data_dict[clf_name].append(acc_score)
 
         # if two classes given create a ROC
@@ -172,12 +191,12 @@ def test_classifiers(df: pd.DataFrame,
             RocCurveDisplay.from_estimator(grid_search, X_val, y_val, name=clf_name, ax=axs)
             RocCurveDisplay.from_estimator(grid_search, X_val, y_shuffled, name="shuffled", ax=axs)
             plt.plot([0,1], [0,1])
-            path = os.path.join(RESULTSPATH, "ML", f"{clf_name}_{dataset_name}_roc_curve.png")
+            path = os.path.join(folder, f"{clf_name}_{dataset_name}_roc_curve.png")
             plt.savefig(path)
             plt.close()
 
     o_df = pd.DataFrame(data_dict)
-    path = os.path.join(RESULTSPATH, "ML", f"{dataset_name}_means.tex")
+    path = os.path.join(folder, f"{dataset_name}_means.tex")
     o_df.to_latex(path, index=False, float_format="%.2f", longtable=True)
 
 
@@ -206,12 +225,12 @@ def test_model(df: pd.DataFrame,
     clf.fit(X, y)
     y_pred = clf.predict(X_val)
     acc = accuracy_score(y_pred, y_val)
-    confusion_m = confusion_matrix(y_pred, y_val)
     return acc
 
 
 def feature_comparision(df: pd.DataFrame,
                         d_name: str,
+                        folder: str,
                         n_bins: int,
                         label_style: str,
                         y_column: str
@@ -228,7 +247,7 @@ def feature_comparision(df: pd.DataFrame,
         :return: None
     '''  
     data_dict = dict()
-    comb = ["base", "DI_length", "Direct_repeat", "Segment", "Junction", "3_5_ratio", "length_proportion" ,"all"]
+    comb = ["base", "Segment", "DI_Length", "Direct_repeat", "Junction", "3_5_ratio", "length_proportion" ,"all"]
     data_dict["param"] = comb
     segment_cols = [f"Segment_{s}" for s in SEGMENTS]
     start_cols = [f"Start_{i}_{ch}" for i in range(1, 11) for ch in CHARS]
@@ -237,11 +256,12 @@ def feature_comparision(df: pd.DataFrame,
     sequence_cols = [f"{i}_{ch}" for i in range(1, MAX_LEN+1) for ch in CHARS]
 
     # add features
-    df, _ = generate_features(df, comb, load_precalc=False)
+    df, _ = generate_features(df, comb, load_precalc=True)
 
     clf_names = ["logistic_regression", "svc", "random_forest", "mlp", "ada_boost", "naive_bayes"]
     for clf_name in clf_names:
         print(clf_name)
+        logging.info(f"\n### {clf_name} ###")
         data_dict[clf_name] = list()
         clf, _ = select_classifier(clf_name)
         base_features = ["Start", "End"]
@@ -267,45 +287,65 @@ def feature_comparision(df: pd.DataFrame,
             acc = test_model(df, clf, features, d_name, n_bins, label_style, y_column)
             data_dict[clf_name].append(acc)
 
+            logging.info(f"\t{f}\t{acc}")
+
     o_df = pd.DataFrame(data_dict)
     print(o_df)
-    path = os.path.join(RESULTSPATH, "ML", f"feature_testing_{d_name}_{n_bins}.tex")
+    path = os.path.join(folder, f"feature_testing_{d_name}_{n_bins}.tex")
     o_df.to_latex(path, index=False, float_format="%.2f", longtable=True)
 
 
 if __name__ == "__main__":
     warnings.simplefilter(action="ignore", category=FutureWarning)
 
-# TODO: write argparse
-    # drop_duplicates
-    # n_bins
-    # label_style
-    # y_column
-    # dataset
-    # grid_search
-    # test_classifiers <-> feature_comparision
+    # argument parsing
+    p = argparse.ArgumentParser(description="Run classifier to predict competitiveness of DI RNA candidates")
+    p.add_argument("--n_bins", "-n", type=int, choices=[2, 3],
+                   help="Number of classes to predict")
+    p.add_argument("--label_style", "-l", type=str, choices=["pd.cut", "median"],
+                   default="median", help="Define how the labels are assigned")
+    p.add_argument("--y_column", "-y", type=str, choices=["comb_dup", "int_dup", "Duplicate", "NGS_log_norm"],
+                   default="NGS_log_norm", help="Set y column to make prediction for")
+    p.add_argument("--dataset", "-d", type=str, choices=["Alnaji2019", "PR8", "Alnaji2021"],
+                   help="Write which dataset to use")
+    p.add_argument("--grid_search", "-g", action="store_true",
+                   help="If set a grid search for best model parameters is performed")
+    p.add_argument("--mode", "-m", type=str, default="test_classifier",
+                   help="Define what analysis to perform, test the classifiers or analyse the features")
+    p.add_argument("--drop_duplicates", "-r", action="store_true",
+                   help="If set the duplicates between datasets are removed from the data")
+    args = p.parse_args()
+
+    n_bins = args.n_bins
+    d = args.dataset
+    label_style = args.label_style
+    y_column = args.y_column
+    perform_grid_search = args.grid_search
+
+    # initialize logger
+    folder_name = datetime.datetime.now().strftime("%Y-%m-%d_%H-%M")
+    folder = os.path.join(RESULTSPATH, "ML", folder_name)
+    os.makedirs(folder)
+    path = os.path.join(folder, "results.log")
+
+    logging.basicConfig(filename=path, filemode="w", format="%(message)s", level=logging.INFO)
+    logging.info(f"Script started on: {datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
+    logging.info("using this command:")
+    a = sys.argv
+    a.insert(0, "python")
+    logging.info(f"\t{' '.join(a)}\n#####")
 
     # Loading the dataset
     df = load_all_sets()
-    drop_duplicates = True
-    drop_duplicates = False
-    n_bins = 2
-#    n_bins = 3
-    label_style = "pd.cut"
-    label_style = "median"
-    datasets = ["Alnaji2019", "PR8"]
-    datasets = ["Alnaji2021"]
-    y_column = "comb_dup"
-    y_column = "int_dup"
-    y_column = "Duplicate"
-    y_column = "NGS_log_norm"
-    perform_grid_search = False
 
-    if drop_duplicates:
+    if args.drop_duplicates:
         df["DI"] = df["Segment"] + "_" + df["Start"].map(str) + "_" + df["End"].map(str)
         df.drop_duplicates("DI", keep=False, inplace=True, ignore_index=True)
 
-    for d in datasets:
-        print(f"#### {d} ####")
-        test_classifiers(df, d, n_bins, label_style, y_column, perform_grid_search)
-   #     feature_comparision(df, d, n_bins, label_style, y_column)
+    print(f"#### {d} ####")
+    if args.mode == "test_classifier":
+        test_classifiers(df, d, folder, n_bins, label_style, y_column, perform_grid_search)
+    elif args.mode == "feature_comparision":
+        feature_comparision(df, d, folder, n_bins, label_style, y_column)
+
+    logging.info(f"Script ended on: {datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
