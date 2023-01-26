@@ -4,7 +4,7 @@
     Expected value is calculated by dividing length of each segment with sum of
     the length of all segements.
 
-    Also creates a model for all three IV A strains together.
+    Also creates a model for all three IAV strains together.
 '''
 import os
 import sys
@@ -140,8 +140,8 @@ def fit_models_and_plot_data(x: list,
     ax.set_title(f"{k}")
     ax.set_xlim(left=0)
     ax.set_ylim(bottom=0, top=0.65)
-    ax.set_xlabel("sequence position")
-    ax.set_ylabel("relative DI occurrence")
+    ax.set_xlabel("sequence length")
+    ax.set_ylabel("relative DI RNA occurrence")
 
     # save final figure
     fname = f"{k}_regression_analysis.png"
