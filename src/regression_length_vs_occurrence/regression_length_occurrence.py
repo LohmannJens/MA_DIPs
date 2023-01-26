@@ -91,7 +91,7 @@ def fit_models_and_plot_data(x: list,
             if k == "exp" and s == "PB1":
                 y[i] = y[i] - 0.007
             ax.annotate(s, (x[i], y[i]))
-            if k == "IVA":
+            if k == "three IAV strains":
                 ax.annotate(s, (x[i+8], y[i+8]))
                 ax.annotate(s, (x[i+16], y[i+16]))
             i += 1
@@ -104,7 +104,7 @@ def fit_models_and_plot_data(x: list,
     ax.errorbar(x, y, yerr=err, fmt="o", capsize=5.0)
  
     # include expected values (perfect correlation DI count and length)
-    if k == "IVA":
+    if k == "three IAV strains":
         y_expected = x.copy().astype("float64")
         y_expected[0:8] = y_expected[0:8] / y_expected[0:8].sum()
         y_expected[8:16] = y_expected[8:16] / y_expected[8:16].sum()
@@ -123,17 +123,17 @@ def fit_models_and_plot_data(x: list,
     y_pred = model.predict(x.reshape((-1, 1)))
     y_exp_pred = np.exp(exp_model[1]) * np.exp(exp_model[0] * x_plot)
 
+    inter_p = -model.intercept_/model.coef_
+
     # plotting the results
     score = model.score(x[:-2].reshape((-1, 1)), y[:-2])
- #   formula = f"f(x) = x * {model.coef_} + {model.intercept_}"
-    formula = ""
-    ax.plot(x, y_pred, label=f"linear model {formula} (R²: {score:.2f})", color="green")
-    ax.plot(x_plot, y_exp_pred, label="exponential model", color="orange")
+    ax.plot(np.insert(x, 0, inter_p), np.insert(y_pred, 0, 0), label=f"linear model (R²: {score:.2f})", color="green")
+#    ax.plot(x_plot, y_exp_pred, label="exponential model", color="orange")
     ax.plot(np.insert(x, 0, 0), np.insert(y_expected, 0, 0), color="grey")
 
     # mark x axis intersection
-    ax.plot((-model.intercept_/model.coef_), 0, 'ro')
-    ax.annotate(f"{(-model.intercept_/model.coef_)[0]:.2f}", ((-model.intercept_/model.coef_), 0))
+    ax.plot(inter_p, 0, 'ro')
+    ax.annotate(f"{inter_p[0]:.2f}", (inter_p, 0))
 
     # set labels and title
     ax.legend(loc="upper left")
@@ -209,25 +209,25 @@ def perform_alnaji2019_regression_analysis(data: dict)-> None:
         y_exp = clean_for_exp_analysis(y)
         fit_models_and_plot_data(x, y, y_exp, err, k, segments=segments)
 
-    # do regression for all three IV A strains together
+    # do regression for all three IAV strains together
     for k in ["Cal07", "NC", "Perth"]:
         v = data[k]
         x, y, err, segments = format_dataset_for_plotting(v, k)
         y_exp = clean_for_exp_analysis(y)
         if k == "Cal07":
-            x_IVA = x
-            y_IVA = y
-            y_IVA_exp = y_exp
-            y_IVA_expected = x / x.sum()
-            IVA_err = err
+            x_IAV = x
+            y_IAV = y
+            y_IAV_exp = y_exp
+            y_IAV_expected = x / x.sum()
+            IAV_err = err
         elif k in ["NC", "Perth"]:
-            x_IVA = np.concatenate((x_IVA, x))
-            y_IVA = np.concatenate((y_IVA, y))
-            y_IVA_exp = np.concatenate((y_IVA_exp, y_exp))
-            y_IVA_expected = np.concatenate((y_IVA_expected, x / x.sum()))
-            IVA_err = np.concatenate((IVA_err, err))
+            x_IAV = np.concatenate((x_IAV, x))
+            y_IAV = np.concatenate((y_IAV, y))
+            y_IAV_exp = np.concatenate((y_IAV_exp, y_exp))
+            y_IAV_expected = np.concatenate((y_IAV_expected, x / x.sum()))
+            IAV_err = np.concatenate((IAV_err, err))
 
-    fit_models_and_plot_data(x_IVA, y_IVA, y_IVA_exp, IVA_err, "IVA", segments=segments)
+    fit_models_and_plot_data(x_IAV, y_IAV, y_IAV_exp, IAV_err, "three IAV strains", segments=segments)
 
 
 if __name__ == "__main__":
