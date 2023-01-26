@@ -30,7 +30,7 @@ def generate_fastas(df: pd.DataFrame)-> None:
     for i, r in df.iterrows():
         id = r["Name"]
         seq = Seq(r["DelSequence"])
-        seq = seq.reverse_complement().translate()
+        seq = seq.complement().translate()
         record = SeqRecord(seq, id)
 
         write_sequence(record, id, root_folder)
