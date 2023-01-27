@@ -129,7 +129,7 @@ def nucleotide_occurrence_analysis(seq_dict: dict,
                 axs[idx, i].set_xlim(left=0.5, right=10.5)
                 axs[idx, i].set_ylim(top=0.8, bottom=0.0)
                 axs[idx, i].set_xticks([1,2,3,4,5,6,7,8,9,10])
-                axs[idx, i].set_xlabel("position at junction side")
+                axs[idx, i].set_xlabel("position at deletion side")
                 axs[idx, i].set_ylabel("relative occurrence")
             axs[idx, 0].add_patch(plt.Rectangle((5.5, 0), 5, 1, color="grey", alpha=0.3))
             axs[idx, 1].add_patch(plt.Rectangle((0.5, 0), 5, 1, color="grey", alpha=0.3))
