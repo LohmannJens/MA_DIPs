@@ -401,7 +401,8 @@ def ngs_set_labels(df: pd.DataFrame,
     return y
 
 def select_datasets(df: pd.DataFrame,
-                    dataset_name: str,
+                    t_datasets: list,
+                    v_datasets: list,
                     features: list,
                     n_bins: int,
                     label_style: str,
@@ -410,7 +411,8 @@ def select_datasets(df: pd.DataFrame,
     '''
         Selects training a test data by a given name.
         :param df: pandas data frame including all data sets and features
-        :param dataset_name: string indicating which data sets to include
+        :param t_datasets: list of datasets to use for training
+        :param v_datasets: list of datasets to use for valdation
         :param features: list with all features, that should be selected
         :param n_bins: number of classes to create
         :param label_style: declares how to create the labels/classes
@@ -422,43 +424,25 @@ def select_datasets(df: pd.DataFrame,
                     X_val: input data for validation
                     y_val: True labels for validation
     '''
-    if dataset_name == "Alnaji2019":
-        train = ["Alnaji2019_Cal07", "Alnaji2019_NC", "Alnaji2019_Perth"]
-        val = ["Alnaji2019_BLEE"]
-    elif dataset_name == "PR8":
-        train = ["Pelz", "Alnaji2021"]
-        val = ["Kupke"]
-    elif dataset_name == "Alnaji2021":
-        train = ["Alnaji2021"]
-        val = []
-
-    else:
-        train = ["Alnaji2019_Cal07", "Alnaji2019_NC", "Alnaji2019_Perth",
-                 "Alnaji2019_BLEE", "Pelz", "Alnaji2021", "Kupke"]
-        val = list()
-
     labels = ["low", "high"]
     if n_bins == 3:
         labels.insert(1, "mid")
 
-    t_df = df.loc[df["dataset_name"].isin(train)].copy().reset_index()
+    t_df = df.loc[df["dataset_name"].isin(t_datasets)].copy().reset_index()
     X = t_df[features]
     if y_column == "NGS_log_norm":
         y = ngs_set_labels(t_df, n_bins, label_style, labels)
     else:
         y = duplicates_set_labels(t_df, y_column)
 
-    if len(val) != 0:
-        v_df = df.loc[df["dataset_name"].isin(val)].copy().reset_index()
+    if len(v_datasets) != 0:
+        v_df = df.loc[df["dataset_name"].isin(v_datasets)].copy().reset_index()
         X_val = v_df[features]
         if y_column == "NGS_log_norm":
             y_val = ngs_set_labels(v_df, n_bins, label_style, labels)
         else:
             y_val = duplicates_set_labels(v_df, y_column)
     else:
-        X_val = pd.DataFrame()
-        y_val = pd.DataFrame()
-    if dataset_name == "Alnaji2021":
         X, X_val, y, y_val = train_test_split(X, y, test_size=0.2, random_state=42)
 
     return X, y, X_val, y_val

@@ -109,7 +109,8 @@ def select_classifier(clf_name: str,
 
 
 def test_classifiers(df: pd.DataFrame,
-                     dataset_name: str,
+                     t_datasets: list,
+                     v_datasets: list,
                      folder: str,
                      n_bins: int,
                      label_style: str,
@@ -119,6 +120,8 @@ def test_classifiers(df: pd.DataFrame,
     '''
         Tests three different classifiers on a given dataset.
         :param df: data frame containing all data sets
+        :param t_datasets: list of datasets to use for training
+        :param v_datasets: list of datasets to use for valdation
         :param dataset_name: string indicating which datasets to use as train/
                              test and validation data set
         :param n_bins: number of classes to create
@@ -137,7 +140,7 @@ def test_classifiers(df: pd.DataFrame,
     logging.info(f"\nUsed features:\n\t{features_out}\n#####\n")
 
     # Selecting train/test and validation data sets
-    X, y, X_val, y_val = select_datasets(df, dataset_name, feature_cols, n_bins, label_style, y_column)
+    X, y, X_val, y_val = select_datasets(df, t_datasets, v_datasets, feature_cols, n_bins, label_style, y_column)
 
     logging.info("Distribution of labels:")
     logging.info(y.value_counts())
@@ -191,19 +194,20 @@ def test_classifiers(df: pd.DataFrame,
             RocCurveDisplay.from_estimator(grid_search, X_val, y_val, name=clf_name, ax=axs)
             RocCurveDisplay.from_estimator(grid_search, X_val, y_shuffled, name="shuffled", ax=axs)
             plt.plot([0,1], [0,1])
-            path = os.path.join(folder, f"{clf_name}_{dataset_name}_roc_curve.png")
+            path = os.path.join(folder, f"{clf_name}_roc_curve.png")
             plt.savefig(path)
             plt.close()
 
     o_df = pd.DataFrame(data_dict)
-    path = os.path.join(folder, f"{dataset_name}_means.tex")
+    path = os.path.join(folder, f"means.tex")
     o_df.to_latex(path, index=False, float_format="%.2f", longtable=True)
 
 
 def test_model(df: pd.DataFrame,
                clf: object,
                f_list: list,
-               d_name: str,
+               t_datasets: list,
+               v_datasets: list,
                n_bins: int,
                label_style: str,
                y_column: str
@@ -214,14 +218,15 @@ def test_model(df: pd.DataFrame,
         :param df: pandas data frame
         :param clf: classifier class (from scikit-learn)
         :param f_list: list of features to use for testing
-        :param d_name: string indicating which data sets to use
+        :param t_datasets: list of datasets to use for training
+        :param v_datasets: list of datasets to use for valdation
         :param n_bins: number of classes to create
         :param label_style: declares how to create the labels/classes
         :param y_column: indicates the columne where to take the y values from
 
         :return: Accuracy of the prediciton
     '''
-    X, y, X_val, y_val, = select_datasets(df, d_name, f_list, n_bins, label_style, y_column)
+    X, y, X_val, y_val, = select_datasets(df, t_datasets, v_datasets, f_list, n_bins, label_style, y_column)
     clf.fit(X, y)
     y_pred = clf.predict(X_val)
     acc = accuracy_score(y_pred, y_val)
@@ -229,7 +234,8 @@ def test_model(df: pd.DataFrame,
 
 
 def feature_comparision(df: pd.DataFrame,
-                        d_name: str,
+                        t_datasets: list,
+                        v_datasets: list,
                         folder: str,
                         n_bins: int,
                         label_style: str,
@@ -238,8 +244,8 @@ def feature_comparision(df: pd.DataFrame,
     '''
         Test different combinations of the given features.
         :param df: data frame containing all data sets
-        :param d_name: string indicating which datasets to use as train/
-                             test and validation data set
+        :param t_datasets: list of datasets to use for training
+        :param v_datasets: list of datasets to use for valdation
         :param n_bins: number of classes to create
         :param label_style: declares how to create the labels/classes
         :param y_column: indicates the columne where to take the y values from
@@ -284,14 +290,14 @@ def feature_comparision(df: pd.DataFrame,
                 features = base_features + sequence_cols
             elif f == "all":
                 features = base_features + single_cols + segment_cols + junction_cols
-            acc = test_model(df, clf, features, d_name, n_bins, label_style, y_column)
+            acc = test_model(df, clf, features, t_datasets, v_datasets, n_bins, label_style, y_column)
             data_dict[clf_name].append(acc)
 
             logging.info(f"\t{f}\t{acc}")
 
     o_df = pd.DataFrame(data_dict)
     print(o_df)
-    path = os.path.join(folder, f"feature_testing_{d_name}_{n_bins}.tex")
+    path = os.path.join(folder, f"feature_testing_{n_bins}.tex")
     o_df.to_latex(path, index=False, float_format="%.2f", longtable=True)
 
 
@@ -306,8 +312,10 @@ if __name__ == "__main__":
                    default="median", help="Define how the labels are assigned")
     p.add_argument("--y_column", "-y", type=str, choices=["comb_dup", "int_dup", "Duplicate", "NGS_log_norm"],
                    default="NGS_log_norm", help="Set y column to make prediction for")
-    p.add_argument("--dataset", "-d", type=str, choices=["Alnaji2019", "PR8", "Alnaji2021"],
-                   help="Write which dataset to use")
+    p.add_argument("--train_dataset", "-d", type=str,
+                   help="Write which dataset(s) to use for training (split by ','")
+    p.add_argument("--validation_dataset", "-v", type=str, default="",
+                   help="Write which dataset(s) to use for validation (split by ','). If left empty train data will be split 80-20.")
     p.add_argument("--grid_search", "-g", action="store_true",
                    help="If set a grid search for best model parameters is performed")
     p.add_argument("--mode", "-m", type=str, default="test_classifier",
@@ -317,7 +325,11 @@ if __name__ == "__main__":
     args = p.parse_args()
 
     n_bins = args.n_bins
-    d = args.dataset
+    d = args.train_dataset.split(",")
+    if (len(args.validation_dataset) != 0):
+        v_d = args.validation_dataset.split(",")
+    else:
+        v_d = list()
     label_style = args.label_style
     y_column = args.y_column
     perform_grid_search = args.grid_search
@@ -342,10 +354,9 @@ if __name__ == "__main__":
         df["DI"] = df["Segment"] + "_" + df["Start"].map(str) + "_" + df["End"].map(str)
         df.drop_duplicates("DI", keep=False, inplace=True, ignore_index=True)
 
-    print(f"#### {d} ####")
     if args.mode == "test_classifier":
-        test_classifiers(df, d, folder, n_bins, label_style, y_column, perform_grid_search)
+        test_classifiers(df, d, v_d, folder, n_bins, label_style, y_column, perform_grid_search)
     elif args.mode == "feature_comparision":
-        feature_comparision(df, d, folder, n_bins, label_style, y_column)
+        feature_comparision(df, d, v_d, folder, n_bins, label_style, y_column)
 
     logging.info(f"Script ended on: {datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
