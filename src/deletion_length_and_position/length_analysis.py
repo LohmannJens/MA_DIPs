@@ -49,7 +49,7 @@ def plot_deletion_lengths(data: dict)-> None:
                 count_dict[r["Segment"]][r["Length"]] = 1
 
         # create a subplot for each key, value pair in count_dict
-        fig, axs = plt.subplots(8, 1, figsize=(10, 20), tight_layout=True)
+        fig, axs = plt.subplots(8, 1, figsize=(10, 15), tight_layout=True)
         for i, s in enumerate(SEGMENTS):
             if len(count_dict[s].keys()) > 1:
                 m = round(np.mean(list(count_dict[s].keys())), 2)
@@ -61,6 +61,7 @@ def plot_deletion_lengths(data: dict)-> None:
 
         axs[0].set_title(f"Deletion length of the eight segments for {key} as histogram")
 
+        plt.rc("font", size=16)
         save_path = os.path.join(RESULTSPATH, "deletion_length_and_position", f"{key}_length_del_hist.png")
         plt.savefig(save_path)
         plt.close()
@@ -92,7 +93,7 @@ def plot_start_and_end_positions(data: dict)-> None:
                 end_dict[r["Segment"]][r["End"]] = 1
         
         # create a subplot for each key, value pair in count_dict
-        fig, axs = plt.subplots(8, 1, figsize=(10, 20), tight_layout=True)
+        fig, axs = plt.subplots(8, 1, figsize=(10, 15), tight_layout=True)
         for i, s in enumerate(SEGMENTS):
             if len(start_dict[s].keys()) > 1:
                 axs[i].bar(start_dict[s].keys(), start_dict[s].values(), label=f"{s} start")
@@ -101,9 +102,9 @@ def plot_start_and_end_positions(data: dict)-> None:
                 axs[i].set_xlim(left=0)
                 axs[i].set_xlabel("sequence position")
                 axs[i].set_ylabel("# occurrences")
-                axs[i].legend()
+                axs[i].legend(bbox_to_anchor=(1.0, 1.0))
 
-        axs[0].set_title(f"Location of start and end of deletion site on full sequences for {k}")
+        axs[0].set_title(f"Position of deletion site on full sequences for {k}")
 
         plt.rc("font", size=16)
         save_path = os.path.join(RESULTSPATH, "deletion_length_and_position", f"{k}_start_and_end_positions.png")
