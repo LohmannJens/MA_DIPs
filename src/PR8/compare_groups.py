@@ -231,7 +231,7 @@ def compare_direct_repeats(df: pd.DataFrame,
         # plot results as barplot
         axs[i, j].bar(x=x, height=gr1_h/gr1_h.sum(), width=-0.4, align="edge", label=f"{gr1} (n={n_gr1})")
         axs[i, j].bar(x=x, height=gr2_h/gr2_h.sum(), width=0.4, align="edge", label=f"{gr2} (n={n_gr2})")
-        axs[i, j].set_xlabel("number of overlapping nucleotides")
+        axs[i, j].set_xlabel("length of direct repeat")
         axs[i, j].set_ylabel("relative occurrence")
         axs[i, j].set_title(f"{s} (n={n}) {symbol}")
         axs[i, j].legend(loc="upper right")
