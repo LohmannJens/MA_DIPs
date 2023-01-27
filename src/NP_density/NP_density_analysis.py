@@ -195,6 +195,7 @@ def compare_position_with_density(data: dict,
                 return y
         return 0
 
+    plt.rc("font", size=18)
     for k, v in data.items():
         fig, ax = plt.subplots(1, 1, figsize=(10, 5), tight_layout=True)
 
@@ -243,14 +244,12 @@ def compare_position_with_density(data: dict,
 
             # plotting of the results
             ax.bar([f"{s} obs", f"{s} exp"], [obs_ratio, exp_ratio])
-            ax.annotate(f"(n={n}) {symbol}", (i*2+0.5,
-                        max(obs_ratio, exp_ratio)),
-                        horizontalalignment="center")
+            ax.annotate(symbol, (i*2+0.5, max(obs_ratio, exp_ratio)), horizontalalignment="center")
             ax.set_xlabel("Segments")
-            ax.set_ylabel("deletions in low area/all positions")
-            ax.set_xticks(ticks=np.arange(0,16), labels=["obs", "exp"]*8)
+            ax.set_ylabel("ratio: low area/all")
+            ax.set_xticks(ticks=np.arange(0,16), labels=["ob.", "ex."]*8)
 
-        plt.legend(SEGMENTS)
+        plt.legend(SEGMENTS, bbox_to_anchor=(1.0, 1.0))
         fig.suptitle(k)
 
         savepath = os.path.join(RESULTSPATH, "NP_density", f"{k}_high_low_NP_areas.png")
