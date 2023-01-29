@@ -64,10 +64,10 @@ def extended_footprint_search(strain: str)-> (float, float, float):
             seq = get_sequence(strain, s)
             f1 = seq[:12]
             if f1 not in footprints:
-                footprints[f1] = "start"
+                footprints[f1] = "start footprint"
             f2 = seq[-12:]
             if f2 not in footprints:
-                footprints[f2] = "end"
+                footprints[f2] = "end footprint"
 
     # generate random footprints by shuffling to have a comparision
     rand_footprints = list()
@@ -128,29 +128,40 @@ def plot_motif_positions_on_sequence(df: pd.DataFrame,
 
         :return None:
     '''
-    f_col = dict({"start": "blue", "end": "red"})
+    f_col = dict({"start footprint": "blue", "end footprint": "red"})
 
-    fig, axs = plt.subplots(8, 1, figsize=(7, 10), tight_layout=True)
+    fig, axs = plt.subplots(8, 1, figsize=(6, 10), tight_layout=True)
     for i, seg in enumerate(SEGMENTS):
         s_df = df[df["Segment"] == seg]
         ngs_s_df = ngs_df[ngs_df["Segment"] == seg]
 
         if not ngs_s_df.empty:
             rect_h = max(ngs_s_df["NGS_read_count"])/10
-            axs[i].bar(ngs_s_df["Start"], ngs_s_df["NGS_read_count"])
-            axs[i].bar(ngs_s_df["End"], ngs_s_df["NGS_read_count"])
-            
+            l1 = axs[i].bar(ngs_s_df["Start"], ngs_s_df["NGS_read_count"], label="start")
+            l2 = axs[i].bar(ngs_s_df["End"], ngs_s_df["NGS_read_count"], label="end")
+
             for r in s_df.iterrows():
                 row = r[1]
                 s = row["Start"]
                 e = row["End"]
                 l = row["Motif_loc"]
-                p = patches.Rectangle((s, 0), e-s, rect_h, label=l, color=f_col[l])
-                axs[i].add_patch(p)
+                if l == "start footprint":
+                    p1 = patches.Rectangle((s, 0), e-s, rect_h, label=l, color=f_col[l])
+                    axs[i].add_patch(p1)
+                elif l == "end footprint":
+                    p2 = patches.Rectangle((s, 0), e-s, rect_h, label=l, color=f_col[l])
+                    axs[i].add_patch(p2)
 
         axs[i].set_title(f"{seg}")
         axs[i].set_xlabel("Sequence position")
         axs[i].set_ylabel("NGS count")
+
+        handles = list([l1, l2])
+        if "p1" in locals():
+            handles.append(p1)
+        if "p2" in locals():
+            handles.append(p2)
+        axs[i].legend(handles=handles, bbox_to_anchor=(1.0, 1.0))
 
     path = os.path.join(RESULTSPATH, "motif_discovery", f"footprints_on_sequence_{strain}.pdf")
     plt.savefig(path)
