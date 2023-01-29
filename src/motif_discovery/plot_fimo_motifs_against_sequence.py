@@ -72,6 +72,10 @@ if __name__ == "__main__":
 
     if args.data == "seg1-3":
         SEGMENTS = SEGMENTS[:3]
+        fsize = (10, 7)
+        plt.rc("font", size=14)
+    else:
+        fsize = (10, 10)
 
     cleaned_data_dict = load_alnaji_excel()
     all_reads_dict = join_lineages(cleaned_data_dict)
@@ -87,8 +91,8 @@ if __name__ == "__main__":
         del all_reads_dict["BLEE"]
 
     # have 4 figures (for each strain) including 8 subplots (for each segment)    
-    for k, v in all_reads_dict.items(): 
-        fig, axs = plt.subplots(len(SEGMENTS), 1, figsize=(10,10), tight_layout=True)
+    for k, v in all_reads_dict.items():
+        fig, axs = plt.subplots(len(SEGMENTS), 1, figsize=fsize, tight_layout=True)
 
         # create color labels for motifs
         color_labels = fimo_df["motif_alt_id"].unique()
@@ -130,8 +134,8 @@ if __name__ == "__main__":
             handles, labels = ax.get_legend_handles_labels()
             by_label.update(dict(zip(labels, handles)))
 
-        fig.legend(by_label.values(), by_label.keys(), ncol=8, mode="expand")
-        fig.suptitle(f"\n\n\n\n{k}")
+        fig.legend(by_label.values(), by_label.keys(), ncol=6, mode="expand")
+        fig.suptitle(f"\n\n\n\n\n{k}")
         fig.subplots_adjust(top=0.2)
         if args.weighted:
             filename = f"{k}_{args.data}_weighted_motif_on_sequence.pdf"
