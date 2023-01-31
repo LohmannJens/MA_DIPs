@@ -121,15 +121,16 @@ def plot_deltaG_length(df: pd.DataFrame,
 
         :return: None
     '''
+    plt.rc("font", size=14)
     r, p = stats.pearsonr(df["delta_G"], df["length"])
 
-    fig, ax = plt.subplots(1, 1, figsize=(10,10), tight_layout=True)
+    fig, ax = plt.subplots(1, 1, figsize=(5, 5), tight_layout=True)
     for s in SEGMENTS:
         s_df = df[df["segment"] == s]
         ax.scatter(s_df["delta_G"], s_df["length"], label=s, alpha=0.3)
 
-    ax.set_title(f"correlation of delta G to sequence length for {d_set} data set (r = {r:.2})")
-    ax.set_xlabel("delta G")
+    ax.set_title(f"{d_set} sequences (r = {r:.2})")
+    ax.set_xlabel("\u0394 G")
     ax.set_ylabel("sequence length")
     ax.legend()
 
@@ -151,16 +152,17 @@ def plot_deltaG_NGS(df: pd.DataFrame,
 
         :return: None
     '''
-    fig, ax = plt.subplots(1, 1, figsize=(10,10), tight_layout=True)
+    plt.rc("font", size=14)
+    fig, ax = plt.subplots(1, 1, figsize=(5, 5), tight_layout=True)
     for s in SEGMENTS:
         s_df = df[cropped_df["segment"] == s]
         x = s_df["delta_G"]/s_df["length"] if normalize else s_df["delta_G"]
         ax.scatter(x, s_df["NGS_read_count"], label=s, alpha=0.3)
 
     plt.locator_params(axis="y", nbins=10)
-    n = "(normalized by sequence length)" if normalize else ""
-    ax.set_title(f"correlation of delta G to NGS count {n}")
-    ax.set_xlabel("delta G")
+    n = "normalized" if normalize else ""
+    ax.set_title("correlation of \u0394 G to NGS count")
+    ax.set_xlabel(f"{n} \u0394 G")
     ax.set_ylabel("NGS count")
     ax.legend()
 
@@ -183,7 +185,8 @@ def plot_delta_G_observed_expected(df: pd.DataFrame,
 
         :return: None
     '''
-    fig, axs = plt.subplots(2, 2, figsize=(10,10), tight_layout=True)
+    plt.rc("font", size=14)
+    fig, axs = plt.subplots(2, 2, figsize=(7, 5), tight_layout=True)
     j = 0
     for i, strain in enumerate(["Cal07", "NC", "Perth", "BLEE"]):
         strain_df = df[df["strain"] == strain]
@@ -195,13 +198,16 @@ def plot_delta_G_observed_expected(df: pd.DataFrame,
 
         r, p = stats.pearsonr(strain_df["delta_G"], strain_df[f"delta_G_{mode}"])
         
-        axs[i%2][j].set_title(f"delta G vs delta G {mode} {strain} (r = {r:.2})")
-        axs[i%2][j].set_xlabel("delta G")
-        axs[i%2][j].set_ylabel(f"delta G {mode}")
+        axs[i%2][j].set_title(f"{strain} (r = {r:.2})")
+        axs[i%2][j].set_xlabel("\u0394 G")
+        axs[i%2][j].set_ylabel(f"\u0394 G {mode}")
         axs[i%2][j].set_xlim([-650, 0])
+        axs[i%2][j].set_xticks([-600, -300, 0])
         axs[i%2][j].set_ylim([-650, 0])
+        axs[i%2][j].set_yticks([-600, -300, 0])
         axs[i%2][j].plot([0,1], [0,1], transform=axs[i%2][j].transAxes, c="grey", linestyle="--")
-        axs[i%2][j].legend()
+    
+    axs[0][1].legend(bbox_to_anchor=(1.0,1.0))
 
     plt.locator_params(axis="y", nbins=10)
 
@@ -227,7 +233,8 @@ def create_difference_boxplots(df: pd.DataFrame,
     # calculate differences of delta G to random cropped data
     df["delta_G_diff"] = df["delta_G"] - df[f"delta_G_{mode}"]
 
-    fig, axs = plt.subplots(2, 2, figsize=(10,10), tight_layout=True)
+    plt.rc("font", size=14)
+    fig, axs = plt.subplots(2, 2, figsize=(5, 5), tight_layout=True)
     j = 0
     for i, strain in enumerate(["Cal07", "NC", "Perth", "BLEE"]):
         strain_df = df[df["strain"] == strain]
@@ -367,8 +374,8 @@ if __name__ == "__main__":
     create_difference_boxplots(cropped_df, results_path, "shuffled")
     
     # Check junction sites and secondary structure
-    cleaned_data_dict = load_alnaji_excel()
-    all_reads_dict = load_short_reads(cleaned_data_dict)
+#    cleaned_data_dict = load_alnaji_excel()
+ #   all_reads_dict = load_short_reads(cleaned_data_dict)
     
 #    check_secondary_structures(all_reads_dict, full_df, results_path)
 
