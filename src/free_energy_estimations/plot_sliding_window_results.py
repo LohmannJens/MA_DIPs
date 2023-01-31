@@ -21,7 +21,7 @@ from utils import load_alnaji_excel, load_short_reads, get_stat_symbol
 def slice_dataset(seg_df: pd.DataFrame,
                   energy_df: pd.DataFrame,
                   seg: str
-                  )-> pd.DataFrame, pd.DataFrame:
+                  )-> (pd.DataFrame, pd.DataFrame):
     '''
         Crops the dataset to only include the start sites of the DI candidates
         :param seg_df: data frame including start positions
