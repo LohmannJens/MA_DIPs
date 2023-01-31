@@ -76,6 +76,7 @@ def run_tloop_analysis(rna: str,
         Down = NegRNA[Downstream:i]
         Downinv = Down[::-1]
         Other = Aheadinv + Uloop + Downinv
+        Other = Aheadinv
 
         (ss, mfe_dimer) = RNA.cofold(Other)
 
@@ -88,7 +89,7 @@ def run_tloop_analysis(rna: str,
 
 
 if __name__ == "__main__":
-    strains = ["Cal07", "NC", "Perth", "B_LEE"]
+    strains = ["Cal07", "NC", "Perth", "BLEE"]
     for strain in strains:
         for s in SEGMENTS:
             rna = get_sequence(strain, s)
