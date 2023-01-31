@@ -57,6 +57,7 @@ def plot_deletions_with_delta_G(d: dict,
 
         :return: None
     '''
+    plt.rc("font", size=14)
     energy_path = os.path.join(DATAPATH, "energy_calculation", "sliding_window")
     for k, v in d.items():
         fig, axs = plt.subplots(8, 1, figsize=(10, 15), tight_layout=True)
@@ -89,7 +90,7 @@ def plot_deletions_with_delta_G(d: dict,
             axs[i].set_xlabel("Sequence position")
             axs[i].set_ylabel("\u0394 G")
 
-        fig.legend([l1, l2, l3], ["NGS count", "\u0394 G", "mean of \u0394 G"])
+        fig.legend([l1, l2, l3], ["NGS count", "\u0394 G", "mean of \u0394 G"], ncol=2)
         fig.suptitle(k, ha="left")
 
         fname = f"{k}_sliding_window_{w_s}_{s_s}.png"
@@ -116,8 +117,11 @@ def create_boxplots(d: dict,
         :return: None
     '''
     energy_path = os.path.join(DATAPATH, "energy_calculation", "sliding_window")
-    fig, axs = plt.subplots(4, 1, figsize=(10, 15), tight_layout=True)
+    plt.rc("font", size=14)
+    fig, axs = plt.subplots(2, 2, figsize=(10, 5), tight_layout=True)
+    j = 0
     for i, (k, v) in enumerate(d.items()):
+
         data = list()
         annotations = list()
         y_min = 0.0
@@ -153,17 +157,19 @@ def create_boxplots(d: dict,
                 symbol = ""
                 data.extend([0, 0])
 
-            annotations.append(axs[i].annotate(f"{s} {symbol}", (idx*2 +1.5, 0.0), ha="center", size="small"))
+            annotations.append(axs[i%2,j].annotate(f"{symbol}\n{s}", (idx*2 +1.5, 0.0), ha="center", size="small"))
 
         for idx, text in enumerate(annotations):
-            text.set_position((idx*2+1.5, y_min))
+            text.set_position((idx*2+1.5, 4.0))
 
-        box = axs[i].boxplot(data, labels=["has del.", "no del."]*8)
-        axs[i].set_title(k)
-        axs[i].set_xlabel("Segments")
-        axs[i].set_ylabel("\u0394 G")
-        axs[i].set_ylim(bottom=y_min)
-        axs[i].set_ylim(top=20.0)
+        box = axs[i%2,j].boxplot(data, labels=["+", "-"]*8)
+        axs[i%2,j].set_title(k)
+        axs[i%2,j].set_xlabel("Segments")
+        axs[i%2,j].set_ylabel("\u0394 G")
+        axs[i%2,j].set_ylim(top=y_min-4, bottom=4.0)
+
+        if i == 1:
+            j = 1
 
     fname = f"boxplot_sliding_window_{w_s}_{s_s}.png"
     if sliced:
