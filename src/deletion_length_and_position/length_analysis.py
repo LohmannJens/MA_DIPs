@@ -36,6 +36,7 @@ def plot_deletion_lengths(data: dict)-> None:
 
         :return: None
     '''
+    plt.rc("font", size=16)
     for key, value in data.items():
         # create a dict for each segment including the NGS read count
         count_dict = dict()
@@ -61,7 +62,6 @@ def plot_deletion_lengths(data: dict)-> None:
 
         axs[0].set_title(f"Deletion length of the eight segments for {key} as histogram")
 
-        plt.rc("font", size=16)
         save_path = os.path.join(RESULTSPATH, "deletion_length_and_position", f"{key}_length_del_hist.png")
         plt.savefig(save_path)
         plt.close()
@@ -75,6 +75,7 @@ def plot_start_and_end_positions(data: dict)-> None:
         :param density_data: dict with density data (key is segment name)
         :return: counts positions found in NGS data
     '''
+    plt.rc("font", size=16)
     for k, v in data.items():
         # create a dict for each segment using Start and End
         start_dict = dict()
@@ -106,7 +107,6 @@ def plot_start_and_end_positions(data: dict)-> None:
 
         axs[0].set_title(f"Position of deletion site on full sequences for {k}")
 
-        plt.rc("font", size=16)
         save_path = os.path.join(RESULTSPATH, "deletion_length_and_position", f"{k}_start_and_end_positions.png")
         plt.savefig(save_path)
         plt.close()
