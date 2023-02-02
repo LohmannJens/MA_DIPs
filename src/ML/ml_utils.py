@@ -5,10 +5,12 @@
 import os
 import sys
 import RNA
+import json
 
 import numpy as np
 import pandas as pd
 
+from Bio.Seq import Seq
 from sklearn.preprocessing import OneHotEncoder
 from sklearn.model_selection import train_test_split
 
@@ -67,6 +69,8 @@ def generate_features(df: pd.DataFrame,
             feature_cols = feature_cols + sequence_cols
         if "delta_G" in features:
             feature_cols.append("delta_G")
+        if "Peptide_Length" in features:
+            feature_cols.append("Peptide_Length")
 
     else:
         feature_cols = ["Start", "End"]
@@ -95,6 +99,9 @@ def generate_features(df: pd.DataFrame,
         if "delta_G" in features:
             df["delta_G"] = df.apply(get_delta_G, axis=1)
             feature_cols.append("delta_G")
+        if "Peptide_Length" in features:
+            df["Peptide_Length"] = df.apply(get_peptide_length, axis=1)
+            feature_cols.append("Peptide_Length")
 
     return df, feature_cols
 
@@ -240,6 +247,24 @@ def get_delta_G(row: pd.Series)-> float:
     del_seq = seq[:row["Start"]] + seq[row["End"]-1:]
     mfe = RNA.fold_compound(del_seq).mfe()[1]
     return mfe/len(del_seq)
+
+def get_peptide_length(row: pd.Series)-> float:
+    '''
+        :param row: data frame row including Strain, Segment, Start, and End
+        
+        :return: length of resulting peptid
+    '''
+    strain = row["Strain"]
+    segment = row["Segment"]
+    seq = get_sequence(strain, segment)
+    f = open(os.path.join(DATAPATH, "strain_segment_fastas", "translation_indices.json"))
+    indices = json.load(f)
+    f.close()
+    s = indices[strain][segment]["start"]-1
+    e = indices[strain][segment]["end"]
+    seq_obj = Seq(seq[s:row["Start"]] + seq[row["End"]-1:e])
+    pep_seq = seq_obj.translate(to_stop=True)
+    return len(pep_seq)
 
 ### others ###
 
