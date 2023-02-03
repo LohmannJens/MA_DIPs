@@ -49,7 +49,7 @@ def select_classifier(clf_name: str,
                 "C" : [0.01, 0.1, 1.0],
             }
         else:
-            clf = LogisticRegression(penalty="l1", C=0.1, solver="saga", max_iter=10000)
+            clf = LogisticRegression(penalty="l1", C=1.0, solver="saga", max_iter=10000)
             param_grid = dict()
     elif clf_name == "svc":
         if grid_search:
@@ -60,8 +60,7 @@ def select_classifier(clf_name: str,
                 "gamma" : ["scale", "auto", 2],
             }
         else:
-            clf = SVC(gamma="auto", C=0.01, kernel="rbf") # alnaji, acc=0.36
-            clf = SVC(gamma="scale", C=1.0, kernel="sigmoid") # PR8, acc=0.39
+            clf = SVC(gamma="scale", C=1.0, kernel="rbf")
             param_grid = dict()
     elif clf_name == "random_forest":
         if grid_search:
@@ -73,7 +72,7 @@ def select_classifier(clf_name: str,
                 "max_features": [3, 5, 10, 20]
             }
         else:
-            clf = RandomForestClassifier(n_estimators=300, max_depth=3, min_samples_split=10, max_features=5)
+            clf = RandomForestClassifier(n_estimators=300, max_depth=15, min_samples_split=10, max_features=20)
             param_grid = dict()
     elif clf_name == "mlp":
         if grid_search:
@@ -83,16 +82,17 @@ def select_classifier(clf_name: str,
                 "alpha" : [0.001, 0.0001, 0.00001]
             }
         else:
-            clf = MLPClassifier(alpha=0.001, hidden_layer_sizes=(100,), max_iter=1000)
+            clf = MLPClassifier(alpha=0.0001, hidden_layer_sizes=(100,), max_iter=1000)
             param_grid = dict()
     elif clf_name == "ada_boost":
-        clf = AdaBoostClassifier(n_estimators=25, learning_rate=0.1)
         if grid_search:
+            clf = AdaBoostClassifier(n_estimators=25, learning_rate=0.1)
             param_grid = {
                 "n_estimators": [25, 50, 100,], 
                 "learning_rate" : [0.1, 0.5, 1.0],
             }
         else:
+            clf = AdaBoostClassifier(n_estimators=100, learning_rate=1.0)
             param_grid = dict()
     elif clf_name == "naive_bayes":
         clf = GaussianNB(var_smoothing=0.0000000001)
@@ -132,7 +132,6 @@ def test_classifiers(df: pd.DataFrame,
         :return: None
     '''
     # add features
-    features = ["Segment", "DI_Length", "Direct_repeat","Junction", "3_5_ratio", "length_proportion", "full_sequence", "delta_G", "Peptide_Length"]
     features = ["Segment", "DI_Length", "Direct_repeat","Junction", "3_5_ratio", "length_proportion", "delta_G", "Peptide_Length"]
     df, feature_cols = generate_features(df, features, load_precalc=True)
 
@@ -149,7 +148,6 @@ def test_classifiers(df: pd.DataFrame,
 
     # Testing different classifiers
     clf_names = ["logistic_regression", "svc", "random_forest", "mlp", "ada_boost", "naive_bayes"]
-    clf_names = ["svc", "random_forest", "mlp", "ada_boost", "naive_bayes"]
     data_dict = dict()
     data_dict["param"] = ["accuracy"]
     for clf_name in clf_names:
@@ -187,6 +185,7 @@ def test_classifiers(df: pd.DataFrame,
         # if two classes given create a ROC
         if len(y.unique()) == 2:
             #set up plotting area
+            plt.rc("font", size=14)
             fig, axs = plt.subplots(1, 1, figsize=(5, 5), tight_layout=True)
 
             y_shuffled = y_val.sample(frac=1, random_state=42, ignore_index=True).to_numpy()
@@ -253,7 +252,7 @@ def feature_comparision(df: pd.DataFrame,
         :return: None
     '''  
     data_dict = dict()
-    comb = ["base", "Segment", "DI_Length", "Direct_repeat", "Junction", "3_5_ratio", "length_proportion" ,"all"]
+    comb = ["base", "Segment", "DI_Length", "Direct_repeat", "Junction", "3_5_ratio", "length_proportion" ,"Peptide_Length", "all"]
     data_dict["param"] = comb
     segment_cols = [f"Segment_{s}" for s in SEGMENTS]
     start_cols = [f"Start_{i}_{ch}" for i in range(1, 11) for ch in CHARS]
@@ -271,7 +270,7 @@ def feature_comparision(df: pd.DataFrame,
         data_dict[clf_name] = list()
         clf, _ = select_classifier(clf_name)
         base_features = ["Start", "End"]
-        single_cols = ["DI_Length", "Direct_repeat", "3_5_ratio", "length_proportion"]
+        single_cols = ["DI_Length", "Direct_repeat", "3_5_ratio", "length_proportion", "Peptide_Length"]
 
         for f in comb:
             if f == "base":
