@@ -76,13 +76,13 @@ def select_classifier(clf_name: str,
             param_grid = dict()
     elif clf_name == "mlp":
         if grid_search:
-            clf = MLPClassifier()
+            clf = MLPClassifier(max_iter=10000)
             param_grid = {
                 "hidden_layer_sizes": [(50,), (100,), (250,)], 
                 "alpha" : [0.001, 0.0001, 0.00001]
             }
         else:
-            clf = MLPClassifier(alpha=0.0001, hidden_layer_sizes=(100,), max_iter=1000)
+            clf = MLPClassifier(alpha=0.0001, hidden_layer_sizes=(100,), max_iter=10000)
             param_grid = dict()
     elif clf_name == "ada_boost":
         if grid_search:
