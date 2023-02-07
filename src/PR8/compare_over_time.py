@@ -70,6 +70,7 @@ def analyze_over_timepoints(df: pd.DataFrame)-> None:
 
         :return: None
     '''
+    plt.rc("font", size=14)
     fig, ax = plt.subplots(1, 1, figsize=(5, 5), tight_layout=True)
 
     timepoints = list(df["Timepoint"].unique())
@@ -112,7 +113,7 @@ def analyze_over_timepoints(df: pd.DataFrame)-> None:
         m.append(np.mean(m_temp))
         err.append(np.std(m_temp))
 
-    fig, ax = plt.subplots(1, 1, figsize=(5, 5), tight_layout=True)
+    fig, ax = plt.subplots(1, 1, figsize=(5, 3), tight_layout=True)
     ax.plot(t_x, m)
     ax.errorbar(t_x, m, yerr=err)
 
@@ -152,6 +153,7 @@ def pelz_analyze_over_time()-> None:
         compares the change of the slope over time. Includes only the de novo
         candidates
     '''
+    plt.rc("font", size=14)
     path = os.path.join(DATAPATH, "Pelz2021", "pelz_split_by_timepoints.xlsx")
     df = pd.read_excel(path, na_values="", keep_default_na=False)
     df["class"] = df.apply(assign_label, axis=1)
@@ -167,9 +169,9 @@ def pelz_analyze_over_time()-> None:
         model = LinearRegression().fit(x.reshape((-1, 1)), y)
         m.append(model.coef_[0])
 
-    fig, ax = plt.subplots(1, 1, figsize=(5, 5), tight_layout=True)
+    fig, ax = plt.subplots(1, 1, figsize=(5, 3), tight_layout=True)
     ax.plot(t_x, m)
-    ax.set_xlabel("number of measurement")
+    ax.set_xlabel("time [h]")
     ax.set_ylabel("slope of regression")
 
     save_path = os.path.join(RESULTSPATH, "PR8", "Pelz_slope_over_time.png")
