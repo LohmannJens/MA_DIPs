@@ -198,6 +198,7 @@ def test_classifiers(df: pd.DataFrame,
             plt.close()
 
     o_df = pd.DataFrame(data_dict)
+    o_df["mean"] = o_df.mean(axis=1)
     path = os.path.join(folder, f"means.tex")
     o_df.to_latex(path, index=False, float_format="%.2f", longtable=True)
 
