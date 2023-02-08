@@ -32,3 +32,9 @@ python classifier.py -n 2 -d Alnaji2021 -m "feature_comparision"
 mv ../../results/ML/2023-* ../../results/ML/Alnaji2021_features
 echo `date +"%Y-%m-%d %T"`
 
+echo `date +"%Y-%m-%d %T"`
+echo Alnaji2021 Alnaji2019Pelz
+python classifier.py -n 2 -d Alnaji2021 -v Alnaji2019_NC,Alnaji2019_Perth,Alnaji2019_Cal07 -g -r
+mv ../../results/ML/2023-* ../../results/ML/Alnaji2021_Alnaji2019_IAV
+echo `date +"%Y-%m-%d %T"`
+
