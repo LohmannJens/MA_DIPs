@@ -4,6 +4,7 @@
 '''
 import os
 import sys
+import shap
 import logging
 import argparse
 import datetime
@@ -122,8 +123,7 @@ def test_classifiers(df: pd.DataFrame,
         :param df: data frame containing all data sets
         :param t_datasets: list of datasets to use for training
         :param v_datasets: list of datasets to use for valdation
-        :param dataset_name: string indicating which datasets to use as train/
-                             test and validation data set
+        :param folder: folder where to save the plots
         :param n_bins: number of classes to create
         :param label_style: declares how to create the labels/classes
         :param y_column: indicates the columne where to take the y values from
@@ -251,6 +251,7 @@ def feature_comparision(df: pd.DataFrame,
         :param df: data frame containing all data sets
         :param t_datasets: list of datasets to use for training
         :param v_datasets: list of datasets to use for valdation
+        :param folder: folder where to save the plots
         :param n_bins: number of classes to create
         :param label_style: declares how to create the labels/classes
         :param y_column: indicates the columne where to take the y values from
@@ -306,6 +307,50 @@ def feature_comparision(df: pd.DataFrame,
     o_df.to_latex(path, index=False, float_format="%.2f", longtable=True)
 
 
+def run_shap(df: pd.DataFrame,
+             t_datasets: list,
+             v_datasets: list,
+             folder: str,
+             n_bins: int,
+             label_style: str,
+             y_column: str
+             )-> None:
+    '''
+        Calculates shap values for lin. reg. classifier.
+        :param df: data frame containing all data sets
+        :param t_datasets: list of datasets to use for training
+        :param v_datasets: list of datasets to use for valdation
+        :param folder: folder where to save the plots
+        :param n_bins: number of classes to create
+        :param label_style: declares how to create the labels/classes
+        :param y_column: indicates the columne where to take the y values from
+
+        :return: None
+    '''  
+    # add features
+    features = ["Segment", "DI_Length", "Direct_repeat","Junction", "3_5_ratio", "length_proportion", "delta_G", "Peptide_Length"]
+    df, feature_cols = generate_features(df, features, load_precalc=True)
+
+    clf_name = "logistic_regression"
+    print(clf_name)
+    logging.info(f"\n### {clf_name} ###")
+
+    X, y, X_val, y_val, = select_datasets(df, t_datasets, v_datasets, feature_cols, n_bins, label_style, y_column)
+    clf, param_grid = select_classifier(clf_name, grid_search=perform_grid_search)
+    clf.fit(X, y)
+
+    X100 = shap.utils.sample(X, 100)
+    explainer = shap.Explainer(clf, X100)
+    shap_values = explainer(X)
+
+    fig, axs = plt.subplots(1, 1, figsize=(5, 5), tight_layout=True)
+    fig = shap.plots.beeswarm(shap_values, show=False)
+
+    path = os.path.join(folder, f"{clf_name}_shap_beeswarm.png")
+    plt.savefig(path)
+    plt.close()
+
+
 if __name__ == "__main__":
     warnings.simplefilter(action="ignore", category=FutureWarning)
 
@@ -324,7 +369,7 @@ if __name__ == "__main__":
     p.add_argument("--grid_search", "-g", action="store_true",
                    help="If set a grid search for best model parameters is performed")
     p.add_argument("--mode", "-m", type=str, default="test_classifier",
-                   help="Define what analysis to perform, test the classifiers or analyse the features")
+                   help="Define what analysis to perform: test the classifiers, analyse the features, or shap analysis")
     p.add_argument("--drop_duplicates", "-r", action="store_true",
                    help="If set the duplicates between datasets are removed from the data")
     args = p.parse_args()
@@ -354,7 +399,7 @@ if __name__ == "__main__":
 
     # Loading the dataset
     df = load_all_sets()
-
+    
     if args.drop_duplicates:
         df["DI"] = df["Segment"] + "_" + df["Start"].map(str) + "_" + df["End"].map(str)
         df.drop_duplicates("DI", keep=False, inplace=True, ignore_index=True)
@@ -363,5 +408,7 @@ if __name__ == "__main__":
         test_classifiers(df, d, v_d, folder, n_bins, label_style, y_column, perform_grid_search)
     elif args.mode == "feature_comparision":
         feature_comparision(df, d, v_d, folder, n_bins, label_style, y_column)
-
+    elif args.mode == "shap":
+        run_shap(df, d, v_d, folder, n_bins, label_style, y_column)
+        
     logging.info(f"Script ended on: {datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
