@@ -184,7 +184,6 @@ def test_classifiers(df: pd.DataFrame,
 
         # if two classes given create a ROC
         if len(y.unique()) == 2:
-            #set up plotting area
             plt.rc("font", size=14)
             fig, axs = plt.subplots(1, 1, figsize=(5, 5), tight_layout=True)
 
@@ -196,6 +195,12 @@ def test_classifiers(df: pd.DataFrame,
             path = os.path.join(folder, f"{clf_name}_roc_curve.png")
             plt.savefig(path)
             plt.close()
+        # compare to shuffled labels, when three labels are selected
+        elif len(y.unique()) == 3:
+            y_shuffled = y_val.sample(frac=1, random_state=42, ignore_index=True).to_numpy()
+            shuf_acc_score = accuracy_score(predicted_val, y_shuffled)
+            print(f"validation acc. shuffled:{shuf_acc_score}")
+            logging.info(f"validation acc. shuffled:{shuf_acc_score}")
 
     o_df = pd.DataFrame(data_dict)
     o_df["mean"] = o_df.mean(axis=1)
