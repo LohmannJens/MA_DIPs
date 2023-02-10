@@ -353,6 +353,63 @@ def run_shap(df: pd.DataFrame,
     plt.close()
 
 
+def validate_rule_based(df, d, val_d, n_bins, label_style, y_column):
+    '''
+
+        :param df: data frame containing all data sets
+        :param d: list of datasets to use for training
+        :param val_d: string indicating which validation data to use
+        :param n_bins: number of classes to create
+        :param label_style: declares how to create the labels/classes
+        :param y_column: indicates the columne where to take the y values from
+
+        :return: None
+    '''
+    features = ["Segment", "DI_Length", "Direct_repeat","Junction", "3_5_ratio", "length_proportion", "delta_G", "Peptide_Length"]
+    df, feature_cols = generate_features(df, features, load_precalc=True)
+
+    features_out = "\n\t".join(features)
+    logging.info(f"\nUsed features:\n\t{features_out}\n#####\n")
+
+    # Selecting train/test and validation data sets
+    X, y, _, _ = select_datasets(df, d, list(), feature_cols, n_bins, label_style, y_column)
+    
+    if val_d == "DI244":
+        f_name = "DI244.csv"
+    else:
+        f_name = f"rule_generated_{val_d}.csv"
+    val_df = pd.read_csv(os.path.join(DATAPATH, "ML", f_name))
+
+    # introduce artificial rows for each segment to ensure correct size of resulting df after feature generation
+    new_df = [{"Start": 0, "End": 1, "Segment": s, "Strain": "PR8", "dir_rep": 0} for s in SEGMENTS]
+    val_df = val_df.append(new_df, ignore_index=True)
+    val_df, _ = generate_features(val_df, features, load_precalc=False)
+    val_df = val_df[val_df["Start"] != 0]
+    X_val = val_df[feature_cols]
+
+    # Testing different classifiers
+    clf_names = ["logistic_regression", "svc", "random_forest", "mlp", "ada_boost", "naive_bayes"]
+    for clf_name in clf_names:
+        print(clf_name)
+        logging.info(f"\n### {clf_name} ###")
+
+        # setting up classifier and k-fold validation
+        clf, param_grid = select_classifier(clf_name, grid_search=False)
+        skf = StratifiedKFold(n_splits=5)
+        scorers = {"accuracy_score": make_scorer(accuracy_score)}
+
+        # perform grid search for best parameters
+        grid_search = GridSearchCV(clf, param_grid, scoring=scorers, cv=skf, return_train_score=True, refit="accuracy_score")
+        grid_search.fit(X, y)
+
+        # fit on overall model and create confusion matrix for validation set
+        predicted_val = grid_search.predict(X_val)
+        print(f"# high:\t{np.count_nonzero(predicted_val == 'high')}")
+        print(f"# low:\t{np.count_nonzero(predicted_val == 'low')}")
+        logging.info(f"# high:\t{np.count_nonzero(predicted_val == 'high')}")
+        logging.info(f"# low:\t{np.count_nonzero(predicted_val == 'low')}")
+
+
 if __name__ == "__main__":
     warnings.simplefilter(action="ignore", category=FutureWarning)
 
@@ -412,5 +469,8 @@ if __name__ == "__main__":
         feature_comparision(df, d, v_d, folder, n_bins, label_style, y_column)
     elif args.mode == "shap":
         run_shap(df, d, v_d, folder, n_bins, label_style, y_column)
-        
+    elif args.mode == "rule_based_validation":
+        val_d = "DI244"
+        validate_rule_based(df, d, val_d, n_bins, label_style, y_column)
+
     logging.info(f"Script ended on: {datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
