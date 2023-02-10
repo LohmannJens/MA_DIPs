@@ -339,6 +339,8 @@ def run_shap(df: pd.DataFrame,
     clf, param_grid = select_classifier(clf_name, grid_search=perform_grid_search)
     clf.fit(X, y)
 
+    X = pd.concat([X, X_val])
+
     X100 = shap.utils.sample(X, 100)
     explainer = shap.Explainer(clf, X100)
     shap_values = explainer(X)
