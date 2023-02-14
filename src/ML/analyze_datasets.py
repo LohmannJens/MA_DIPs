@@ -8,9 +8,12 @@ import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
 
+from sklearn.decomposition import PCA
+from sklearn.manifold import TSNE
+
 sys.path.insert(0, "..")
 from utils import DATAPATH, RESULTSPATH
-from ml_utils import load_all_sets, ngs_set_labels
+from ml_utils import load_all_sets, ngs_set_labels, generate_features, select_datasets
 
 
 def check_distributions(df: pd.DataFrame)-> None:
@@ -227,10 +230,94 @@ def check_label_split(df: pd.DataFrame)-> None:
         plt.close()
 
 
+def principal_component_analysis(X: pd.DataFrame,
+                                 y: pd.Series,
+                                 name: str
+                                 )-> None:
+    '''
+        Runs PCA for two dimensions and plots the results
+        :param X: input features as data frame
+        :param y: output vector as series
+        :param name: string of all used datasets
+
+        :return: None
+    '''
+    pca = PCA(n_components=2)
+    principal_components = pca.fit_transform(X)
+    pca_df = pd.DataFrame(data=principal_components, columns=["pc1", "pc2"])
+
+    for l in y.unique():
+        indices = y == l
+        plt.scatter(pca_df.loc[indices, "pc1"], pca_df.loc[indices, "pc2"], alpha=0.2, label=l)
+
+    plt.legend()
+    plt.title("PCA")
+    save_path = os.path.join(RESULTSPATH, "ML", f"pca_{name}.png")
+    plt.savefig(save_path)
+    plt.close()
+
+
+def tsne(X: pd.DataFrame,
+         y: pd.Series,
+         name: str
+         )-> None:
+    '''
+        Runs t-SNE for two dimensions and plots the results
+        :param X: input features as data frame
+        :param y: output vector as series
+        :param name: string of all used datasets
+
+        :return: None
+    '''
+    tsne = TSNE(n_components=2)
+    X_embedded = tsne.fit_transform(X)
+    tsne_df = pd.DataFrame(data=X_embedded, columns=["f1", "f2"])
+
+    for l in y.unique():
+        indices = y == l
+        plt.scatter(tsne_df.loc[indices, "f1"], tsne_df.loc[indices, "f2"], alpha=0.2, label=l)
+
+    plt.legend()
+    plt.title("t-SNE")
+    save_path = os.path.join(RESULTSPATH, "ML", f"tsne_{name}.png")
+    plt.savefig(save_path)
+    plt.close()
+
+
+def run_dim_reduction(df: pd.DataFrame)-> None:
+    '''
+        runs two dimensionality reduction analyses to check resulting grouping
+        induced by the feature values.
+        :param df: data frame including all datasets
+
+        :return: None
+    '''
+    n_bins = 2
+    label_style = "median"
+    y_column = "NGS_log_norm"
+
+    features = ["Segment", "DI_Length", "Direct_repeat", "Junction", "3_5_ratio", "length_proportion", "full_sequence", "delta_G", "Peptide_Length"]
+    features = ["Segment", "DI_Length", "Direct_repeat", "3_5_ratio", "length_proportion", "delta_G", "Peptide_Length"]
+    df, feature_cols = generate_features(df, features, load_precalc=True)
+
+    t_datasets = ["Alnaji2019_Cal07", "Alnaji2019_NC", "Alnaji2019_Perth", "Alnaji2019_BLEE", "Pelz", "Kupke", "Alnaji2021"]
+    t_datasets = ["Alnaji2021"]
+    v_datasets = list()
+
+    X, y, X_val, y_val = select_datasets(df, t_datasets, v_datasets, feature_cols, n_bins, label_style, y_column)
+    X = pd.concat([X, X_val])
+    y = pd.concat([y, y_val])
+
+    plt.rc("font", size=20)
+    name = "_".join(t_datasets)
+    principal_component_analysis(X, y, name)
+    tsne(X, y, name)
+
+
 if __name__ == "__main__":
     all_df = load_all_sets()
     check_distributions(all_df)
     check_stat_parameters(all_df)
     check_duplicates(all_df)
     check_label_split(all_df)
-
+    run_dim_reduction(all_df)
