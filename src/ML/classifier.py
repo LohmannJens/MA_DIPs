@@ -5,6 +5,7 @@
 import os
 import sys
 import shap
+import joblib
 import logging
 import argparse
 import datetime
@@ -170,6 +171,10 @@ def test_classifiers(df: pd.DataFrame,
         if perform_grid_search:
             print(grid_search.best_params_)
             logging.info(grid_search.best_params_)
+
+        # save model as pickle file (for R shiny application)
+        path = os.path.join(folder, f"{clf_name}.pkl")
+        joblib.dump(grid_search, path, compress=3)
 
         # fit on overall model and create confusion matrix for validation set
         predicted_val = grid_search.predict(X_val)
