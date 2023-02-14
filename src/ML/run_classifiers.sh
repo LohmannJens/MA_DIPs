@@ -38,3 +38,9 @@ python classifier.py -n 2 -d Alnaji2021 -v Alnaji2019_NC,Alnaji2019_Perth,Alnaji
 mv ../../results/ML/2023-* ../../results/ML/Alnaji2021_Alnaji2019_IAV
 echo `date +"%Y-%m-%d %T"`
 
+echo `date +"%Y-%m-%d %T"`
+echo Alnaji2021 shap values
+python classifier.py -n 2 -d Alnaji2021 -m shap
+mv ../../results/ML/2023-* ../../results/ML/Alnaji2021_shap
+echo `date +"%Y-%m-%d %T"`
+
