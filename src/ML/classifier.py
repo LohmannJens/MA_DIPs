@@ -378,7 +378,7 @@ def validate_rule_based(df, d, val_d, n_bins, label_style, y_column):
 
     # Selecting train/test and validation data sets
     X, y, _, _ = select_datasets(df, d, list(), feature_cols, n_bins, label_style, y_column)
-    
+    val_d = "PB2_PR8"
     if val_d == "DI244":
         f_name = "DI244.csv"
     else:
