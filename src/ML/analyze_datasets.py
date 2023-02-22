@@ -314,10 +314,54 @@ def run_dim_reduction(df: pd.DataFrame)-> None:
     tsne(X, y, name)
 
 
+def plot_start_vs_end(df: pd.DataFrame)-> None:
+    '''
+        Plots Start vs End.
+        :param df: data frame including all datasets
+
+        :return: None
+    '''
+    n_bins = 2
+    label_style = "median"
+    y_column = "NGS_log_norm"
+
+    features = ["DI_Length"]
+    df, feature_cols = generate_features(df, features, load_precalc=True)
+
+    t_datasets = ["Alnaji2021"]
+    v_datasets = list()
+
+    X, y, X_val, y_val = select_datasets(df, t_datasets, v_datasets, feature_cols, n_bins, label_style, y_column)
+    X = pd.concat([X, X_val])
+    y = pd.concat([y, y_val])
+
+    plt.rc("font", size=20)
+    name = "_".join(t_datasets)
+
+    fig = plt.figure()
+    ax = plt.axes()
+
+    X["y"] = y
+
+    for l in y.unique():
+        X_p = X[X["y"] == l]
+        ax.scatter(X_p["Start"], X_p["End"], s=4, alpha=0.1, label=l)
+
+    ax.set_xlabel("Start")
+    ax.set_ylabel("End")
+    ax.legend()
+
+    plt.show()
+
+
 if __name__ == "__main__":
     all_df = load_all_sets()
+    '''
     check_distributions(all_df)
     check_stat_parameters(all_df)
     check_duplicates(all_df)
     check_label_split(all_df)
     run_dim_reduction(all_df)
+    '''
+    plot_start_vs_end(all_df)
+
