@@ -325,11 +325,12 @@ def plot_start_vs_end(df: pd.DataFrame)-> None:
     label_style = "median"
     y_column = "NGS_log_norm"
 
-    features = ["DI_Length"]
-    df, feature_cols = generate_features(df, features, load_precalc=True)
+ #   df, feature_cols = generate_features(df, features, load_precalc=True)
 
     t_datasets = ["Alnaji2021"]
     v_datasets = list()
+
+    feature_cols = ["Start", "End", "Segment"]
 
     X, y, X_val, y_val = select_datasets(df, t_datasets, v_datasets, feature_cols, n_bins, label_style, y_column)
     X = pd.concat([X, X_val])
@@ -342,10 +343,36 @@ def plot_start_vs_end(df: pd.DataFrame)-> None:
     ax = plt.axes()
 
     X["y"] = y
+    '''
+    X["DI"] = X["Segment"].astype(str) + "_" + X["Start"].astype(str) + "_" + X["End"].astype(str)
 
+    path = os.path.join(DATAPATH, "Alnaji2021", "Early_DIs_mbio.xlsx")
+    df_3_6_24 = pd.read_excel(path)
+    path = os.path.join(DATAPATH, "Alnaji2021", "14hpi_inter_exter.xlsx")
+    df_14 = pd.read_excel(path)
+    class_df = pd.concat([df_3_6_24, df_14])
+    internal = set(class_df[class_df["Class"] == "internal"]["DI"].tolist())
+    external = set(class_df[class_df["Class"] == "external"]["DI"].tolist())
+    both = internal.intersection(external)
+
+    new_list = list()
+    for i, r in X.iterrows():
+        if r["DI"] in both:
+            new_list.append("both")
+        elif r["DI"] in internal:
+            new_list.append("int")
+        elif r["DI"] in external:
+            new_list.append("ext")
+        else:
+            new_list.append("none")
+
+    X["Class"] = new_list
+    '''
     for l in y.unique():
+   # for l in X["Class"].unique():
         X_p = X[X["y"] == l]
-        ax.scatter(X_p["Start"], X_p["End"], s=4, alpha=0.1, label=l)
+   #     X_p = X[X["Class"] == l]
+        ax.scatter(X_p["Start"], X_p["End"], s=7, alpha=0.2, label=l)
 
     ax.set_xlabel("Start")
     ax.set_ylabel("End")
