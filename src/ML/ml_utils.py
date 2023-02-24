@@ -313,6 +313,14 @@ def load_all_sets()-> pd.DataFrame:
     df["dataset_name"] = "Pelz"
     df["Strain"] = "PR8"
     df = log_and_norm(df)
+    
+    '''
+    path = os.path.join(DATAPATH, "Pelz2021", "no_cutoff.xlsx")
+    df = pd.read_excel(io=path, sheet_name=None, header=0, na_values=["", "None"], keep_default_na=False)["PR8"]
+    df["dataset_name"] = "Pelz_cutoff"
+    df["Strain"] = "PR8"
+    df = log_and_norm(df)
+    '''
 
     # load kupke dataset
     kupke = load_kupke(corrected=True)["PR8"]
