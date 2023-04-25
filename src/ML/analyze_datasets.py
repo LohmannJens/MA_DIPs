@@ -314,10 +314,24 @@ def run_dim_reduction(df: pd.DataFrame)-> None:
     tsne(X, y, name)
 
 
-def plot_start_vs_end(df: pd.DataFrame)-> None:
+def compare_start_vs_end(df: pd.DataFrame)-> None:
     '''
-        Plots Start vs End.
+        Runs the plotting rountine for different slices of the dataset.
         :param df: data frame including all datasets
+
+        :return: None
+    '''
+    slices = list(["all", "Alnaji2021", "Alnaji2021_cutoff"])
+    for slc in slices:
+        plot_start_vs_end(df, slc)
+
+
+def plot_start_vs_end(df: pd.DataFrame, slc: str)-> None:
+    '''
+        Filters given dataframe by dataset namse and plots start and end
+        positions in a scatter.
+        :param df: data frame including all datasets
+        :param slc: Name of the datasets indicating how to slice the df
 
         :return: None
     '''
@@ -325,9 +339,14 @@ def plot_start_vs_end(df: pd.DataFrame)-> None:
     label_style = "median"
     y_column = "NGS_log_norm"
 
- #   df, feature_cols = generate_features(df, features, load_precalc=True)
+    if slc == "all":
+        t_datasets = ["Alnaji2019_Cal07", "Alnaji2019_NC", "Alnaji2019_Perth", "Alnaji2019_BLEE", "Pelz", "Kupke"]
+    elif slc == "Alnaji2021":
+        t_datasets = ["Alnaji2021"]
+    elif slc == "Alnaji2021_cutoff":
+        t_datasets = ["Alnaji2021"]
+        df = df[df["NGS_read_count"] > 5]
 
-    t_datasets = ["Alnaji2021"]
     v_datasets = list()
 
     feature_cols = ["Start", "End", "Segment"]
@@ -335,60 +354,31 @@ def plot_start_vs_end(df: pd.DataFrame)-> None:
     X, y, X_val, y_val = select_datasets(df, t_datasets, v_datasets, feature_cols, n_bins, label_style, y_column)
     X = pd.concat([X, X_val])
     y = pd.concat([y, y_val])
+    X["y"] = y
 
     plt.rc("font", size=20)
-    name = "_".join(t_datasets)
+    fig, ax = plt.subplots(1, 1, figsize=(7, 7), tight_layout=True)
 
-    fig = plt.figure()
-    ax = plt.axes()
-
-    X["y"] = y
-    '''
-    X["DI"] = X["Segment"].astype(str) + "_" + X["Start"].astype(str) + "_" + X["End"].astype(str)
-
-    path = os.path.join(DATAPATH, "Alnaji2021", "Early_DIs_mbio.xlsx")
-    df_3_6_24 = pd.read_excel(path)
-    path = os.path.join(DATAPATH, "Alnaji2021", "14hpi_inter_exter.xlsx")
-    df_14 = pd.read_excel(path)
-    class_df = pd.concat([df_3_6_24, df_14])
-    internal = set(class_df[class_df["Class"] == "internal"]["DI"].tolist())
-    external = set(class_df[class_df["Class"] == "external"]["DI"].tolist())
-    both = internal.intersection(external)
-
-    new_list = list()
-    for i, r in X.iterrows():
-        if r["DI"] in both:
-            new_list.append("both")
-        elif r["DI"] in internal:
-            new_list.append("int")
-        elif r["DI"] in external:
-            new_list.append("ext")
-        else:
-            new_list.append("none")
-
-    X["Class"] = new_list
-    '''
     for l in y.unique():
-   # for l in X["Class"].unique():
         X_p = X[X["y"] == l]
-   #     X_p = X[X["Class"] == l]
         ax.scatter(X_p["Start"], X_p["End"], s=7, alpha=0.2, label=l)
 
     ax.set_xlabel("Start")
     ax.set_ylabel("End")
     ax.legend()
+    ax.set_title(slc)
 
-    plt.show()
+    save_path = os.path.join(RESULTSPATH, "ML", f"start_end_{slc}.png")
+    plt.savefig(save_path)
+    plt.close()
 
 
 if __name__ == "__main__":
     all_df = load_all_sets()
-    '''
     check_distributions(all_df)
     check_stat_parameters(all_df)
     check_duplicates(all_df)
     check_label_split(all_df)
     run_dim_reduction(all_df)
-    '''
-    plot_start_vs_end(all_df)
+    compare_start_vs_end(all_df)
 
