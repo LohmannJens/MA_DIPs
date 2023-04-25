@@ -1,6 +1,9 @@
-*.sam.gz
 __pycache__/
-*.pyc
+
 data
 results
+.config.json
+
+*.pyc
 *.fold
+*.sam.gz

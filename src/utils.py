@@ -5,22 +5,24 @@
 '''
 import os
 import random
+import json
 
 import numpy as np
 import pandas as pd
 
 from Bio import SeqIO
 
-# needs to be changed when cloning the repo
-REPOPATH = "/home/jens/Masterarbeit/MA_DIPs"
 
-# paths to the data and results folder
-DATAPATH = os.path.join(REPOPATH, "data")
-RESULTSPATH = os.path.join(REPOPATH, "results")
+# load config and assign values to global variables
+DATAPATH = json.load(open("../../.config.json"))["DATAPATH"]
+RESULTSPATH = json.load(open("../../.config.json"))["RESULTSPATH"]
 
+# segments and nuclotides
 SEGMENTS = list(["PB2", "PB1", "PA", "HA", "NP", "NA", "M", "NS"])
-COLORS = dict({"A": "deepskyblue", "C": "gold", "G": "springgreen", "U": "salmon"})
 NUCLEOTIDES = list(["A", "C", "G", "U"])
+
+# global colors for plotting
+COLORS = dict({"A": "deepskyblue", "C": "gold", "G": "springgreen", "U": "salmon"})
 
 # parameters for the sampling
 QUANT = 0.1
