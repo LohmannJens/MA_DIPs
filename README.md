@@ -61,23 +61,5 @@ In the root of the repository a conda environment called env.yml is given. It in
 conda create -n <new env name> --file env.yml
 ```
 
-
-## Folder overview
-
-All analyses can be found in the ```src``` folder. A short overview about the contents is given in the following:
-
-- **ML**
-- **NP_density**
-- **PR8**
-- **control_analysis**
-- **deletion_length_and_position**
-- **direct_repeats**
-- **free_energy_estimations**
-- **general_validation**
-- **motif_discovery**
-- **regression_length_vs_occurrence**
-- **relative_occurrence_nucleotides**
-
-
 ## Help
 For questions and suggestions open a new ticket in this repository
