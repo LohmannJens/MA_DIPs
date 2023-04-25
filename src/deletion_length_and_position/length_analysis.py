@@ -56,11 +56,11 @@ def plot_deletion_lengths(data: dict)-> None:
                 m = round(np.mean(list(count_dict[s].keys())), 2)
                 axs[i].hist(count_dict[s].keys(), weights=count_dict[s].values(), bins=100, label=f"{s} (mean={m})")
                 axs[i].set_xlim(left=0)
-                axs[i].set_xlabel("deletion length")
+                axs[i].set_xlabel("sequence length")
                 axs[i].set_ylabel("# occurrences")
                 axs[i].legend()
 
-        axs[0].set_title(f"Deletion length of the eight segments for {key} as histogram")
+        axs[0].set_title(f"DI RNA candidate sequence length for {key}")
 
         save_path = os.path.join(RESULTSPATH, "deletion_length_and_position", f"{key}_length_del_hist.png")
         plt.savefig(save_path)
@@ -161,13 +161,13 @@ def start_vs_end_lengths(data: dict,
                 axs[j,i%4].add_patch(plt.Rectangle((0, 0), signals["bundling_end"], max_p, color="lightgrey", alpha = 0.5, ls="None"))
 
             axs[j,i%4].set_title(f"{s} (n={v_s.shape[0]}) r={pearson[0]:.2}")
-            axs[j,i%4].set_xlabel("start")
-            axs[j,i%4].set_ylabel("end")
+            axs[j,i%4].set_xlabel("3' end")
+            axs[j,i%4].set_ylabel("5' end")
 
             if i == 3:
                 j = 1
 
-        fig.suptitle(f"Lengths of start and end site {k}", x=0.5)
+        fig.suptitle(f"Comparision of the 3' and 5' ends for {k}", x=0.5)
         if limit == 0:
             filename = f"{k}_length_start_end.png"
         else:
