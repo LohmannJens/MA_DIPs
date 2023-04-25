@@ -128,7 +128,7 @@ def plot_motif_positions_on_sequence(df: pd.DataFrame,
 
         :return None:
     '''
-    f_col = dict({"start footprint": "blue", "end footprint": "red"})
+    f_col = dict({"start footprint": "green", "end footprint": "red"})
 
     fig, axs = plt.subplots(8, 1, figsize=(6, 10), tight_layout=True)
     for i, seg in enumerate(SEGMENTS):
