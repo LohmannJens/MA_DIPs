@@ -117,7 +117,7 @@ def plot_deltaG_length(df: pd.DataFrame,
         Plots delta G against the sequence length as a scatter plot
         :param df: data frame with the data
         :param path: path to the results folder
-        :param d_set: is "full" or "cropped" depending on which set was used
+        :param d_set: is "full" or "DI RNA" depending on which set was used
 
         :return: None
     '''
@@ -362,7 +362,7 @@ if __name__ == "__main__":
     cropped_df = structure_dataframe(path_cropped)
 
     plot_deltaG_length(full_df, results_path, "full")
-    plot_deltaG_length(cropped_df, results_path, "cropped")
+    plot_deltaG_length(cropped_df, results_path, "DI RNA")
 
     plot_deltaG_NGS(cropped_df, results_path, False)
     plot_deltaG_NGS(cropped_df, results_path, True)
