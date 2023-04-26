@@ -1,6 +1,5 @@
 '''
     Compares the timepoints 3hpi, 6hpi and 24hpi of Alnaji2021.
-
     Also compares de novo and not de novo candidates in Pelz.
 '''
 import os
@@ -68,7 +67,7 @@ def compare_nucleotide_occurrence(df: pd.DataFrame,
                                   author: str=""
                                   )-> None:
     '''
-        gets the sequences dataset and calculates the occurrence of each
+        Gets the sequence dataset and calculates the occurrence of each
         nucleotide at the start and end deletion site.
         Compares two groups with each other:
             - DI candidates that occurred in more than [n] replicates
@@ -145,7 +144,6 @@ def compare_nucleotide_occurrence(df: pd.DataFrame,
                 by_label.update(dict(zip(labels, handles)))
         fig.legend(by_label.values(), by_label.keys(), ncol=4, loc="upper center")
 
-
         plt.suptitle(f"\n\n\nstart (left) and end (right) of {s} of {strain}")
 
         fname = f"{author}_{s}_compare_nucleotide_occurrence.png"
@@ -163,7 +161,7 @@ def compare_direct_repeats(df: pd.DataFrame,
                            author: str=""
                            )-> None:
     '''
-        gets the sequences for all four strains and calculates the overlap of 
+        Gets the sequences for all four strains and calculates the overlap of 
         the nucleotides at the junction site.
         :param df: data frame with the sequences
         :param strain: name of the strain
@@ -256,11 +254,12 @@ def slice_by_occurrence(df: pd.DataFrame,
                         )-> pd.DataFrame:
     '''
         Allows to slice a dataset by the number of occurrences for each DI
-        candidate. Counts the number of occurrences for each DI Name and then
-        prints the candidates out, that are above a given threshhold.
+        candidate.
         :param data: data frame containing the DI candidates
-        :param thresh: occurrences larger or equal to this parameter are
-                       included in the written file
+        :param thresh: indicates the number of occurrences used for dividing 
+                       the dataset
+        :param below: if True only candidates below the given threshold are
+                      included in the returned data frame
 
         :return: data frame
     '''

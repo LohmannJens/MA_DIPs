@@ -1,6 +1,6 @@
 '''
-    Analyzes the datasets of PR8 from Alnaji, Pelz and Kupke. Compares if which
-    DI candidates can be found in every of the datasets.
+    Analyzes the datasets of PR8 from Alnaji, Pelz and Kupke. Compares which DI
+    candidates can be found in every of the datasets.
 '''
 import os
 import sys

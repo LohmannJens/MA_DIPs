@@ -1,6 +1,7 @@
 '''
-    Compares the timepoints 3hpi, 6hpi and 24hpi of Alnaji2021.
-    And does an analysis over time of the Pelz dataset.
+    Compares the timepoints of Alnaji2021 by a venn diagram.
+    Analyzes the change of the slope of linear regression for Alanji2021 and
+    Pelz.
 '''
 import os
 import sys
@@ -180,12 +181,9 @@ def pelz_analyze_over_time()-> None:
 
 
 if __name__ == "__main__":
-    strain = "PR8"
     data_dict = load_alnaji_2021()
-    # check the overlap of the different timepoints
     venn_different_timepoints(data_dict)
-    # analyze alanji dataset over the five timepoints
     analyze_over_timepoints(load_full_alnaji2021())
 
-    # analyze pelz dataset over timepoints
     pelz_analyze_over_time()
+

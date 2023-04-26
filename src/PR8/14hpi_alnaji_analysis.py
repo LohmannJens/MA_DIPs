@@ -1,6 +1,6 @@
 '''
     Analyzes the data set from Alnaji et al. 2021. Main aspect is the
-    difference of the intra and extra group.
+    difference of the intra and extra group at 14 hpi.
 '''
 import os
 import sys
