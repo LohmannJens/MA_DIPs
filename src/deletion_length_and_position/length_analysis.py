@@ -30,7 +30,7 @@ from utils import load_alnaji_excel, load_short_reads
 
 def plot_deletion_lengths(data: dict)-> None:
     '''
-        creates a histogram for each strain, indicating the length of the
+        Creates a histogram for each strain, indicating the length of the
         deletions.
         :param data: dictionary with a data frame for each strain
 
@@ -69,10 +69,10 @@ def plot_deletion_lengths(data: dict)-> None:
 
 def plot_start_and_end_positions(data: dict)-> None:
     '''
-        Maps the NP density to the start and end position of the deletion
-        sites.
+        Plots the start and end position of the deletion sites in reference to
+        the full sequence.
         :param data: dict with information about start and end position
-        :param density_data: dict with density data (key is segment name)
+
         :return: counts positions found in NGS data
     '''
     plt.rc("font", size=16)
@@ -185,3 +185,4 @@ if __name__ == "__main__":
     plot_start_and_end_positions(all_reads_dict)
     start_vs_end_lengths(all_reads_dict)
     start_vs_end_lengths(all_reads_dict, 700)
+
