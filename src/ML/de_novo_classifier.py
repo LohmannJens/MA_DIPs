@@ -11,8 +11,8 @@ import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
 
-from sklearn.model_selection import KFold, GridSearchCV, StratifiedKFold
-from sklearn.metrics import accuracy_score, confusion_matrix, make_scorer, precision_score, recall_score
+from sklearn.model_selection import GridSearchCV, StratifiedKFold
+from sklearn.metrics import accuracy_score, confusion_matrix, make_scorer
 from sklearn.cluster import KMeans
 
 from classifier import select_classifier

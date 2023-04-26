@@ -15,13 +15,13 @@ import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
 
-from sklearn.model_selection import KFold, GridSearchCV, StratifiedKFold
+from sklearn.model_selection import GridSearchCV, StratifiedKFold
 from sklearn.linear_model import LogisticRegression
 from sklearn.svm import SVC
 from sklearn.ensemble import RandomForestClassifier, AdaBoostClassifier
 from sklearn.neural_network import MLPClassifier
 from sklearn.naive_bayes import GaussianNB
-from sklearn.metrics import accuracy_score, RocCurveDisplay, confusion_matrix, make_scorer, precision_score, recall_score, roc_curve, roc_auc_score
+from sklearn.metrics import accuracy_score, RocCurveDisplay, confusion_matrix, make_scorer
 
 from ml_utils import load_all_sets, select_datasets, generate_features
 from ml_utils import CHARS, CHARS_COUNT, MAX_LEN
