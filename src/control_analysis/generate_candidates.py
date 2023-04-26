@@ -62,7 +62,6 @@ def clean_output_files()-> None:
                     newline = newline + l.replace("\n", "")
 
             newline = newline + "\n"
-     #       newline = newline.replace("*", "")
             new_lines.append(newline)
 
         with open(file, "w") as handle:
@@ -113,7 +112,6 @@ if __name__ == "__main__":
     full_df = pd.concat([pelz_top_df, di244_df], ignore_index=True)
     name_col = full_df.pop("Name")
     full_df.insert(0, "Name", name_col)
-#    seq_df = create_sequence_library({"PR8": full_df})["PR8"]
     seq_df = cropped_sequence_library(full_df)
 
     generate_fastas(seq_df)

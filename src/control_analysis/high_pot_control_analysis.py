@@ -17,9 +17,10 @@ from utils import load_alnaji_excel, get_sequence, get_seq_len
 from composition_junction_site import count_nucleotide_occurrence
 from search_direct_repeats import calculate_direct_repeat
 
+
 def load_DI244()-> object:
     '''
-        Loads the data of the DI244 DI RNA
+        Loads the data of the DI244 candidate
 
         :return: pandas data frame
     '''
@@ -51,7 +52,13 @@ def get_sequence_around_site(segments: list,
                              points: list
                              )-> list:
     '''
+        Returns the part of the sequences that are directly around the deletion
+        site.
+        :param segments: list of segments
+        :param points: list of integers indicating the deletion site, is of
+                       equal length than segments
 
+        :return: list of sequences around the deletion site
     '''
     sequences = list()
     for s, p in zip(segments, points):

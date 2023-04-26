@@ -1,5 +1,5 @@
 '''
-    generates a .csv file for potential good PR8 candidates by applying rules.
+    Generates a .csv file for potential good PR8 candidates by applying rules.
 '''
 import os
 import sys
@@ -112,3 +112,4 @@ if __name__ == "__main__":
     a_df = generate_potential_candidates(o_df, args.strain, args.segment)
 
     check_overlap(o_df, a_df, args.strain, args.segment)
+
