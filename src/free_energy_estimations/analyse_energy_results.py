@@ -114,7 +114,7 @@ def plot_deltaG_length(df: pd.DataFrame,
                        d_set: str
                        )-> None:
     '''
-        Plots delta G against the sequence length as a scatter plot
+        Plots delta G against the sequence length as a scatter plot.
         :param df: data frame with the data
         :param path: path to the results folder
         :param d_set: is "full" or "DI RNA" depending on which set was used
@@ -374,8 +374,7 @@ if __name__ == "__main__":
     create_difference_boxplots(cropped_df, results_path, "shuffled")
     
     # Check junction sites and secondary structure
-#    cleaned_data_dict = load_alnaji_excel()
- #   all_reads_dict = load_short_reads(cleaned_data_dict)
-    
-#    check_secondary_structures(all_reads_dict, full_df, results_path)
+    cleaned_data_dict = load_alnaji_excel()
+    all_reads_dict = load_short_reads(cleaned_data_dict)    
+    check_secondary_structures(all_reads_dict, full_df, results_path)
 

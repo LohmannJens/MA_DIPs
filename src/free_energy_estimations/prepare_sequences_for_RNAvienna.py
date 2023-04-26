@@ -24,7 +24,7 @@ def write_sequence(seq: SeqRecord,
                    folder: str
                    )-> None:
     '''
-        gets RNA sequence as Biopython SeqRecord and writes it into three
+        Gets RNA sequence as Biopython SeqRecord and writes it into three
         files. One for all sequences, one for the strains and one for the
         different segments.
         :param seq: RNA sequence as Biopython SeqRecord

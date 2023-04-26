@@ -3,7 +3,8 @@
     and checks up/down stream for intermol bp.
     run_tloop_analysis() inspired by AJ te Velthuis, Sept 2020 from French
     et al. 2021
-    used their main function and adapted it to automize it for alnajis dataset
+
+    Used their main function and adapted it to automize it for other datasets
 '''
 import os
 import sys

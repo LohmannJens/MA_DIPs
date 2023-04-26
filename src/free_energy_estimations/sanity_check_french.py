@@ -24,3 +24,4 @@ if __name__ == "__main__":
 
     plt.plot(energy_df["position"], energy_df["delta_G"])
     plt.show()
+

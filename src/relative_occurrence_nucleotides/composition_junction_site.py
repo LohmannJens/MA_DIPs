@@ -74,12 +74,11 @@ def nucleotide_occurrence_analysis(seq_dict: dict,
                                    author: str=""
                                    )-> None:
     '''
-        gets the sequences for all four strains and calculates the occurrence
+        Gets the sequences for all four strains and calculates the occurrence
         of each nucleotide at the start and end deletion site.
         :param seq_dict: dictionary with the sequences
         :param seg: name of the segment that is analyzed
-        :param author: name of the author where the data was taken from. Is
-                       used to distinguish different PR8 datasets.
+        :param author: authors name, used to distinguish PR8 datasets
 
         :return: None
     '''

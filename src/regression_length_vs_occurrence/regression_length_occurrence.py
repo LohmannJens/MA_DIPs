@@ -25,7 +25,7 @@ def format_dataset_for_plotting(df: pd.DataFrame,
                                 del_indices: list=[]
                                 )-> (list, list, list):
     '''
-        formats the dataset to have it ready for plotting and doing the linear
+        Formats the dataset to have it ready for plotting and doing the linear
         regression.
         :param df: data frame including the data to prepare
         :param dataset_name: indicates which data set is loaded and will be
@@ -81,7 +81,8 @@ def fit_models_and_plot_data(x: list,
         :param y_exp: cleaned y values for the exponential model (no 0 values)
         :param err: data for the error bar (only for schwartz dataset)
         :param k: name of the strain/data set
-        :param author:
+        :param author: authors name, used to distinguish PR8 datasets
+        :param segments: list of the segments to include
 
         :return: None
     '''
@@ -128,7 +129,6 @@ def fit_models_and_plot_data(x: list,
     # plotting the results
     score = model.score(x[:-2].reshape((-1, 1)), y[:-2])
     ax.plot(np.insert(x, 0, inter_p), np.insert(y_pred, 0, 0), label=f"linear model (R²: {score:.2f})", color="green")
-#    ax.plot(x_plot, y_exp_pred, label="exponential model", color="orange")
     ax.plot(np.insert(x, 0, 0), np.insert(y_expected, 0, 0), color="grey")
 
     # mark x axis intersection

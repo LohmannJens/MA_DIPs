@@ -1,7 +1,4 @@
 '''
-    Loads the data for the deletion sides (start/end point) from Alnaji 2019.
-    Does different analysis with the data.
-
     Compares the nucleotides before the junction start with the ones before
     the junction end site. Counts the number of nucleotides, that are the same.
     --> direct repeats
@@ -28,7 +25,7 @@ def calculate_direct_repeat(seq: str,
                             m: int
                             )-> (int, str):
     '''
-        counts the number of overlapping nucleotides directly before start and
+        Counts the number of overlapping nucleotides directly before start and
         end of junction site --> direct repeats
         :param seq: nucleotide sequence
         :param w_len: length of window to be searched
@@ -78,7 +75,7 @@ def count_direct_repeats_overall(df: pd.DataFrame,
                                  mode: int
                                  )-> (dict, dict):
     '''
-        calculates the number of direct repeats for each data point.
+        Calculates the number of direct repeats for each data point.
         :param df: dataframe with sequence and junction site data
         :param seq: RNA sequence of the given segement and strain
         :param mode: states which calculation mode is used in 
@@ -142,7 +139,7 @@ def direct_repeats_analysis(seq_dict: dict,
                      composition_junction_site.py for more info.
         :param top: states if the whole dataset or just the top DI RNA are used
         :param correction: if True a correction calculation is made
-        :param savepath: allows the user to give a path for saving
+        :param author: name of author data published the given data
         :return: None
     '''
     plt.rc("font", size=12)
@@ -181,16 +178,8 @@ def direct_repeats_analysis(seq_dict: dict,
             f_obs = np.array(f_obs)
             f_exp = np.array(f_exp)
 
-            # select statistical test here
-            #stats_test = "mannwhitneyu"
-            stats_test = "ks_2samp"
-
-            if stats_test == "mannwhitneyu":
-               res = stats.mannwhitneyu(f_obs, f_exp)
-               symbol = get_stat_symbol(res.pvalue)
-            elif stats_test == "ks_2samp":
-                stat, pvalue = stats.ks_2samp(f_obs, f_exp)
-                symbol=get_stat_symbol(pvalue)
+            stat, pvalue = stats.ks_2samp(f_obs, f_exp)
+            symbol=get_stat_symbol(pvalue)
 
             axs[i%4, j].bar(x=x, height=h/h.sum(), width=-0.4, align="edge", label="observed")
             axs[i%4, j].bar(x=x, height=h_exp/h_exp.sum(), width=0.4, align="edge", label="expected")

@@ -234,3 +234,4 @@ if __name__ == "__main__":
         grouped = fimo_df.groupby(["motif_alt_id", "strain", "segment", "motif_start", "matched_sequence"])
         grouped_df = grouped.size().reset_index()
         print(grouped_df)
+

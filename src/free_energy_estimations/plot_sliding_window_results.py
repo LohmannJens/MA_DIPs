@@ -23,7 +23,7 @@ def slice_dataset(seg_df: pd.DataFrame,
                   seg: str
                   )-> (pd.DataFrame, pd.DataFrame):
     '''
-        Crops the dataset to only include the start sites of the DI candidates
+        Crops the dataset to only include the start sites of the DI candidates.
         :param seg_df: data frame including start positions
         :param energy_df: data frame including free energy information
         :param seg: segment name
@@ -53,7 +53,7 @@ def plot_deletions_with_delta_G(d: dict,
         :param d: dictionary with the start and end point data split by strains
         :param w_s: size of the window in the sliding window approach
         :param s_s: step size of the sliding window approach
-        :param sliced: states if the full lenght or only the beginning is shown
+        :param sliced: states if the full length or only the beginning is shown
 
         :return: None
     '''
@@ -112,7 +112,7 @@ def create_boxplots(d: dict,
         :param d: dictionary with the start and end point data split by strains
         :param w_s: size of the window in the sliding window approach
         :param s_s: step size of the sliding window approach
-        :param sliced: states if the full lenght or only the beginning is shown
+        :param sliced: states if the full length or only the beginning is shown
 
         :return: None
     '''
