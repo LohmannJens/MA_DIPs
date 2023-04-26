@@ -1,6 +1,7 @@
 '''
-    Tests different classifers on different data sets. Also tests which
-    combination of features is the best.
+    Trains and tests different classifiers using different labels as output.
+    The labels are: gain, loss, de novo gain, and de novo loss. These are
+    taken from Pelz et al. 2021
 '''
 import os
 import sys
@@ -29,8 +30,8 @@ def test_classifiers(df: pd.DataFrame,
                      perform_grid_search: bool
                      )-> None:
     '''
-        Tests three different classifiers on a given dataset.
-        :param df: data frame containing all data sets
+        Tests six different classifiers on a given dataset.
+        :param df: data frame containing pelz dataset
         :param dataset_name: string indicating which datasets to use as train/
                              test and validation data set
         :param n_bins: number of classes to create
@@ -89,7 +90,6 @@ def test_model(df: pd.DataFrame,
                )-> float:
     '''
         Fits given data to a given classifier class and returns the accuracy.
-        Is used to test different feature combinations.
         :param df: pandas data frame
         :param clf: classifier class (from scikit-learn)
         :param f_list: list of features to use for testing
@@ -116,7 +116,7 @@ def feature_comparision(df: pd.DataFrame,
                         )-> None:
     '''
         Test different combinations of the given features.
-        :param df: data frame containing all data sets
+        :param df: data frame containing pelz dataset
         :param d_name: string indicating which datasets to use as train/
                              test and validation data set
         :param n_bins: number of classes to create
@@ -134,7 +134,6 @@ def feature_comparision(df: pd.DataFrame,
     junction_cols = junction_start_cols + junction_end_cols
     df["3_5_ratio"] = df.apply(get_3_to_5_ratio, axis=1)
     df["length_proportion"] = df.apply(get_length_proportion, axis=1)
-#    df, sequence_cols = full_sequence_ohe(df)
 
     clf_names = ["logistic_regression", "svc", "random_forest", "mlp", "ada_boost", "naive_bayes"]
     data_dict = dict()
@@ -175,10 +174,13 @@ def feature_comparision(df: pd.DataFrame,
 
 
 def run_clustering(df: pd.DataFrame,
-                   name: str
                    )-> None:
     '''
+        Clusters the data set and compares the results to the ground truth
+        labels. Generates a confusion matrix as result and prints it.
+        :param df: data frame containing pelz dataset
 
+        :return None:
     '''
     # add features
     feature_cols = ["Start", "End"]
@@ -194,8 +196,6 @@ def run_clustering(df: pd.DataFrame,
     feature_cols.append("3_5_ratio")
     df["length_proportion"] = df.apply(get_length_proportion, axis=1)
     feature_cols.append("length_proportion")
-#    df, sequence_cols = full_sequence_ohe(df)
- #   feature_cols = feature_cols + sequence_cols
 
     # Selecting train/test and validation data sets
     X = df[feature_cols]
@@ -229,14 +229,10 @@ if __name__ == "__main__":
     # Loading the dataset
     df = load_pelz_dataset()["PR8"]
     df["Strain"] = "PR8"
-    drop_duplicates = True
-    drop_duplicates = False
-    label_style = "pd.cut"
     label_style = "median"
     perform_grid_search = False
 
-#    test_classifiers(df, "Pelz", label_style, perform_grid_search)
- #   feature_comparision(df, "Pelz", label_style)
-
+    test_classifiers(df, "Pelz", label_style, perform_grid_search)
+    feature_comparision(df, "Pelz", label_style)
     run_clustering(df, "Pelz")
 

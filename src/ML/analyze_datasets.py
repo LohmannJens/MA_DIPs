@@ -1,5 +1,9 @@
 '''
-    Analyzing the datasets to check their distribution etc
+    Analyzing the datasets that are used in the ML
+    - checking the distribution
+    - check for duplicates
+    - dimensionality reduction
+    - comparing start and end positions
 '''
 import os
 import sys
@@ -170,8 +174,8 @@ def check_duplicates(df: pd.DataFrame)-> None:
 
 def check_label_split(df: pd.DataFrame)-> None:
     '''
-        Checks postion of the splitting lines for the different approaches and 
-        compares them to the NGS counts for all given datasets.
+        Checks postion of the labeling thresholds for the different approaches
+        and compares them to the NGS counts for all given datasets.
         :param df: data frame including all data sets
 
         :return: None
@@ -207,7 +211,11 @@ def check_label_split(df: pd.DataFrame)-> None:
                     if j == 0:
                         m = n_df["NGS_log_norm"].median()
                     elif j == 1:
-                        _, bins = pd.cut(n_df["NGS_log_norm"], bins=n_bins, labels=l, retbins=True, ordered=False)
+                        _, bins = pd.cut(n_df["NGS_log_norm"],
+                                         bins=n_bins,
+                                         labels=l,
+                                         retbins=True,
+                                         ordered=False)
                         m = bins[1]
                     axs[i,j].vlines(m, 0, x_max, color="red")
                 elif n_bins == 3:
@@ -215,7 +223,11 @@ def check_label_split(df: pd.DataFrame)-> None:
                         perc1 = n_df["NGS_log_norm"].quantile(q=0.33)
                         perc2 = n_df["NGS_log_norm"].quantile(q=0.66)
                     elif j == 1:
-                        _, bins = pd.cut(n_df["NGS_log_norm"], bins=n_bins, labels=l, retbins=True, ordered=False)
+                        _, bins = pd.cut(n_df["NGS_log_norm"],
+                                         bins=n_bins,
+                                         labels=l,
+                                         retbins=True,
+                                         ordered=False)
                         perc1 = bins[1]
                         perc2 = bins[2]
 
@@ -235,7 +247,7 @@ def principal_component_analysis(X: pd.DataFrame,
                                  name: str
                                  )-> None:
     '''
-        Runs PCA for two dimensions and plots the results
+        Runs PCA for two dimensions and plots the results.
         :param X: input features as data frame
         :param y: output vector as series
         :param name: string of all used datasets
@@ -248,7 +260,9 @@ def principal_component_analysis(X: pd.DataFrame,
 
     for l in y.unique():
         indices = y == l
-        plt.scatter(pca_df.loc[indices, "pc1"], pca_df.loc[indices, "pc2"], alpha=0.2, label=l)
+        pc1 = pca_df.loc[indices, "pc1"]
+        pc2 = pca_df.loc[indices, "pc2"]
+        plt.scatter(pc1, pc2, alpha=0.2, label=l)
 
     plt.legend()
     plt.title("PCA")
@@ -275,7 +289,9 @@ def tsne(X: pd.DataFrame,
 
     for l in y.unique():
         indices = y == l
-        plt.scatter(tsne_df.loc[indices, "f1"], tsne_df.loc[indices, "f2"], alpha=0.2, label=l)
+        f1 = tsne_df.loc[indices, "f1"]
+        f2 = tsne_df.loc[indices, "f2"]
+        plt.scatter(f1, f2, alpha=0.2, label=l)
 
     plt.legend()
     plt.title("t-SNE")
@@ -296,11 +312,9 @@ def run_dim_reduction(df: pd.DataFrame)-> None:
     label_style = "median"
     y_column = "NGS_log_norm"
 
-    features = ["Segment", "DI_Length", "Direct_repeat", "Junction", "3_5_ratio", "length_proportion", "full_sequence", "delta_G", "Peptide_Length"]
     features = ["Segment", "DI_Length", "Direct_repeat", "3_5_ratio", "length_proportion", "delta_G", "Peptide_Length"]
     df, feature_cols = generate_features(df, features, load_precalc=True)
 
-    t_datasets = ["Alnaji2019_Cal07", "Alnaji2019_NC", "Alnaji2019_Perth", "Alnaji2019_BLEE", "Pelz", "Kupke", "Alnaji2021"]
     t_datasets = ["Alnaji2021"]
     v_datasets = list()
 
@@ -328,7 +342,7 @@ def compare_start_vs_end(df: pd.DataFrame)-> None:
 
 def plot_start_vs_end(df: pd.DataFrame, slc: str)-> None:
     '''
-        Filters given dataframe by dataset namse and plots start and end
+        Filters given dataframe by dataset names and plots start and end
         positions in a scatter.
         :param df: data frame including all datasets
         :param slc: Name of the datasets indicating how to slice the df

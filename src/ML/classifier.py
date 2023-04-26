@@ -35,7 +35,7 @@ def select_classifier(clf_name: str,
                       )-> (object, dict):
     '''
         Selects a scikit-learn classifier by a given name. Is implemented in an
-        extra function to use the same parameters in each usage of one of the
+        extra function to use the same parameters in each usage of the
         classifiers.
         :param clf_name: name of the classifier
         :param grid_search: Bool indicating if a grid search will be performed
@@ -120,7 +120,7 @@ def test_classifiers(df: pd.DataFrame,
                      perform_grid_search: bool
                      )-> None:
     '''
-        Tests three different classifiers on a given dataset.
+        Tests different classifiers on a given dataset.
         :param df: data frame containing all data sets
         :param t_datasets: list of datasets to use for training
         :param v_datasets: list of datasets to use for valdation
@@ -321,7 +321,8 @@ def run_shap(df: pd.DataFrame,
              y_column: str
              )-> None:
     '''
-        Calculates shap values for lin. reg. classifier.
+        Calculates shap values for lin. reg. classifier and generate beeswarm
+        plot.
         :param df: data frame containing all data sets
         :param t_datasets: list of datasets to use for training
         :param v_datasets: list of datasets to use for valdation
@@ -360,7 +361,8 @@ def run_shap(df: pd.DataFrame,
 
 def validate_rule_based(df, d, val_d, n_bins, label_style, y_column):
     '''
-
+        Function to validate the generated models by comparing to artificially
+        generated DI RNA candidates by applying rules.
         :param df: data frame containing all data sets
         :param d: list of datasets to use for training
         :param val_d: string indicating which validation data to use
@@ -479,3 +481,4 @@ if __name__ == "__main__":
         validate_rule_based(df, d, val_d, n_bins, label_style, y_column)
 
     logging.info(f"Script ended on: {datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
+

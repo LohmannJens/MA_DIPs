@@ -18,7 +18,15 @@ def split_data(df: pd.DataFrame,
                col: str=""
                )-> (pd.DataFrame, pd.DataFrame):
     '''
+        Splits a data frame by a given feature and threshold.
+        :param df: pandas data frame
+        :param feature: name of the feature to split by
+        :param thresh: threshold indicating the point where to split the df
+        :param col: name of the column to split by
 
+        return: tuple containing two data frames:
+                    data points above or equal to threshold
+                    data points below threshold
     '''
     if col == "": col = feature
 
@@ -46,7 +54,12 @@ def test_feature(df: pd.DataFrame,
                  col: str=""
                  )-> None:
     '''
-        :param df: data frame including all data sets
+        Test for a given feature how the data is split up applying a given
+        threshold.
+        :param df: pandas data frame
+        :param feature: name of the feature to split by
+        :param thresh: threshold indicating the point where to split the df
+        :param col: name of the column to split by
 
         :return: None
     '''

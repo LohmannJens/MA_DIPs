@@ -150,7 +150,7 @@ def junction_site_ohe(df: pd.DataFrame,
                       position: str
                       )-> (pd.DataFrame, list):
     '''
-        Gets the sequence around the start or end of a given junction site and
+        Gets the sequence around the start or end of a given deletion site and
         converts the sequence into an one hot encoding.
         :param df: data frame including Start, End, Strain, and Segment
         :param position: is either 'Start' or 'End' to indicate which site
@@ -239,6 +239,8 @@ def full_sequence_ohe(df: pd.DataFrame)-> (pd.DataFrame, list):
 
 def get_delta_G(row: pd.Series)-> float:
     '''
+        Calculate Gibbs freee energy for a DI RNA candidate and return it
+        normalized by its length.
         :param row: data frame row including Strain, Segment, Start, and End
         
         :return: ratio of DI RNA lenght to full length sequence
@@ -250,6 +252,8 @@ def get_delta_G(row: pd.Series)-> float:
 
 def get_peptide_length(row: pd.Series)-> float:
     '''
+        Translates a given RNA sequence into amino acids and calculates the
+        length of the resulting peptide.
         :param row: data frame row including Strain, Segment, Start, and End
         
         :return: length of resulting peptid
@@ -267,7 +271,6 @@ def get_peptide_length(row: pd.Series)-> float:
     return len(pep_seq)
 
 ### others ###
-
 def get_duplicate_info(df: pd.DataFrame)-> pd.DataFrame:
     '''
         Adds a new column to a given data frame, that shows if the DI
@@ -314,14 +317,6 @@ def load_all_sets()-> pd.DataFrame:
     df["Strain"] = "PR8"
     df = log_and_norm(df)
     
-    '''
-    path = os.path.join(DATAPATH, "Pelz2021", "no_cutoff.xlsx")
-    df = pd.read_excel(io=path, sheet_name=None, header=0, na_values=["", "None"], keep_default_na=False)["PR8"]
-    df["dataset_name"] = "Pelz_cutoff"
-    df["Strain"] = "PR8"
-    df = log_and_norm(df)
-    '''
-
     # load kupke dataset
     kupke = load_kupke(corrected=True)["PR8"]
     # only load post samples to avoid duplicates
@@ -385,8 +380,8 @@ def duplicates_set_labels(df: pd.DataFrame,
                           col: str
                           )-> pd.Series:
     '''
-        Sets the labels for the classifier if the duplicates should be
-        predicted.
+        Sets the labels for the classifiers to the information if the DI RNA
+        candidate is a duplicate or not.
         :param df: data frame
         :param col: name of the column to use as y value
 
@@ -442,7 +437,7 @@ def select_datasets(df: pd.DataFrame,
                     y_column: str
                     )-> (pd.DataFrame, pd.Series, pd.DataFrame, pd.Series):
     '''
-        Selects training a test data by a given name.
+        Selects data for training and testing by a given name.
         :param df: pandas data frame including all data sets and features
         :param t_datasets: list of datasets to use for training
         :param v_datasets: list of datasets to use for valdation
