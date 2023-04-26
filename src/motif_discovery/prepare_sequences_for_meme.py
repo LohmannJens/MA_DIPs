@@ -104,7 +104,7 @@ def create_cropped_seq_files(d: dict)-> None:
     for k, v in d.items():
         for r in v.iterrows():
             r = r[1]
-            seq = Seq(r["DelSequence"])
+            seq = Seq(r["DIRNASequence"])
             seg = r["Segment"]
             s = r["Start"]
             e = r["End"]

@@ -22,14 +22,14 @@ def generate_fastas(df: pd.DataFrame)-> None:
     '''
         Generates an independent FASTA file for each entry in the given Data
         Frame
-        :param df: data frame including at least a Name and DelSequence
+        :param df: data frame including at least a Name and DIRNASequence
 
         :return: None
     '''
     root_folder = os.path.join(DATAPATH, "FIRM-AVP")
     for i, r in df.iterrows():
         id = r["Name"]
-        seq = Seq(r["DelSequence"])
+        seq = Seq(r["DIRNASequence"])
         seq = seq.translate(to_stop=True)
         if type(r["Class"]) != "str":
             desc = ""
@@ -75,7 +75,7 @@ def cropped_sequence_library(df: pd.DataFrame)-> pd.DataFrame:
         sequences corresponding to that.
         :param df: data frame including the candidates
 
-        :return: data frame with the cropped sequences in column 'DelSequence'
+        :return: data frame with the cropped sequences in column 'DIRNASequence'
     '''
     indices = dict({"PB2": (28, 2307),
                     "PB1": (25, 2298),
@@ -90,7 +90,7 @@ def cropped_sequence_library(df: pd.DataFrame)-> pd.DataFrame:
         del_seq = full_seq[s:row["Start"]] + full_seq[row["End"]-1:e]
         del_seq_list.append(del_seq)
 
-    df["DelSequence"] = del_seq_list
+    df["DIRNASequence"] = del_seq_list
 
     # add full sequences
     for k, v in indices.items():

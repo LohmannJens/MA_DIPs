@@ -96,17 +96,17 @@ def create_cropped_seq_files(d: dict,
             id = f"{k}_{seg}_{s}_{e}_{NGS}"
 
             if shuffle:
-                seq_list = list(r["DelSequence"])
+                seq_list = list(r["DIRNASequence"])
                 np.random.shuffle(seq_list)
                 seq = Seq("".join(seq_list))
                 id = f"{id}_shuffled"
             elif random:
                 full_seq = get_sequence(k, seg)
-                del_len = len(full_seq) - len(r["DelSequence"])
+                del_len = len(full_seq) - len(r["DIRNASequence"])
                 seq = random_crop_sequence(full_seq, del_len)
                 id = f"{id}_randomcrop"
             else:
-                seq = r["DelSequence"]
+                seq = r["DIRNASequence"]
                 
             record = SeqRecord(seq, id=id)
             write_sequence(record, id, root_folder)

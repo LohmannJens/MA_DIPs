@@ -1,7 +1,5 @@
 '''
     General functions and global parameters, that are used in different scripts
-    Functions include: loading of sequences, loading of datasets, ...
-    Parameters include: paths to results and data, Segments names, ...
 '''
 import os
 import random
@@ -30,13 +28,13 @@ N_SAMPLES = 2000
 
 def get_sequence(strain: str, seg: str, full: bool=False)-> object:
     '''
-        loads a DNA sequence by strain and segment.
+        Loads a DNA sequence given the strain and segment.
         :param strain: name of the strain
-        :param seg: name of the segment of the strain
-        :param full: if true the whole Biopython Seq Object is returned
+        :param seg: name of the segment
+        :param full: if True the whole Biopython Seq Object is returned
+                     if False a string object is returned
 
-        :return: Biopython Seq Object including the sequence. To get raw string
-                 use: str(RETURN.seq)
+        :return: Biopython Seq Object or str() of the sequence
     '''
     fasta_file = os.path.join(DATAPATH, "strain_segment_fastas", strain, f"{seg}.fasta")
     seq_obj = SeqIO.read(fasta_file, "fasta")
@@ -49,10 +47,10 @@ def get_sequence(strain: str, seg: str, full: bool=False)-> object:
 
 def get_seq_len(strain: str, seg: str)-> int:
     '''
-        calculates the length of a specific segment.
-        uses a fasta file for that.
+        Calculates the length of a specific sequence given the strain and
+        segment.
         :param strain: name of the strain
-        :param seg: name of the segment of the strain
+        :param seg: name of the segment
 
         :return: length of the sequence as int
     '''
@@ -60,9 +58,9 @@ def get_seq_len(strain: str, seg: str)-> int:
 
 def load_alnaji_excel()-> dict:
     '''
-        loads the excel file containing the start and end positions of 
-        the deletion sides.
-        Cleans up nan data fields and splits up the strains and the lines.
+        Loads the excel file of Alnaji2019 containing the start and end
+        positions of the deletion sites.
+        Cleans up NaN data fields and splits up the strains and the lines.
         Also calculates the length of each deletion and adds it as new column.
 
         :return: dictionary with 8 key, value pairs (4 strains * 2 lines each)
@@ -101,8 +99,8 @@ def load_alnaji_excel()-> dict:
 
 def join_lineages(data: dict)-> dict:
     '''
-        gets the loaded excel file of Alnaji 2019 and joins the lineages by
-        strains. Dict with eight key-value pairs gets reduced to four pairs
+        Gets the loaded excel file of Alnaji 2019 and joins the lineages by
+        strain. Dict with eight key-value pairs gets reduced to four pairs
         :param data: loaded dict with strain as key and data frame as value
 
         :return: dict with dataframes joined by strain name
@@ -117,11 +115,11 @@ def join_lineages(data: dict)-> dict:
 
 def load_short_reads(data_dict: dict)-> dict:
     '''
-        loads the short reads from extra excel file and adds them to an
-        existing dictionary.
+        Loads the short reads of Alnaji 2019 from extra excel file and adds
+        them to an existing dictionary.
         :param data_dict: dictionary with longer deletions
 
-        :return: gives a combined dictionary of both sources
+        :return: combined dictionary of both sources
     '''
     file_path = os.path.join(DATAPATH, "alnaji2019", "Small_deletionSize_FA.xlsx")
     short_data_dict = pd.read_excel(io=file_path,
@@ -150,7 +148,7 @@ def get_stat_symbol(p: float)-> str:
         Indicates the statistical significance by letters. Is used for plots.
         :param p: p-value of the test
 
-        :return: letter indicating the significance
+        :return: letter indicating the significance level
     '''
     if p < 0.0001:
         return "****"
@@ -165,8 +163,8 @@ def get_stat_symbol(p: float)-> str:
 
 def load_pelz_dataset(de_novo: bool=False)-> dict:
     '''
-        Loads the data from Pelz et al 2019 publication.
-        Is structured the same way as data from alnaji 2019.
+        Loads the data from Pelz et al 2021 publication.
+        Is structured the same way as data from Alnaji 2019.
         :param de_novo: if True only de novo candidates are taken
 
         :return: dictionary with one key, value pair
@@ -187,15 +185,16 @@ def load_pelz_dataset(de_novo: bool=False)-> dict:
 
 def generate_sampling_data(seq: str, s: (int, int), e: (int, int),  n: int) -> object:
     '''
-        generates sampling data by creating random start and end points for
-        artificial junction sites. Generated data is used to calculate the
-        expected values. Sample set is 3 times the size of the observation set.
-        :param seq: sequence of the segment
+        Generates sampling data by creating random start and end points for
+        artificial deletion sites. Generated data is used to calculate the
+        expected values.
+        :param seq: RNA sequence
         :param s: tuple with start and end point of the range for the artifical
-                  start point of the junction
+                  start point of the deletion site
         :param e: tuple with start and end point of the range for the artifical
-                  end point of the junction
-        :param n: size of the observation data set
+                  end point of the deletion site
+        :param n: number of samples to generate
+
         :return: dataframe with the artifical data set
     '''
     sampling = dict({"Start": [], "End": []})
@@ -206,12 +205,12 @@ def generate_sampling_data(seq: str, s: (int, int), e: (int, int),  n: int) -> o
 
 def create_sequence_library(data_dict: dict)-> dict:
     '''
-        gets the raw loaded sequence data, which is a dict over all strains.
-        In each dict the value is a data frame with the rows and columns from
-        the loaded excel file.
-        Creates the deletion sequence and saves it with other features as 
-        sequence length, ... in a pandas data frame.
-        :param data_dict: dictionary of the loaded excel
+        Gets the raw loaded sequence data, which is a dict over all strains.
+        In each dict the value is a data frame including DI RNA candidates.
+        Creates the DI RNA sequence and adds it to the data frame.
+        :param data_dict: dictionary key is strain names, value is df of DI RNA
+                          candiates
+
         :return: dictionary with key for each strain. Value is a pandas df.
     '''
     for k, v in data_dict.items():
@@ -221,7 +220,7 @@ def create_sequence_library(data_dict: dict)-> dict:
             del_seq = full_seq[:row["Start"]] + full_seq[row["End"]-1:]
             del_seq_list.append(del_seq)
 
-        data_dict[k]["DelSequence"] = del_seq_list
+        data_dict[k]["DIRNASequence"] = del_seq_list
 
     return data_dict
 
