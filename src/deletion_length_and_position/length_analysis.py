@@ -54,7 +54,7 @@ def plot_deletion_lengths(data: dict)-> None:
         for i, s in enumerate(SEGMENTS):
             if len(count_dict[s].keys()) > 1:
                 m = round(np.mean(list(count_dict[s].keys())), 2)
-                axs[i].hist(count_dict[s].keys(), weights=count_dict[s].values(), bins=100, label=f"{s} (mean={m})")
+                axs[i].hist(count_dict[s].keys(), weights=count_dict[s].values(), bins=100, label=f"{s} (µ={m})")
                 axs[i].set_xlim(left=0)
                 axs[i].set_xlabel("sequence length")
                 axs[i].set_ylabel("# occurrences")
