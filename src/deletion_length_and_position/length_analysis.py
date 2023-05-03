@@ -56,6 +56,7 @@ def plot_deletion_lengths(data: dict)-> None:
                 m = round(np.mean(list(count_dict[s].keys())), 2)
                 axs[i].hist(count_dict[s].keys(), weights=count_dict[s].values(), bins=100, label=f"{s} (µ={m})")
                 axs[i].set_xlim(left=0)
+                axs[i].set_yticks([0, 4, 8, 12])
                 axs[i].set_xlabel("sequence length")
                 axs[i].set_ylabel("# occurrences")
                 axs[i].legend()
@@ -103,6 +104,7 @@ def plot_start_and_end_positions(data: dict)-> None:
                 axs[i].bar(end_dict[s].keys(), end_dict[s].values(), label=f"{s} end")
 
                 axs[i].set_xlim(left=0)
+                axs[i].set_yticks([0, 4, 8])
                 axs[i].set_xlabel("sequence position")
                 axs[i].set_ylabel("# occurrences")
                 axs[i].legend(bbox_to_anchor=(1.0, 1.0))
@@ -153,9 +155,8 @@ def start_vs_end_lengths(data: dict,
 
                 pearson = stats.pearsonr(v_s["Start"], v_s["End_L"])
 
-                axs[j,i%4].set_xlim(left=0, right=max_p)
-                axs[j,i%4].set_xticks([0,max_p])
-                axs[j,i%4].set_yticks([0,max_p])
+                axs[j,i%4].set_xticks([0, max_p/2, max_p])
+                axs[j,i%4].set_yticks([0, max_p/2,max_p])
                 axs[j,i%4].set_aspect("equal", "box")
 
                 signals = packaging_signals[s]
@@ -167,7 +168,7 @@ def start_vs_end_lengths(data: dict,
             else:
                 axs[j,i%4].set_visible(False)
 
-            axs[j,i%4].set_title(f"{s} (n={v_s.shape[0]}) r={pearson[0]:.2}")
+            axs[j,i%4].set_title(f"{s} (r={pearson[0]:.2})")
             axs[j,i%4].set_xlabel("3' end")
             axs[j,i%4].set_ylabel("5' end")
 
