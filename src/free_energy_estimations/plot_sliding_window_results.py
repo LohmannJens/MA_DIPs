@@ -65,6 +65,7 @@ def plot_deletions_with_delta_G(d: dict,
         for i, s in enumerate(SEGMENTS):
             seg_df = v.loc[v["Segment"] == s]
             if seg_df.size == 0:
+                axs[i].set_visible(False)
                 continue
 
             start_seg_df = seg_df.loc[:, ["Start", "NGS_read_count"]]

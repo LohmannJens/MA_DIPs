@@ -24,7 +24,7 @@ import matplotlib.pyplot as plt
 from scipy import stats
 
 sys.path.insert(0, "..")
-from utils import DATAPATH, RESULTSPATH, SEGMENTS
+from utils import DATAPATH, RESULTSPATH, SEGMENTS, STRAINS
 from utils import load_alnaji_excel, load_short_reads
 
 
@@ -59,6 +59,8 @@ def plot_deletion_lengths(data: dict)-> None:
                 axs[i].set_xlabel("sequence length")
                 axs[i].set_ylabel("# occurrences")
                 axs[i].legend()
+            else:
+                axs[i].set_visible(False)
 
         axs[0].set_title(f"DI RNA candidate sequence length for {key}")
 
@@ -104,6 +106,8 @@ def plot_start_and_end_positions(data: dict)-> None:
                 axs[i].set_xlabel("sequence position")
                 axs[i].set_ylabel("# occurrences")
                 axs[i].legend(bbox_to_anchor=(1.0, 1.0))
+            else:
+                axs[i].set_visible(False)
 
         axs[0].set_title(f"Position of deletion site on full sequences for {k}")
 
@@ -159,6 +163,9 @@ def start_vs_end_lengths(data: dict,
                 axs[j,i%4].add_patch(plt.Rectangle((0, 0), signals["incorporation_end"], max_p, color="grey", alpha = 0.5, ls="None"))
                 axs[j,i%4].add_patch(plt.Rectangle((0, 0), max_p, signals["bundling_start"], color="lightgrey", alpha = 0.5, ls="None"))
                 axs[j,i%4].add_patch(plt.Rectangle((0, 0), signals["bundling_end"], max_p, color="lightgrey", alpha = 0.5, ls="None"))
+
+            else:
+                axs[j,i%4].set_visible(False)
 
             axs[j,i%4].set_title(f"{s} (n={v_s.shape[0]}) r={pearson[0]:.2}")
             axs[j,i%4].set_xlabel("3' end")
