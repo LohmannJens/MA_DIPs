@@ -15,9 +15,16 @@ from Bio import SeqIO
 DATAPATH = json.load(open("../../.config.json"))["DATAPATH"]
 RESULTSPATH = json.load(open("../../.config.json"))["RESULTSPATH"]
 
-# segments and nuclotides
+# segments, nuclotides, and strains
 SEGMENTS = list(["PB2", "PB1", "PA", "HA", "NP", "NA", "M", "NS"])
 NUCLEOTIDES = list(["A", "C", "G", "U"])
+STRAINS = dict({"Cal07": "A/California/07/2009",
+                "NC": "A/New Caledonia/20-JY2/1999",
+                "Perth": "A/Perth/16/2009",
+                "BLEE": "B/Lee/1940",
+                "PR8": "A/Puerto Rico/8/1934",
+                "WSN": "A/WSN/1933"
+                })
 
 # global colors for plotting
 COLORS = dict({"A": "deepskyblue", "C": "gold", "G": "springgreen", "U": "salmon"})
