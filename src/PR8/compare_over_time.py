@@ -110,16 +110,17 @@ def analyze_over_timepoints(df: pd.DataFrame)-> None:
             tr_df = t_df[t_df["Replicate"] == r]
             x, y, _, _ = format_dataset_for_plotting(tr_df, "PR8")
             model = LinearRegression().fit(x.reshape((-1, 1)), y)
-            m_temp.append(model.coef_)
+            m_temp.append(model.coef_*10000)
         m.append(np.mean(m_temp))
         err.append(np.std(m_temp))
 
     fig, ax = plt.subplots(1, 1, figsize=(5, 3), tight_layout=True)
     ax.plot(t_x, m)
     ax.errorbar(t_x, m, yerr=err)
+    ax.ticklabel_format(useOffset=False, useMathText=True)
 
     ax.set_xlabel("time [h]")
-    ax.set_ylabel("slope of regression")
+    ax.set_ylabel(f"slope (\u00D710\N{SUPERSCRIPT FOUR})")
 
     save_path = os.path.join(RESULTSPATH, "PR8", "Alnaji2021_slope_over_time.png")
     plt.savefig(save_path)
@@ -168,12 +169,12 @@ def pelz_analyze_over_time()-> None:
 
         x, y, _, _ = format_dataset_for_plotting(t_df, "PR8")
         model = LinearRegression().fit(x.reshape((-1, 1)), y)
-        m.append(model.coef_[0])
+        m.append(model.coef_[0]*10000)
 
     fig, ax = plt.subplots(1, 1, figsize=(5, 3), tight_layout=True)
     ax.plot(t_x, m)
     ax.set_xlabel("time [h]")
-    ax.set_ylabel("slope of regression")
+    ax.set_ylabel(f"slope (\u00D710\N{SUPERSCRIPT FOUR})")
 
     save_path = os.path.join(RESULTSPATH, "PR8", "Pelz_slope_over_time.png")
     plt.savefig(save_path)
