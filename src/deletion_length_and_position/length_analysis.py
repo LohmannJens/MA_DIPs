@@ -58,7 +58,7 @@ def plot_deletion_lengths(data: dict)-> None:
                 axs[i].set_xlim(left=0)
                 axs[i].set_yticks([0, 4, 8, 12])
                 axs[i].set_xlabel("sequence length")
-                axs[i].set_ylabel("# occurrences")
+                axs[i].set_ylabel("occurrences")
                 axs[i].legend()
             else:
                 axs[i].set_visible(False)
@@ -104,7 +104,7 @@ def plot_start_and_end_positions(data: dict)-> None:
                 axs[i].set_xlim(left=0)
                 axs[i].set_yticks([0, 4, 8])
                 axs[i].set_xlabel("sequence position")
-                axs[i].set_ylabel("# occurrences")
+                axs[i].set_ylabel("occurrences")
                 axs[i].legend(bbox_to_anchor=(1.0, 1.0))
             else:
                 axs[i].set_visible(False)

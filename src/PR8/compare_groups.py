@@ -144,7 +144,7 @@ def compare_nucleotide_occurrence(df: pd.DataFrame,
                 by_label.update(dict(zip(labels, handles)))
         fig.legend(by_label.values(), by_label.keys(), ncol=4, loc="upper center")
 
-        plt.suptitle(f"\n\n\nstart (left) and end (right) of {s} of {strain}")
+        plt.suptitle(f"\n\n\n{s}")
 
         fname = f"{author}_{s}_compare_nucleotide_occurrence.png"
         savepath = os.path.join(RESULTSPATH, "PR8", fname)

@@ -135,6 +135,7 @@ if __name__ == "__main__":
             handles, labels = ax.get_legend_handles_labels()
             by_label.update(dict(zip(labels, handles)))
 
+        fig.suptitle("\n\n\n\n")
         fig.legend(by_label.values(), by_label.keys(), ncol=6, mode="expand")
         fig.subplots_adjust(top=0.2)
         if args.weighted:
