@@ -202,9 +202,9 @@ def plot_delta_G_observed_expected(df: pd.DataFrame,
         axs[i%2][j].set_xlabel("\u0394 G")
         axs[i%2][j].set_ylabel(f"\u0394 G {mode}")
         axs[i%2][j].set_xlim([-650, 0])
-        axs[i%2][j].set_xticks([-600, -300, 0])
+        axs[i%2][j].set_xticks([-600, -400, -200, 0])
         axs[i%2][j].set_ylim([-650, 0])
-        axs[i%2][j].set_yticks([-600, -300, 0])
+        axs[i%2][j].set_yticks([-600, -400, -200, 0])
         axs[i%2][j].plot([0,1], [0,1], transform=axs[i%2][j].transAxes, c="grey", linestyle="--")
     
     axs[0][1].legend(bbox_to_anchor=(1.0,1.0))

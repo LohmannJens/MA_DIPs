@@ -12,6 +12,7 @@ import pandas as pd
 import matplotlib.pyplot as plt
 
 from scipy import stats
+from matplotlib import ticker
 
 sys.path.insert(0, "..")
 from utils import DATAPATH, RESULTSPATH, SEGMENTS
@@ -88,6 +89,7 @@ def plot_deletions_with_delta_G(d: dict,
             axs[i].set_title(s)
             axs[i].set_xlim(left=0.0, right=max(energy_df["position"]))
             axs[i].set_ylim(bottom=0.0, top=min(energy_df["delta_G"]))
+            axs[i].yaxis.set_major_locator(ticker.MaxNLocator(3))
             axs[i].set_xlabel("Sequence position")
             axs[i].set_ylabel("\u0394 G")
 
@@ -168,6 +170,7 @@ def create_boxplots(d: dict,
         axs[i%2,j].set_xlabel("Segments")
         axs[i%2,j].set_ylabel("\u0394 G")
         axs[i%2,j].set_ylim(top=y_min-4, bottom=4.0)
+        axs[i%2,j].yaxis.set_major_locator(ticker.MaxNLocator(4))
 
         if i == 1:
             j = 1
