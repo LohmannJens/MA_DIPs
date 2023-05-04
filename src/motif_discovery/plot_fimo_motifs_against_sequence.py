@@ -136,7 +136,6 @@ if __name__ == "__main__":
             by_label.update(dict(zip(labels, handles)))
 
         fig.legend(by_label.values(), by_label.keys(), ncol=6, mode="expand")
-        fig.suptitle(f"\n\n\n\n\n{k}")
         fig.subplots_adjust(top=0.2)
         if args.weighted:
             filename = f"{k}_{args.data}_weighted_motif_on_sequence.pdf"

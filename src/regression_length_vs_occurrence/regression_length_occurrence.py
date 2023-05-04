@@ -16,7 +16,7 @@ import matplotlib.pyplot as plt
 from sklearn.linear_model import LinearRegression
 
 sys.path.insert(0, "..")
-from utils import DATAPATH, RESULTSPATH, SEGMENTS
+from utils import DATAPATH, RESULTSPATH, SEGMENTS, STRAINS
 from utils import get_seq_len, load_alnaji_excel, load_short_reads
 
 
@@ -177,7 +177,10 @@ def fit_models_and_plot_data(x: list,
 
     # set labels and title
     ax.legend(loc="upper left")
-    ax.set_title(f"{k}")
+    if k in STRAINS.keys():
+        ax.set_title(f"{STRAINS[k]}")
+    else:
+        ax.set_title(k)
     ax.set_xlim(left=0, right=2600)
     ax.set_ylim(bottom=0, top=0.65)
     ax.set_xlabel("sequence length")

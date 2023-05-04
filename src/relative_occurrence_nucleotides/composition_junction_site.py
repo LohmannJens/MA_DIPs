@@ -139,7 +139,7 @@ def nucleotide_occurrence_analysis(seq_dict: dict,
                 handles, labels = a.get_legend_handles_labels()
                 by_label.update(dict(zip(labels, handles)))
         fig.legend(by_label.values(), by_label.keys(), ncol=4, loc="upper center")
-        fig.suptitle(f"\n\n\nstart (left) and end (right) of {seg} of {k} ({n})")
+        fig.suptitle(f"\n\n\n{seg} ({n})")
 
         fname = f"{k}_{seg}.png"
         if author != "":

@@ -12,7 +12,7 @@ import matplotlib.pyplot as plt
 from scipy import stats
 
 sys.path.insert(0, "..")
-from utils import DATAPATH, RESULTSPATH, SEGMENTS, QUANT, N_SAMPLES
+from utils import DATAPATH, RESULTSPATH, SEGMENTS, STRAINS, QUANT, N_SAMPLES
 from utils import get_seq_len, load_alnaji_excel, load_short_reads, get_stat_symbol, generate_sampling_data
 
 
@@ -197,8 +197,10 @@ def plot_delta_G_observed_expected(df: pd.DataFrame,
             axs[i%2][j].scatter(seg_df["delta_G"], seg_df[f"delta_G_{mode}"], label=s, alpha=0.3)
 
         r, p = stats.pearsonr(strain_df["delta_G"], strain_df[f"delta_G_{mode}"])
-        
-        axs[i%2][j].set_title(f"{strain} (r = {r:.2})")
+
+        axs[i%2][j].annotate(f"(r={r:.2})", (-310, -600))
+
+        axs[i%2][j].set_title(f"{STRAINS[strain]}")
         axs[i%2][j].set_xlabel("\u0394 G")
         axs[i%2][j].set_ylabel(f"\u0394 G {mode}")
         axs[i%2][j].set_xlim([-650, 0])
@@ -328,7 +330,7 @@ def check_secondary_structures(all_reads_dict: dict,
 
                 sampling_df = generate_sampling_data(sec_struct, s, e, N_SAMPLES)
                 exp_bound = count_bound_bases(sampling_df, sec_struct)
-                exp_bound_ratio = exp_bound / (n_sampling*2)
+                exp_bound_ratio = exp_bound / (N_SAMPLES*2)
 
                 # n * 2 because Start and End is counted together
                 result = stats.binomtest(obs_bound, n*2, exp_bound_ratio)
@@ -376,5 +378,5 @@ if __name__ == "__main__":
     # Check junction sites and secondary structure
     cleaned_data_dict = load_alnaji_excel()
     all_reads_dict = load_short_reads(cleaned_data_dict)    
-    check_secondary_structures(all_reads_dict, full_df, results_path)
+ #   check_secondary_structures(all_reads_dict, full_df, results_path)
 

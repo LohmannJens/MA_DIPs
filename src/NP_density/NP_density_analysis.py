@@ -20,7 +20,7 @@ import matplotlib.pyplot as plt
 from scipy import stats
 
 sys.path.insert(0, "..")
-from utils import DATAPATH, RESULTSPATH, SEGMENTS, QUANT, N_SAMPLES
+from utils import DATAPATH, RESULTSPATH, SEGMENTS, STRAINS, QUANT, N_SAMPLES
 from utils import load_alnaji_excel, load_short_reads, get_sequence, get_seq_len, get_stat_symbol, generate_sampling_data
 
 
@@ -130,7 +130,6 @@ def map_positions_to_density(data: dict,
             axs[i].set_xlabel("sequence position")
             axs[i].set_ylabel("NP density")
 
-        fig.suptitle(f"deletion position against NP areas for {k}")
         fig.legend([l1, l2], ["NGS count", "NP density"])
 
         save_path = os.path.join(RESULTSPATH, "NP_density", f"{k}_del_position_NP_density.pdf") # leave as .pdf, because saving as .png loses some bars
@@ -250,7 +249,7 @@ def compare_position_with_density(data: dict,
             ax.set_xticks(ticks=np.arange(0,16), labels=["ob.", "ex."]*8)
 
         plt.legend(SEGMENTS, bbox_to_anchor=(1.0, 1.0))
-        fig.suptitle(k)
+        fig.suptitle(f"{STRAINS[k]}")
 
         savepath = os.path.join(RESULTSPATH, "NP_density", f"{k}_high_low_NP_areas.png")
         fig.savefig(savepath)

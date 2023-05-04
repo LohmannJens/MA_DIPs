@@ -15,7 +15,7 @@ from scipy import stats
 from matplotlib import ticker
 
 sys.path.insert(0, "..")
-from utils import DATAPATH, RESULTSPATH, SEGMENTS
+from utils import DATAPATH, RESULTSPATH, SEGMENTS, STRAINS
 from utils import load_alnaji_excel, load_short_reads, get_stat_symbol
 
 
@@ -94,7 +94,6 @@ def plot_deletions_with_delta_G(d: dict,
             axs[i].set_ylabel("\u0394 G")
 
         fig.legend([l1, l2, l3], ["NGS count", "\u0394 G", "mean of \u0394 G"], ncol=2)
-        fig.suptitle(k, ha="left")
 
         fname = f"{k}_sliding_window_{w_s}_{s_s}.png"
         if sliced:
@@ -166,7 +165,7 @@ def create_boxplots(d: dict,
             text.set_position((idx*2+1.5, 4.0))
 
         box = axs[i%2,j].boxplot(data, labels=["+", "-"]*8)
-        axs[i%2,j].set_title(k)
+        axs[i%2,j].set_title(f"{STRAINS[k]}")
         axs[i%2,j].set_xlabel("Segments")
         axs[i%2,j].set_ylabel("\u0394 G")
         axs[i%2,j].set_ylim(top=y_min-4, bottom=4.0)

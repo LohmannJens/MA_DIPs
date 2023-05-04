@@ -63,8 +63,6 @@ def plot_deletion_lengths(data: dict)-> None:
             else:
                 axs[i].set_visible(False)
 
-        axs[0].set_title(f"DI RNA candidate sequence length for {key}")
-
         save_path = os.path.join(RESULTSPATH, "deletion_length_and_position", f"{key}_length_del_hist.png")
         plt.savefig(save_path)
         plt.close()
@@ -110,8 +108,6 @@ def plot_start_and_end_positions(data: dict)-> None:
                 axs[i].legend(bbox_to_anchor=(1.0, 1.0))
             else:
                 axs[i].set_visible(False)
-
-        axs[0].set_title(f"Position of deletion site on full sequences for {k}")
 
         save_path = os.path.join(RESULTSPATH, "deletion_length_and_position", f"{k}_start_and_end_positions.png")
         plt.savefig(save_path)
@@ -175,7 +171,6 @@ def start_vs_end_lengths(data: dict,
             if i == 3:
                 j = 1
 
-        fig.suptitle(f"Comparision of the 3' and 5' ends for {k}", x=0.5)
         if limit == 0:
             filename = f"{k}_length_start_end.png"
         else:
