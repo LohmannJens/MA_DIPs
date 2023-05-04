@@ -12,6 +12,7 @@ import matplotlib.patches as patches
 
 from scipy import stats
 from Bio.Seq import Seq
+from matplotlib import ticker
 from Bio.Align import PairwiseAligner
 
 sys.path.insert(0, "..")
@@ -135,10 +136,13 @@ def plot_motif_positions_on_sequence(df: pd.DataFrame,
         s_df = df[df["Segment"] == seg]
         ngs_s_df = ngs_df[ngs_df["Segment"] == seg]
 
-        if not ngs_s_df.empty:
+        if ngs_s_df.empty:
+            axs[i].set_visible(False)
+        else:
             rect_h = max(ngs_s_df["NGS_read_count"])/10
             l1 = axs[i].bar(ngs_s_df["Start"], ngs_s_df["NGS_read_count"], label="start")
             l2 = axs[i].bar(ngs_s_df["End"], ngs_s_df["NGS_read_count"], label="end")
+            axs[i].yaxis.set_major_locator(ticker.MaxNLocator(3))
 
             for r in s_df.iterrows():
                 row = r[1]

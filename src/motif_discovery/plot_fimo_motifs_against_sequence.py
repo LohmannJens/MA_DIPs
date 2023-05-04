@@ -11,7 +11,7 @@ import pandas as pd
 import matplotlib.pyplot as plt
 import matplotlib.patches as patches
 
-from matplotlib import cm
+from matplotlib import cm, ticker
 
 sys.path.insert(0, "..")
 from utils import DATAPATH, RESULTSPATH, SEGMENTS
@@ -110,6 +110,7 @@ if __name__ == "__main__":
                     rect_height = max(df["NGS_read_count"])/10
                     axs[i].bar(df["Start"], df["NGS_read_count"])
                     axs[i].bar(df["End"], df["NGS_read_count"])
+                    axs[i].yaxis.set_major_locator(ticker.MaxNLocator(3))
                 else:    
                     # plot start and end point of junctions as scatter
                     rect_height = 0.5
