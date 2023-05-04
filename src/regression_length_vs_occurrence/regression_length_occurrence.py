@@ -86,23 +86,61 @@ def fit_models_and_plot_data(x: list,
 
         :return: None
     '''
-    def label_scatter(x, y, k, segments):
-        i = 0
-        for s in segments:
-            if k == "exp" and s == "PB1":
-                y[i] = y[i] - 0.007
+    def label_scatter(x, y, k, segments, a=""):
+        if a != "":
+            k = f"{a}_{k}"
+
+        # This is for adjusting the labels by hand
+        if k == "Cal07":
+            y[4] = y[4] + 0.020 # NP
+        elif k == "NC":
+            y[3] = y[3] + 0.020 # HA
+            y[4] = y[4] + 0.020 # NP
+            x[4] = x[4] - 80 # NP
+            x[5] = x[5] - 140 # NA
+        elif k == "Perth":
+            y[4] = y[4] + 0.020 # NP
+        elif k == "BLEE":
+            x[2] = x[2] - 50 # PA
+            y[3] = y[3] + 0.005 # HA
+            x[4] = x[4] - 130 # NP
+        elif k == "three IAV strains":
+            y[8] = y[8] - 0.015 # PB2
+            x[8] = x[8] - 210 # PB2
+            x[2] = x[2] - 130 # PA
+            y[19] = y[19] - 0.015 # HA
+            y[4] = y[4] - 0.015 # NP
+            y[12] = y[12] - 0.015 # NP
+            x[20] = x[20] + 30 # NP
+            y[13] = y[13] - 0.015 # NA
+            y[6] = y[6] - 0.015 # M
+            y[14] = y[14] - 0.015 # M
+            y[7] = y[7] - 0.015 # NS
+            y[15] = y[15] - 0.015 # NS
+            x[23] = x[23] - 70 # NS
+        elif k == "Alnaji_PR8":
+            x[2] = x[2] - 50 # PA
+            y[4] = y[4] - 0.015 # NP
+            y[6] = y[6] + 0.017 # M
+        elif k == "Pelz_PR8":
+            y[4] = y[4] + 0.020 # NP
+            y[5] = y[5] + 0.020 # NA
+        elif k == "Kupke_PR8":
+            y[5] = y[5] + 0.023 # NA
+            x[7] = x[7] - 50 # PA
+
+        for i, s in enumerate(segments):
             ax.annotate(s, (x[i], y[i]))
             if k == "three IAV strains":
                 ax.annotate(s, (x[i+8], y[i+8]))
                 ax.annotate(s, (x[i+16], y[i+16]))
-            i += 1
 
     x_plot = np.linspace(0, 2341, num=100).reshape((-1, 1))
     fig, ax = plt.subplots(1, 1, figsize=(5, 5), tight_layout=True)
     
-    ax.scatter(x, y, label="observation")
-    label_scatter(x, y, k, segments)
-    ax.errorbar(x, y, yerr=err, fmt="o", capsize=5.0)
+    ax.scatter(x, y, label="observed", marker=".")
+    label_scatter(x.copy(), y.copy(), k, segments, author)
+    ax.errorbar(x, y, yerr=err, fmt=".", capsize=5.0)
  
     # include expected values (perfect correlation DI count and length)
     if k == "three IAV strains":
@@ -113,8 +151,7 @@ def fit_models_and_plot_data(x: list,
     else:
         y_expected = x / x.sum()
 
-    ax.scatter(x, y_expected, label="expected", color="grey")
-    label_scatter(x, y_expected, "exp", segments)
+    ax.scatter(x, y_expected, label="expected", color="grey", marker=".")
 
     # fit the models
     model = LinearRegression().fit(x.reshape((-1, 1)), y)
@@ -124,21 +161,24 @@ def fit_models_and_plot_data(x: list,
     y_pred = model.predict(x.reshape((-1, 1)))
     y_exp_pred = np.exp(exp_model[1]) * np.exp(exp_model[0] * x_plot)
 
-    inter_p = -model.intercept_/model.coef_
+    inter = model.intercept_
+    coef = model.coef_[0]
+    inter_p = -inter/coef
 
     # plotting the results
     score = model.score(x[:-2].reshape((-1, 1)), y[:-2])
-    ax.plot(np.insert(x, 0, inter_p), np.insert(y_pred, 0, 0), label=f"linear model (R²: {score:.2f})", color="green")
+    label = f"f(x) = {coef:.6f}*x {inter:.3f} (R²: {score:.2f})"
+    ax.plot(np.insert(x, 0, inter_p), np.insert(y_pred, 0, 0), label=label, color="green")
     ax.plot(np.insert(x, 0, 0), np.insert(y_expected, 0, 0), color="grey")
 
     # mark x axis intersection
     ax.plot(inter_p, 0, 'ro')
-    ax.annotate(f"{inter_p[0]:.2f}", (inter_p, 0))
+    ax.annotate(f"{inter_p:.2f}", (inter_p, 0))
 
     # set labels and title
     ax.legend(loc="upper left")
     ax.set_title(f"{k}")
-    ax.set_xlim(left=0)
+    ax.set_xlim(left=0, right=2600)
     ax.set_ylim(bottom=0, top=0.65)
     ax.set_xlabel("sequence length")
     ax.set_ylabel("relative DI RNA occurrence")
