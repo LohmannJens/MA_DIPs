@@ -152,7 +152,8 @@ def direct_repeats_analysis(seq_dict: dict,
             nuc_overlap_dict, _ = count_direct_repeats_overall(v_s, seq, mode)  
             n = len(v_s.index)
             if n <= 1:
-                axs[i%4, j].set_visible(False)
+                if k != "NC":
+                    axs[i%4, j].set_visible(False)
                 continue
 
             if correction:
