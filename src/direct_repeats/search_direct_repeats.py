@@ -188,6 +188,8 @@ def direct_repeats_analysis(seq_dict: dict,
             axs[i%4, j].set_xlabel("length of direct repeat")
             axs[i%4, j].set_ylabel("relative occurrence")
             axs[i%4, j].set_title(f"{s} (n={n}) {symbol}")
+            axs[i%4, j].set_xticks([0, 5, 10, 15])
+            axs[i%4, j].set_yticks([1.0, 0.8, 0.6, 0.4, 0.2, 0.0])
             axs[i%4, j].legend(loc="upper right")
             axs[i%4, j].set_ylim(bottom=0.0, top=1.0)
 
