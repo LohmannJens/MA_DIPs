@@ -44,3 +44,9 @@ python classifier.py -n 2 -d Alnaji2021 -m shap
 mv ../../results/ML/2023-* ../../results/ML/Alnaji2021_shap
 echo `date +"%Y-%m-%d %T"`
 
+echo `date +"%Y-%m-%d %T"`
+echo Alnaji2021 shap values
+python classifier.py -n 2 -d Alnaji2021 -m rule_based_validation
+mv ../../results/ML/2023-* ../../results/ML/Alnaji2021_rule_based_validation
+echo `date +"%Y-%m-%d %T"`
+
