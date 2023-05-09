@@ -377,8 +377,8 @@ def plot_start_vs_end(df: pd.DataFrame, slc: str)-> None:
         X_p = X[X["y"] == l]
         ax.scatter(X_p["Start"], X_p["End"], s=7, alpha=0.2, label=l)
 
-    ax.set_xlabel("Start")
-    ax.set_ylabel("End")
+    ax.set_xlabel("Start position")
+    ax.set_ylabel("End position")
     ax.legend()
     ax.set_title(slc)
 

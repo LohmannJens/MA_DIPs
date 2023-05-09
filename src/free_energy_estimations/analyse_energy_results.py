@@ -127,11 +127,11 @@ def plot_deltaG_length(df: pd.DataFrame,
     fig, ax = plt.subplots(1, 1, figsize=(5, 5), tight_layout=True)
     for s in SEGMENTS:
         s_df = df[df["segment"] == s]
-        ax.scatter(s_df["delta_G"], s_df["length"], label=s, alpha=0.3)
+        ax.scatter(s_df["length"], s_df["delta_G"], label=s, alpha=0.3)
 
     ax.set_title(f"{d_set} sequences (r = {r:.2})")
-    ax.set_xlabel("\u0394 G")
-    ax.set_ylabel("sequence length")
+    ax.set_xlabel("sequence length [nt]")
+    ax.set_ylabel("\u0394 G [J]")
     ax.legend()
 
     save_path = os.path.join(path, f"deltaG_length_{d_set}.png")
@@ -161,8 +161,7 @@ def plot_deltaG_NGS(df: pd.DataFrame,
 
     plt.locator_params(axis="y", nbins=10)
     n = "normalized" if normalize else ""
-    ax.set_title("correlation of \u0394 G to NGS count")
-    ax.set_xlabel(f"{n} \u0394 G")
+    ax.set_xlabel(f"{n} \u0394 G [J]")
     ax.set_ylabel("NGS count")
     ax.legend()
 
@@ -201,8 +200,8 @@ def plot_delta_G_observed_expected(df: pd.DataFrame,
         axs[i%2][j].annotate(f"(r={r:.2})", (-310, -600))
 
         axs[i%2][j].set_title(f"{STRAINS[strain]}")
-        axs[i%2][j].set_xlabel("\u0394 G")
-        axs[i%2][j].set_ylabel(f"\u0394 G {mode}")
+        axs[i%2][j].set_xlabel("\u0394 G [J]")
+        axs[i%2][j].set_ylabel(f"{mode} \u0394 G [J]")
         axs[i%2][j].set_xlim([-650, 0])
         axs[i%2][j].set_xticks([-600, -400, -200, 0])
         axs[i%2][j].set_ylim([-650, 0])

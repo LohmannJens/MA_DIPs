@@ -245,7 +245,7 @@ def compare_position_with_density(data: dict,
             ax.bar([f"{s} obs", f"{s} exp"], [obs_ratio, exp_ratio])
             ax.annotate(symbol, (i*2+0.5, max(obs_ratio, exp_ratio)), horizontalalignment="center")
             ax.set_xlabel("Segments")
-            ax.set_ylabel("ratio: low area/all")
+            ax.set_ylabel("$r_{NP}$")
             ax.set_xticks(ticks=np.arange(0,16), labels=["ob.", "ex."]*8)
 
         plt.legend(SEGMENTS, bbox_to_anchor=(1.0, 1.0))

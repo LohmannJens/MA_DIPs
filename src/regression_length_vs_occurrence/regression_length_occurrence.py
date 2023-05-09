@@ -183,7 +183,7 @@ def fit_models_and_plot_data(x: list,
         ax.set_title(k)
     ax.set_xlim(left=0, right=2600)
     ax.set_ylim(bottom=0, top=0.65)
-    ax.set_xlabel("sequence length")
+    ax.set_xlabel("sequence length [nt]")
     ax.set_ylabel("relative DI RNA occurrence")
 
     # save final figure

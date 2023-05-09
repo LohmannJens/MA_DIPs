@@ -91,7 +91,7 @@ def plot_deletions_with_delta_G(d: dict,
             axs[i].set_ylim(bottom=0.0, top=min(energy_df["delta_G"]))
             axs[i].yaxis.set_major_locator(ticker.MaxNLocator(3))
             axs[i].set_xlabel("Sequence position")
-            axs[i].set_ylabel("\u0394 G")
+            axs[i].set_ylabel("\u0394 G [J]")
 
         fig.legend([l1, l2, l3], ["NGS count", "\u0394 G", "mean of \u0394 G"], ncol=2)
 
@@ -167,7 +167,7 @@ def create_boxplots(d: dict,
         box = axs[i%2,j].boxplot(data, labels=["+", "-"]*8)
         axs[i%2,j].set_title(f"{STRAINS[k]}")
         axs[i%2,j].set_xlabel("Segments")
-        axs[i%2,j].set_ylabel("\u0394 G")
+        axs[i%2,j].set_ylabel("\u0394 G [J]")
         axs[i%2,j].set_ylim(top=y_min-4, bottom=4.0)
         axs[i%2,j].yaxis.set_major_locator(ticker.MaxNLocator(4))
 
