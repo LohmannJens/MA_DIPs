@@ -58,7 +58,7 @@ To run the scripts python version 3.9.12 including the following packages:
 In the root of the repository a conda environment called env.yml is given. It includes all necessary libraries and python packages. It can be installed by the following typing the following comand:
 
 ```bash
-conda create -n <new env name> --file env.yml
+conda env create -n <new env name> --file env.yml
 ```
 
 ## Help
