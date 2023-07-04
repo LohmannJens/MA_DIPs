@@ -7,7 +7,7 @@ cat << EOF > .config.json
 }
 EOF
 
-mkdir -p data results
+mkdir -p results
 cd results
 mkdir -p control_analysis deletion_length_and_position direct_repeats free_energy_estimations general_validation ML motif_discovery NP_density PR8 regression_length_vs_occurrence relative_occurrence_nucleotides
 

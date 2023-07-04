@@ -21,7 +21,13 @@ cd MA_DIPs
 bash setup.sh
 ```
 
-3. Download datasets [here](https://drive.google.com/drive/folders/1QAxqjZMCb7OJyK3GxBGogCJKs3rX65Ya) and unzip them
+3. Download datasets [here](https://drive.google.com/drive/folders/1QAxqjZMCb7OJyK3GxBGogCJKs3rX65Ya) and unzip them into the root folder by using
+
+```
+tar -xzf PATH/TO/TARFILE/data.tar.gz
+```
+
+
 
 4. Move downloaded datasets into data folder
 
