@@ -168,7 +168,7 @@ def get_stat_symbol(p: float)-> str:
     else:
         return ""
 
-def load_pelz_dataset(de_novo: bool=False)-> dict:
+def load_pelz_dataset(de_novo: bool=False, long_dirna: bool=False)-> dict:
     '''
         Loads the data from Pelz et al 2021 publication.
         Is structured the same way as data from Alnaji 2019.
@@ -176,7 +176,11 @@ def load_pelz_dataset(de_novo: bool=False)-> dict:
 
         :return: dictionary with one key, value pair
     '''
-    file_path = os.path.join(DATAPATH, "Pelz2021", "ShortDeletions_AbsoluteValues.xlsx")
+    if long_dirna:
+        filename = "NGS_SC_3_cutoffMPI_numbers_long_DI_RNAs.xlsx"
+    else:
+        filename = "ShortDeletions_AbsoluteValues.xlsx"
+    file_path = os.path.join(DATAPATH, "Pelz2021", filename)
     data_dict = pd.read_excel(io=file_path,
                               sheet_name=None,
                               header=0,
@@ -189,6 +193,7 @@ def load_pelz_dataset(de_novo: bool=False)-> dict:
         data_dict["PR8"] = d
 
     return data_dict
+
 
 def generate_sampling_data(seq: str, s: (int, int), e: (int, int),  n: int) -> object:
     '''
