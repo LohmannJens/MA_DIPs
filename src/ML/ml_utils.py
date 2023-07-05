@@ -480,4 +480,3 @@ def select_datasets(df: pd.DataFrame,
         X, X_val, y, y_val = train_test_split(X, y, test_size=0.2, random_state=42)
 
     return X, y, X_val, y_val
-

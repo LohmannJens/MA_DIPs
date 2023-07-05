@@ -168,16 +168,23 @@ def get_stat_symbol(p: float)-> str:
     else:
         return ""
 
-def load_pelz_dataset(de_novo: bool=False, long_dirna: bool=False)-> dict:
+def load_pelz_dataset(de_novo: bool=False,
+                      long_dirna: bool=False,
+                      by_time: bool=False)-> dict:
     '''
         Loads the data from Pelz et al 2021 publication.
         Is structured the same way as data from Alnaji 2019.
         :param de_novo: if True only de novo candidates are taken
+        :param long_dirna: if True loads data set that includes long DI RNA
+                           candidates
+        :param by_time: if True loads the dataset split up by timepoints
 
         :return: dictionary with one key, value pair
     '''
     if long_dirna:
         filename = "NGS_SC_3_cutoffMPI_numbers_long_DI_RNAs.xlsx"
+    elif by_time:
+        filename = "ShortDeletions_by_timepoints.xlsx"
     else:
         filename = "ShortDeletions_AbsoluteValues.xlsx"
     file_path = os.path.join(DATAPATH, "Pelz2021", filename)
