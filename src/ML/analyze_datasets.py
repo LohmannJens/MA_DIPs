@@ -12,6 +12,8 @@ import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
 
+from umap import UMAP
+
 from sklearn.decomposition import PCA
 from sklearn.manifold import TSNE
 
@@ -242,67 +244,46 @@ def check_label_split(df: pd.DataFrame)-> None:
         plt.close()
 
 
-def principal_component_analysis(X: pd.DataFrame,
-                                 y: pd.Series,
-                                 name: str
-                                 )-> None:
-    '''
-        Runs PCA for two dimensions and plots the results.
-        :param X: input features as data frame
-        :param y: output vector as series
-        :param name: string of all used datasets
-
-        :return: None
-    '''
-    pca = PCA(n_components=2)
-    principal_components = pca.fit_transform(X)
-    pca_df = pd.DataFrame(data=principal_components, columns=["pc1", "pc2"])
-
-    for l in y.unique():
-        indices = y == l
-        pc1 = pca_df.loc[indices, "pc1"]
-        pc2 = pca_df.loc[indices, "pc2"]
-        plt.scatter(pc1, pc2, alpha=0.2, label=l)
-
-    plt.legend()
-    plt.title("PCA")
-    save_path = os.path.join(RESULTSPATH, "ML", f"pca_{name}.png")
-    plt.savefig(save_path)
-    plt.close()
-
-
-def tsne(X: pd.DataFrame,
+def run_dim_red_method(X: pd.DataFrame,
          y: pd.Series,
-         name: str
+         name: str,
+         method: str
          )-> None:
     '''
-        Runs t-SNE for two dimensions and plots the results
+        Runs a dim. red. method for two dimensions and plots the results
         :param X: input features as data frame
         :param y: output vector as series
         :param name: string of all used datasets
+        :param method: name of the method which should be performed
 
         :return: None
     '''
-    tsne = TSNE(n_components=2)
-    X_embedded = tsne.fit_transform(X)
-    tsne_df = pd.DataFrame(data=X_embedded, columns=["f1", "f2"])
+    if method == "pca":
+        dr_obj = PCA(n_components=2)
+    elif method == "tsne":
+        dr_obj = TSNE(n_components=2)
+    elif method == "umap":
+        dr_obj = UMAP(n_components=2)
+
+    X_embedded = dr_obj.fit_transform(X)
+    plot_df = pd.DataFrame(data=X_embedded, columns=["x", "y"])
 
     for l in y.unique():
         indices = y == l
-        f1 = tsne_df.loc[indices, "f1"]
-        f2 = tsne_df.loc[indices, "f2"]
+        f1 = plot_df.loc[indices, "x"]
+        f2 = plot_df.loc[indices, "y"]
         plt.scatter(f1, f2, alpha=0.2, label=l)
 
     plt.legend()
-    plt.title("t-SNE")
-    save_path = os.path.join(RESULTSPATH, "ML", f"tsne_{name}.png")
+    plt.title(method)
+    save_path = os.path.join(RESULTSPATH, "ML", f"{method}_{name}.png")
     plt.savefig(save_path)
     plt.close()
 
 
 def run_dim_reduction(df: pd.DataFrame)-> None:
     '''
-        runs two dimensionality reduction analyses to check resulting grouping
+        runs three dimensionality reduction analyses to check resulting grouping
         induced by the feature values.
         :param df: data frame including all datasets
 
@@ -324,8 +305,10 @@ def run_dim_reduction(df: pd.DataFrame)-> None:
 
     plt.rc("font", size=20)
     name = "_".join(t_datasets)
-    principal_component_analysis(X, y, name)
-    tsne(X, y, name)
+
+    methods = ["pca", "tsne", "umap"]
+    for method in methods:
+        run_dim_red_method(X, y, name, method)
 
 
 def compare_start_vs_end(df: pd.DataFrame)-> None:
@@ -392,10 +375,12 @@ def plot_start_vs_end(df: pd.DataFrame, slc: str)-> None:
 
 if __name__ == "__main__":
     all_df = load_all_sets()
+    """
     check_distributions(all_df)
     check_stat_parameters(all_df)
     check_duplicates(all_df)
     check_label_split(all_df)
+    """
     run_dim_reduction(all_df)
-    compare_start_vs_end(all_df)
+    #compare_start_vs_end(all_df)
 
