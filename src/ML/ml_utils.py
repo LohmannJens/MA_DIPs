@@ -21,7 +21,7 @@ from utils import load_pelz_dataset, load_kupke, load_full_alnaji2021, load_shor
 sys.path.insert(0, "../direct_repeats")
 from search_direct_repeats import calculate_direct_repeat
 
-### global paramters ###
+### global parameters ###
 CHARS = 'ACGU'
 CHARS_COUNT = len(CHARS)
 MAX_LEN = 2361 # B Lee
@@ -314,6 +314,12 @@ def load_all_sets()-> pd.DataFrame:
     # load pelz dataset
     df = load_pelz_dataset()["PR8"]
     df["dataset_name"] = "Pelz"
+    df["Strain"] = "PR8"
+    df = log_and_norm(df)
+
+    # load pelz dataset long DI RNA set
+    df = load_pelz_dataset(de_novo=False, long_dirna=True)["PR8"]
+    df["dataset_name"] = "Pelz_long"
     df["Strain"] = "PR8"
     df = log_and_norm(df)
     

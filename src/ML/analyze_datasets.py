@@ -335,7 +335,8 @@ def compare_start_vs_end(df: pd.DataFrame)-> None:
 
         :return: None
     '''
-    slices = list(["all", "Alnaji2021", "Alnaji2021_cutoff"])
+    slices = list(["all", "Alnaji2021", "Alnaji2021_cutoff", "Pelz_long"])
+    
     for slc in slices:
         plot_start_vs_end(df, slc)
 
@@ -360,6 +361,8 @@ def plot_start_vs_end(df: pd.DataFrame, slc: str)-> None:
     elif slc == "Alnaji2021_cutoff":
         t_datasets = ["Alnaji2021"]
         df = df[df["NGS_read_count"] > 5]
+    elif slc == "Pelz_long":
+        t_datasets = ["Pelz_long"]
 
     v_datasets = list()
 
