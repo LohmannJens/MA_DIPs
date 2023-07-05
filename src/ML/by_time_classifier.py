@@ -32,9 +32,13 @@ from utils import DATAPATH, RESULTSPATH, SEGMENTS
 from utils import load_pelz_dataset
 
 
-def timepoints_set_labels(df):
+def timepoints_set_labels(df: pd.DataFrame)-> pd.Series:
     '''
-    
+        Set the labels for the classification by labeling them at each time
+        point. Then the sum of all "high" is calculated and normalized.
+        :param df: Dataframe including the NGS count for the single time points
+
+        :return: Pandas Series with the labels
     '''
     old_col_n = df.shape[1]
     for i in range(3, old_col_n):
@@ -76,10 +80,6 @@ def test_classifiers(df: pd.DataFrame,
 
     features_out = "\n\t".join(features)
     logging.info(f"\nUsed features:\n\t{features_out}\n#####\n")
-
-    print(df)
-
-    print(y)
 
     # Selecting train/test and validation data sets
     X, X_val, y, y_val = train_test_split(df[feature_cols], y, test_size=0.2, random_state=42)
