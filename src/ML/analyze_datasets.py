@@ -268,7 +268,7 @@ def run_dim_red_method(X: pd.DataFrame,
     X_embedded = dr_obj.fit_transform(X)
     plot_df = pd.DataFrame(data=X_embedded, columns=["x", "y"])
 
-    for l in y.unique():
+    for l in sorted(y.unique()):
         indices = y == l
         f1 = plot_df.loc[indices, "x"]
         f2 = plot_df.loc[indices, "y"]
@@ -359,7 +359,7 @@ def plot_start_vs_end(df: pd.DataFrame, slc: str)-> None:
     plt.rc("font", size=20)
     fig, ax = plt.subplots(1, 1, figsize=(7, 7), tight_layout=True)
 
-    for l in y.unique():
+    for l in sorted(y.unique()):
         X_p = X[X["y"] == l]
         ax.scatter(X_p["Start"], X_p["End"], s=7, alpha=0.2, label=l)
 
@@ -381,6 +381,7 @@ if __name__ == "__main__":
     check_duplicates(all_df)
     check_label_split(all_df)
     """
-    run_dim_reduction(all_df)
-    #compare_start_vs_end(all_df)
+    #run_dim_reduction(all_df)
+
+    compare_start_vs_end(all_df)
 
