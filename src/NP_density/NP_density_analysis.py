@@ -18,6 +18,7 @@ import pandas as pd
 import matplotlib.pyplot as plt
 
 from scipy import stats
+from matplotlib.patches import Rectangle
 
 sys.path.insert(0, "..")
 from utils import DATAPATH, RESULTSPATH, SEGMENTS, STRAINS, QUANT, N_SAMPLES
@@ -122,15 +123,23 @@ def map_positions_to_density(data: dict,
         # create a subplot for each key, value pair in count_dict
         fig, axs = plt.subplots(8, 1, figsize=(10, 14), tight_layout=True)
         for i, s in enumerate(SEGMENTS):
-            l1 = axs[i].twinx().bar(count_dict[s].keys(), height=count_dict[s].values(), label="count")
-            l2, = axs[i].plot(density_data[s]["x"], density_data[s]["y"], label="NP density", alpha=0.5, color="green", fillstyle="full")
+            counts = count_dict[s].values()
+            axs[i].bar(count_dict[s].keys(), height=counts, label="count")            
+            l = density_data[s]["x"].tolist()
+            for j in range(2, len(l)-1, 4):
+                x = l[j]
+                y = 0
+                width = l[j+1] - x
+                height = max(counts) if len(counts) != 0 else 1
+                axs[i].add_patch(Rectangle((x, y), width, height, alpha=0.4, color="g"))
+            
             axs[i].set_title(f"{s}")
             axs[i].set_xlim(left=0, right=max(density_data[s]["x"]))
-            axs[i].set_ylim(bottom=0, top=105)
+            axs[i].set_ylim(bottom=0)
             axs[i].set_xlabel("sequence position")
-            axs[i].set_ylabel("NP density")
+            axs[i].set_ylabel("NGS count")
 
-        fig.legend([l1, l2], ["NGS count", "NP density"])
+        fig.legend()
 
         save_path = os.path.join(RESULTSPATH, "NP_density", f"{k}_del_position_NP_density.pdf") # leave as .pdf, because saving as .png loses some bars
         plt.savefig(save_path)
