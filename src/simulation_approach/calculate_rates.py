@@ -11,14 +11,14 @@ import matplotlib.pyplot as plt
 from typing import Tuple
 
 sys.path.insert(0, "..")
-from utils import DATAPATH, SEGMENTS, COLORS, NUCLEOTIDES, QUANT, N_SAMPLES
+from utils import DATAPATH
 
 
 def load_excel()-> pd.DataFrame:
     '''
     
     '''
-    file_path = os.path.join(DATAPATH, "Pelz2021", "rates_for_simulation.xlsx")
+    file_path = os.path.join(DATAPATH, "Pelz2021", "rates_for_simulation_frac.xlsx")
     data_dict = pd.read_excel(io=file_path,
                               sheet_name=None,
                               header=0,
@@ -29,26 +29,37 @@ def load_excel()-> pd.DataFrame:
     return data_dict["PR8"]
 
 
-def calculate_probabilities(df: pd.DataFrame)-> Tuple[float, float]:
+def calculate_probabilities(df: pd.DataFrame)-> float:
     '''
     
     '''
-    increase = list()
-    decrease = list()
+    fig, ax = plt.subplots(1,1)
 
-    for i in range(3, df.shape[1]-2):
-        series = df.iloc[:,i] - df.iloc[:,i+1]
+    for c in ["gain", "loss"]:
+        increase = list()
+        decrease = list()
+        p_df = df[df["class"] == c]
 
-        increase.append(series[series < 0].count())
-        decrease.append(series[series > 0].count())
+        for i in range(3, p_df.shape[1]-2):
+            series = p_df.iloc[:,i] - p_df.iloc[:,i+1]
 
-    """
-    p_list = [a/(a+b) for a, b in zip(increase, decrease)]
-    plt.plot(p_list)
-    plt.xlabel("timepoint")
-    plt.ylabel("prob. of increase")
+            increase.append(series[series < 0].count())
+            decrease.append(series[series > 0].count())
+
+        p_list = [a/(a+b) for a, b in zip(increase, decrease)]
+        ax.plot(p_list, label = c)
+
+        probability = sum(increase) / (sum(increase) + sum(decrease))
+
+        print(f"{c}:/t{probability}")
+    
+    ax.set_xlabel("timepoint")
+    ax.set_ylabel("prob. of increase")
+    ax.set_ylim(bottom=0, top=1.0)
+    ax.legend()
+
     plt.show()
-    """
+    
     return sum(increase) / (sum(increase) + sum(decrease))
 
 
@@ -70,18 +81,12 @@ def check_label_developement_to_gt(df):
     '''
     differ_list = list()
 
-  #  df.drop(df[df["class"] == "de novo gain"].index, inplace=True)
-   # df.drop(df[df["class"] == "de novo loss"].index, inplace=True)
-    #df.reset_index(drop=True, inplace=True)
-
     ground_truth_class = df["class"]
-    ground_truth_class.replace({"de novo gain": "gain", "de novo loss": "loss"}, inplace=True)
     
-    start_series = df.iloc[:,3]
-    denovo_series = np.where(start_series == 0, "denovo", "no")
+    start = df.iloc[:,3]
 
     for i in range(4, df.shape[1]-1):
-        class_series = pd.Series(np.where((df.iloc[:,3] < df.iloc[:,i]), "gain", "loss"))
+        class_series = pd.Series(np.where((start == 0.0), np.where((start < df.iloc[:,i]), "de novo gain", "de novo loss"), np.where((start < df.iloc[:,i]), "gain", "loss")))
         differ_list.append(ground_truth_class.compare(class_series).shape[0])
 
     fig, ax = plt.subplots(1,1)
@@ -126,16 +131,8 @@ def check_label_distribution_over_time(df):
 if __name__ == "__main__":
     df = load_excel()
 
-    """
     n_gain, n_loss = starting_conditions(df)
 
-    prob_gain = calculate_probabilities(df[df["class"] == "gain"])
-    print(prob_gain)
-    print("#######################################")    
-    prob_loss = calculate_probabilities(df[df["class"] == "loss"])
-    print(prob_loss)
-    """
-
+    calculate_probabilities(df)
     check_label_distribution_over_time(df)
-
- #   check_label_developement_to_gt(df)
+    check_label_developement_to_gt(df)
