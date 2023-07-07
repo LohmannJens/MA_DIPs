@@ -29,7 +29,7 @@ def load_excel()-> pd.DataFrame:
     return data_dict["PR8"]
 
 
-def calculate_probabilities(df: pd.DataFrame)-> float:
+def calculate_probabilities(df: pd.DataFrame)-> None:
     '''
     
     '''
@@ -59,8 +59,36 @@ def calculate_probabilities(df: pd.DataFrame)-> float:
     ax.legend()
 
     plt.show()
+
+
+def calculate_rates(df: pd.DataFrame)-> None:
+    '''
     
-    return sum(increase) / (sum(increase) + sum(decrease))
+    '''
+    fig, ax = plt.subplots(1,1)
+
+    for c in ["gain", "loss"]:
+        increase = list()
+        decrease = list()
+        p_df = df[df["class"] == c]
+
+        for i in range(3, p_df.shape[1]-2):
+            series = (p_df.iloc[:,i] - p_df.iloc[:,i+1]) / p_df.iloc[:,i] # calculate percentage
+
+            increase.append(series[series < 0].replace(-np.inf, np.nan).mean())
+            decrease.append(series[series > 0].mean())
+
+        ax.plot(increase, label = f"{c} inc.")
+        ax.plot(decrease, label = f"{c} dec.")
+
+        print(f"{c} increase:/t{sum(increase) / (len(increase))}")
+        print(f"{c} decrease:/t{sum(decrease) / (len(decrease))}")
+
+    ax.set_xlabel("timepoint")
+    ax.set_ylabel("prob. of increase")
+    ax.legend()
+
+    plt.show()
 
 
 def starting_conditions(df)-> Tuple[int, int]:
@@ -134,5 +162,8 @@ if __name__ == "__main__":
     n_gain, n_loss = starting_conditions(df)
 
     calculate_probabilities(df)
+    calculate_rates(df)
+    
+    exit()
     check_label_distribution_over_time(df)
     check_label_developement_to_gt(df)
