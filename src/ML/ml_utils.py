@@ -318,11 +318,12 @@ def load_all_sets()-> pd.DataFrame:
     df = log_and_norm(df)
 
     # load pelz dataset long DI RNA set
-    df = load_pelz_dataset(de_novo=False, long_dirna=True)["PR8"]
-    df["dataset_name"] = "Pelz_long"
-    df["Strain"] = "PR8"
-    df = log_and_norm(df)
-    
+    p_long = load_pelz_dataset(de_novo=False, long_dirna=True)["PR8"]
+    p_long["dataset_name"] = "Pelz_long"
+    p_long["Strain"] = "PR8"
+    p_long = log_and_norm(p_long)
+    df = pd.concat([df, p_long])
+   
     # load kupke dataset
     kupke = load_kupke(corrected=True)["PR8"]
     # only load post samples to avoid duplicates
