@@ -13,9 +13,8 @@ import pandas as pd
 import matplotlib.pyplot as plt
 
 from umap import UMAP
-
-from sklearn.decomposition import PCA
 from sklearn.manifold import TSNE
+from sklearn.decomposition import PCA
 
 sys.path.insert(0, "..")
 from utils import RESULTSPATH
@@ -42,12 +41,13 @@ def check_distributions(df: pd.DataFrame)-> None:
 
         axs[0].hist(n_df["NGS_read_count"], bins=100)
         axs[0].set_xlabel("NGS count")
-        axs[0].set_ylabel("# occurrences")
+        axs[0].set_ylabel("# candidates")
         axs[0].set_title(f"NGS distribution for {name}")
 
         axs[1].hist(n_df["NGS_log_norm"], bins=100)
+        axs[1].vlines(n_df["NGS_log_norm"].median(), ymin=0, ymax=1200, color="r")
         axs[1].set_xlabel("log(NGS count)")
-        axs[1].set_ylabel("# occurrences")
+        axs[1].set_ylabel("# candidates")
         axs[1].set_title(f"log(NGS) distribution for {name}")
     
         save_path = os.path.join(RESULTSPATH, "ML", f"distribution_{name}.png")
@@ -274,6 +274,12 @@ def run_dim_red_method(X: pd.DataFrame,
         f2 = plot_df.loc[indices, "y"]
         plt.scatter(f1, f2, alpha=0.2, label=l)
 
+    '''
+    for idx in [202, 285, 319, 416, 803, 1117, 1165, 1174, 1269, 1272, 1434]:
+        x = plot_df.loc[idx, "x"]
+        y = plot_df.loc[idx, "y"]
+        plt.plot(x, y, "ro")
+    '''
     plt.legend()
     plt.title(method)
     save_path = os.path.join(RESULTSPATH, "ML", f"{method}_{name}.png")
