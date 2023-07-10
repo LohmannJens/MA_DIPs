@@ -10,8 +10,9 @@ import json
 import numpy as np
 import pandas as pd
 
+from typing import Tuple
 from Bio.Seq import Seq
-from sklearn.preprocessing import OneHotEncoder
+from sklearn.preprocessing import OneHotEncoder, power_transform
 from sklearn.model_selection import train_test_split
 
 sys.path.insert(0, "..")
@@ -31,7 +32,7 @@ MAX_LEN = 2361 # B Lee
 def generate_features(df: pd.DataFrame,
                       features: list,
                       load_precalc: bool
-                      )-> (pd.DataFrame, list):
+                      )-> Tuple[pd.DataFrame, list]:
     '''
         Main function to generate/load the features.
         :param df: data frame including the deletion site data
@@ -105,7 +106,7 @@ def generate_features(df: pd.DataFrame,
 
     return df, feature_cols
 
-def segment_ohe(df: pd.DataFrame)-> (pd.DataFrame, list):
+def segment_ohe(df: pd.DataFrame)-> Tuple[pd.DataFrame, list]:
     '''
         Converts the column with segment names into an one hot encoding.
         :param df: data frame including a row called 'Segment'
@@ -148,7 +149,7 @@ def get_direct_repeat_length(row: pd.Series)-> int:
 
 def junction_site_ohe(df: pd.DataFrame,
                       position: str
-                      )-> (pd.DataFrame, list):
+                      )-> Tuple[pd.DataFrame, list]:
     '''
         Gets the sequence around the start or end of a given deletion site and
         converts the sequence into an one hot encoding.
@@ -442,7 +443,7 @@ def select_datasets(df: pd.DataFrame,
                     n_bins: int,
                     label_style: str,
                     y_column: str
-                    )-> (pd.DataFrame, pd.Series, pd.DataFrame, pd.Series):
+                    )-> Tuple[pd.DataFrame, pd.Series, pd.DataFrame, pd.Series]:
     '''
         Selects data for training and testing by a given name.
         :param df: pandas data frame including all data sets and features
@@ -465,6 +466,11 @@ def select_datasets(df: pd.DataFrame,
 
     t_df = df.loc[df["dataset_name"].isin(t_datasets)].copy().reset_index()
     X = t_df[features]
+
+    # transform features
+    col = X.columns
+    X = pd.DataFrame(power_transform(X), columns=col)
+
     if y_column == "NGS_log_norm":
         y = ngs_set_labels(t_df, n_bins, label_style, labels)
     else:
