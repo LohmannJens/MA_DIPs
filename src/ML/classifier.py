@@ -15,6 +15,7 @@ import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
 
+from typing import Tuple
 from sklearn.model_selection import GridSearchCV, StratifiedKFold
 from sklearn.linear_model import LogisticRegression
 from sklearn.svm import SVC
@@ -32,7 +33,7 @@ from utils import DATAPATH, RESULTSPATH, SEGMENTS
 
 def select_classifier(clf_name: str,
                       grid_search: bool=False
-                      )-> (object, dict):
+                      )-> Tuple[object, dict]:
     '''
         Selects a scikit-learn classifier by a given name. Is implemented in an
         extra function to use the same parameters in each usage of the

@@ -10,6 +10,7 @@ import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
 
+from typing import Tuple
 from scipy import stats
 from decimal import Decimal, ROUND_HALF_UP
 
@@ -23,7 +24,7 @@ def calculate_direct_repeat(seq: str,
                             e: int,
                             w_len: int,
                             m: int
-                            )-> (int, str):
+                            )-> Tuple[int, str]:
     '''
         Counts the number of overlapping nucleotides directly before start and
         end of junction site --> direct repeats
@@ -73,7 +74,7 @@ def calculate_direct_repeat(seq: str,
 def count_direct_repeats_overall(df: pd.DataFrame,
                                  seq: str,
                                  mode: int
-                                 )-> (dict, dict):
+                                 )-> Tuple[dict, dict]:
     '''
         Calculates the number of direct repeats for each data point.
         :param df: dataframe with sequence and junction site data

@@ -13,6 +13,7 @@ import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
 
+from typing import Tuple
 from sklearn.linear_model import LinearRegression
 
 sys.path.insert(0, "..")
@@ -23,7 +24,7 @@ from utils import get_seq_len, load_alnaji_excel, load_short_reads
 def format_dataset_for_plotting(df: pd.DataFrame,
                                 dataset_name: str,
                                 del_indices: list=[]
-                                )-> (list, list, list):
+                                )-> Tuple[list, list, list]:
     '''
         Formats the dataset to have it ready for plotting and doing the linear
         regression.

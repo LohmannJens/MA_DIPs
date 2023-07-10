@@ -10,6 +10,7 @@ import pandas as pd
 import matplotlib.pyplot as plt
 import matplotlib.patches as patches
 
+from typing import Tuple
 from scipy import stats
 from Bio.Seq import Seq
 from matplotlib import ticker
@@ -43,7 +44,7 @@ def search_footprint(strain: str)-> None:
     df.to_latex(path, float_format="%.2f")
 
 
-def extended_footprint_search(strain: str)-> (float, float, float):
+def extended_footprint_search(strain: str)-> Tuple[float, float, float]:
     '''
         Search for the match with the highest score for each footprint on the
         sequences of a given strain. Compares the score to randomly shuffled

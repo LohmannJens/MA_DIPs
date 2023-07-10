@@ -9,6 +9,7 @@ import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
 
+from typing import Tuple
 from scipy import stats
 
 sys.path.insert(0, "..")
@@ -16,7 +17,7 @@ from utils import DATAPATH, RESULTSPATH, SEGMENTS, STRAINS, QUANT, N_SAMPLES
 from utils import get_seq_len, load_alnaji_excel, load_short_reads, get_stat_symbol, generate_sampling_data
 
 
-def extract_data_from_file(f: str)-> (int, float, str):
+def extract_data_from_file(f: str)-> Tuple[int, float, str]:
     '''
         Opens a .fold file form the free energy calculations and gets the 
         length of the sequence and the delta G

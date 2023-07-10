@@ -8,6 +8,8 @@ import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
 
+from typing import Tuple
+
 sys.path.insert(0, "..")
 from utils import DATAPATH, RESULTSPATH
 from ml_utils import load_all_sets, junction_site_ohe, get_direct_repeat_length, get_3_to_5_ratio, get_length_proportion
@@ -16,7 +18,7 @@ def split_data(df: pd.DataFrame,
                feature: str,
                thresh: str="",
                col: str=""
-               )-> (pd.DataFrame, pd.DataFrame):
+               )-> Tuple[pd.DataFrame, pd.DataFrame]:
     '''
         Splits a data frame by a given feature and threshold.
         :param df: pandas data frame
