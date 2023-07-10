@@ -18,7 +18,7 @@ from sklearn.decomposition import PCA
 from sklearn.manifold import TSNE
 
 sys.path.insert(0, "..")
-from utils import DATAPATH, RESULTSPATH
+from utils import RESULTSPATH
 from ml_utils import load_all_sets, ngs_set_labels, generate_features, select_datasets
 
 
