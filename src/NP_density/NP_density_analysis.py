@@ -131,15 +131,13 @@ def map_positions_to_density(data: dict,
                 y = 0
                 width = l[j+1] - x
                 height = max(counts) if len(counts) != 0 else 1
-                axs[i].add_patch(Rectangle((x, y), width, height, alpha=0.4, color="g"))
+                axs[i].add_patch(Rectangle((x, y), width, height, alpha=0.2, color="g"))
             
             axs[i].set_title(f"{s}")
             axs[i].set_xlim(left=0, right=max(density_data[s]["x"]))
             axs[i].set_ylim(bottom=0)
             axs[i].set_xlabel("sequence position")
             axs[i].set_ylabel("NGS count")
-
-        fig.legend()
 
         save_path = os.path.join(RESULTSPATH, "NP_density", f"{k}_del_position_NP_density.pdf") # leave as .pdf, because saving as .png loses some bars
         plt.savefig(save_path)
