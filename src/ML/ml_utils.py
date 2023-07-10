@@ -207,7 +207,7 @@ def get_length_proportion(row: pd.Series)-> float:
     dirna_len = row["Start"] + (seq_len - row["End"] + 1)
     return dirna_len/seq_len
 
-def full_sequence_ohe(df: pd.DataFrame)-> (pd.DataFrame, list):
+def full_sequence_ohe(df: pd.DataFrame)-> Tuple[pd.DataFrame, list]:
     '''
         Gets the whole sequence as an one hot encoding. Sequences get
         normalized to the longest sequence length by adding * at the end
