@@ -18,7 +18,12 @@ def load_excel()-> pd.DataFrame:
     '''
     
     '''
-    file_path = os.path.join(DATAPATH, "Pelz2021", "rates_for_simulation_frac.xlsx")
+    use_abs = True
+    if use_abs:
+        file_path = os.path.join(DATAPATH, "Pelz2021", "rates_for_simulation.xlsx")
+    else:
+        file_path = os.path.join(DATAPATH, "Pelz2021", "rates_for_simulation_frac.xlsx")
+    
     data_dict = pd.read_excel(io=file_path,
                               sheet_name=None,
                               header=0,
@@ -29,13 +34,28 @@ def load_excel()-> pd.DataFrame:
     return data_dict["PR8"]
 
 
+def starting_conditions(df: pd.DataFrame)-> Tuple[int, int]:
+    '''
+    
+    '''
+    #print(df.shape[0]) this is max number of DI RNA candidates
+
+    g = df.groupby(["class"]).count()
+
+    n_gain = g.iloc[2,2]
+    n_loss = g.iloc[3,3]
+
+    return n_gain, n_loss
+
+
 def calculate_probabilities(df: pd.DataFrame)-> None:
     '''
     
     '''
     fig, ax = plt.subplots(1,1)
+    prob = dict()
 
-    for c in ["gain", "loss"]:
+    for c in ["gain", "loss", "de novo gain", "de novo loss"]:
         increase = list()
         decrease = list()
         p_df = df[df["class"] == c]
@@ -49,9 +69,11 @@ def calculate_probabilities(df: pd.DataFrame)-> None:
         p_list = [a/(a+b) for a, b in zip(increase, decrease)]
         ax.plot(p_list, label = c)
 
-        probability = sum(increase) / (sum(increase) + sum(decrease))
+        prob[c] = sum(increase) / (sum(increase) + sum(decrease))
+        print(f"{c}:/t{prob[c]}")
 
-        print(f"{c}:/t{probability}")
+    print(f"gain\t{(prob['gain'] + prob['de novo gain'])/2}")
+    print(f"loss\t{(prob['loss'] + prob['de novo loss'])/2}")
     
     ax.set_xlabel("timepoint")
     ax.set_ylabel("prob. of increase")
@@ -66,8 +88,10 @@ def calculate_rates(df: pd.DataFrame)-> None:
     
     '''
     fig, ax = plt.subplots(1,1)
+    inc_d = dict()
+    dec_d = dict()
 
-    for c in ["gain", "loss"]:
+    for c in ["gain", "loss", "de novo gain", "de novo loss"]:
         increase = list()
         decrease = list()
         p_df = df[df["class"] == c]
@@ -78,32 +102,57 @@ def calculate_rates(df: pd.DataFrame)-> None:
             increase.append(series[series < 0].replace(-np.inf, np.nan).mean())
             decrease.append(series[series > 0].mean())
 
+        increase = [x for x in increase if str(x) != "nan"]
+        decrease = [x for x in decrease if str(x) != "nan"]
+
         ax.plot(increase, label = f"{c} inc.")
         ax.plot(decrease, label = f"{c} dec.")
 
-        print(f"{c} increase:/t{sum(increase) / (len(increase))}")
-        print(f"{c} decrease:/t{sum(decrease) / (len(decrease))}")
+        inc_d[c] = sum(increase) / len(increase)
+        dec_d[c] = sum(decrease) / len(decrease)
+
+        print(f"{c} increase:\t{inc_d[c]}")
+        print(f"{c} decrease:\t{dec_d[c]}")
+
+    print(f"gain inc\t{(inc_d['gain'] + inc_d['de novo gain'])/2}")
+    print(f"gain dec\t{(dec_d['gain'] + dec_d['de novo gain'])/2}")
+
+    print(f"loss inc\t{(inc_d['loss'] + inc_d['de novo loss'])/2}")
+    print(f"loss dec\t{(dec_d['loss'] + dec_d['de novo loss'])/2}")
 
     ax.set_xlabel("timepoint")
-    ax.set_ylabel("prob. of increase")
+    ax.set_ylabel("rel. increase")
     ax.legend()
 
     plt.show()
 
 
-def starting_conditions(df)-> Tuple[int, int]:
+def calculate_de_novo_events(df: pd.DataFrame):
     '''
     
     '''
-    g = df.groupby(["class"]).count()
+    for c in ["gain", "loss"]:
+        ratios = list()
+        p_df = df[df["class"].isin([c, f"de novo {c}"])]
 
-    n_gain = g.iloc[2,2]
-    n_loss = g.iloc[3,3]
+        for i in range(3, p_df.shape[1]-2):
+            start = p_df.iloc[:,i]
+            s_candidates = start[start != 0].count()
 
-    return n_gain, n_loss
+            end = p_df.iloc[:,i+1]
+            e_candidates = end[end != 0].count()
+
+            d_candidates = e_candidates - s_candidates
+
+            if d_candidates > 0:
+                ratios.append(d_candidates/s_candidates)
+
+        print(ratios)
+
+        print(f"{c}\t{sum(ratios[1:])/(len(ratios)-1)}")
 
 
-def check_label_developement_to_gt(df):
+def check_label_developement_to_gt(df: pd.DataFrame):
     '''
     
     '''
@@ -126,14 +175,27 @@ def check_label_developement_to_gt(df):
     plt.show()
     
 
-def check_label_distribution_over_time(df):
+def check_label_distribution_over_time(df: pd.DataFrame):
     '''
     
     '''
     only_top = False
-    if only_top: # filter for top 5 candidates
+    if only_top: # filter for top candidates
+        file_path = os.path.join(DATAPATH, "Pelz2021", "top_candidates_ranked.xlsx")
+        top_df = pd.read_excel(io=file_path,
+                                  sheet_name=None,
+                                  header=0,
+                                  na_values=["", "None"],
+                                  keep_default_na=False)["PR8"]
+
+        all_candidates = top_df["DI"].tolist()
+
         top_candidates = ["PB1_139_2056", "PA_164_2028", "PA_138_1948", "PA_244_2074", "PA_163_1990",
             "PA_137_1916", "PB1_113_1897", "PB2_206_2152", "PB2_269_2202", "PA_124_1940", "PB1_218_2091"]
+
+        n = 200
+        top_candidates = all_candidates[0:n]
+        print(top_candidates)
         df["DI"] = df["Segment"] + "_" + df["Start"].map(str) + "_" + df["End"].map(str)
         df = df[df["DI"].isin(top_candidates)]
         df.drop(["DI"], axis=1, inplace=True)
@@ -158,12 +220,13 @@ def check_label_distribution_over_time(df):
 
 if __name__ == "__main__":
     df = load_excel()
-
+    '''
     n_gain, n_loss = starting_conditions(df)
-
+    
     calculate_probabilities(df)
     calculate_rates(df)
+    '''
+    calculate_de_novo_events(df)
     
-    exit()
-    check_label_distribution_over_time(df)
-    check_label_developement_to_gt(df)
+    #check_label_distribution_over_time(df)
+    #check_label_developement_to_gt(df)
