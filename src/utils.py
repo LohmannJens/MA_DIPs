@@ -8,6 +8,7 @@ import json
 import numpy as np
 import pandas as pd
 
+from typing import Tuple
 from Bio import SeqIO
 
 
@@ -202,7 +203,7 @@ def load_pelz_dataset(de_novo: bool=False,
     return data_dict
 
 
-def generate_sampling_data(seq: str, s: (int, int), e: (int, int),  n: int) -> object:
+def generate_sampling_data(seq: str, s: Tuple[int, int], e: Tuple[int, int],  n: int) -> object:
     '''
         Generates sampling data by creating random start and end points for
         artificial deletion sites. Generated data is used to calculate the
