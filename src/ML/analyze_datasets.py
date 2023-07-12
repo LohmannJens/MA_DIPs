@@ -274,12 +274,13 @@ def run_dim_red_method(X: pd.DataFrame,
         f2 = plot_df.loc[indices, "y"]
         plt.scatter(f1, f2, alpha=0.2, label=l)
 
-    '''
-    for idx in [202, 285, 319, 416, 803, 1117, 1165, 1174, 1269, 1272, 1434]:
-        x = plot_df.loc[idx, "x"]
-        y = plot_df.loc[idx, "y"]
-        plt.plot(x, y, "ro")
-    '''
+    mark_top_candidates = False
+    if mark_top_candidates:
+        for idx in [202, 285, 319, 416, 803, 1117, 1165, 1174, 1269, 1272, 1434]:
+            x = plot_df.loc[idx, "x"]
+            y = plot_df.loc[idx, "y"]
+            plt.plot(x, y, "ro")
+    
     plt.legend()
     plt.title(method)
     save_path = os.path.join(RESULTSPATH, "ML", f"{method}_{name}.png")
