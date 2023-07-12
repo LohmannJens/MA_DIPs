@@ -218,7 +218,6 @@ def check_label_distribution_over_time(df: pd.DataFrame):
     plt.show()
 
 
-
 def ground_truth_population(df):
     '''
     
