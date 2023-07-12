@@ -218,6 +218,27 @@ def check_label_distribution_over_time(df: pd.DataFrame):
     plt.show()
 
 
+
+def ground_truth_population(df):
+    '''
+    
+    '''
+    d = dict({"gain": list(), "loss": list()})
+    
+    for i in range(3, df.shape[1]-1):
+        d["gain"].append(df[df["class"].isin(["gain", "de novo gain"]) & df.iloc[:,i] != 0].count()[0])
+        d["loss"].append(df[df["class"].isin(["loss", "de novo loss"]) & df.iloc[:,i] != 0].count()[0])
+
+    fig, ax = plt.subplots(1,1)
+    for k, v in d.items():
+        ax.plot(v, label=k)
+    ax.set_xlabel("time point")
+    ax.set_ylabel("number of candidates")
+    ax.set_ylim(bottom=0)
+    plt.legend()
+    plt.show()
+    
+
 if __name__ == "__main__":
     df = load_excel()
     '''
@@ -226,7 +247,9 @@ if __name__ == "__main__":
     calculate_probabilities(df)
     calculate_rates(df)
     '''
-    calculate_de_novo_events(df)
+   # calculate_de_novo_events(df)
     
     #check_label_distribution_over_time(df)
     #check_label_developement_to_gt(df)
+
+    ground_truth_population(df)
