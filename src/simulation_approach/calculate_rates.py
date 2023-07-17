@@ -18,7 +18,7 @@ def load_excel()-> pd.DataFrame:
     '''
     
     '''
-    use_abs = True
+    use_abs = False
     if use_abs:
         file_path = os.path.join(DATAPATH, "Pelz2021", "rates_for_simulation.xlsx")
     else:
@@ -70,7 +70,7 @@ def calculate_probabilities(df: pd.DataFrame)-> None:
         ax.plot(p_list, label = c)
 
         prob[c] = sum(increase) / (sum(increase) + sum(decrease))
-        print(f"{c}:/t{prob[c]}")
+        print(f"{c}:\t{prob[c]}")
 
     print(f"gain\t{(prob['gain'] + prob['de novo gain'])/2}")
     print(f"loss\t{(prob['loss'] + prob['de novo loss'])/2}")
@@ -132,7 +132,8 @@ def calculate_de_novo_events(df: pd.DataFrame):
     
     '''
     for c in ["gain", "loss"]:
-        ratios = list()
+        gain_ratios = list()
+        loss_ratios = list()
         p_df = df[df["class"].isin([c, f"de novo {c}"])]
 
         for i in range(3, p_df.shape[1]-2):
@@ -145,11 +146,12 @@ def calculate_de_novo_events(df: pd.DataFrame):
             d_candidates = e_candidates - s_candidates
 
             if d_candidates > 0:
-                ratios.append(d_candidates/s_candidates)
+                gain_ratios.append(d_candidates/s_candidates)
+            else:
+                loss_ratios.append(d_candidates/s_candidates)
 
-        print(ratios)
-
-        print(f"{c}\t{sum(ratios[1:])/(len(ratios)-1)}")
+        print(f"{c}\t{sum(gain_ratios[1:])/(len(gain_ratios) + len(loss_ratios) - 1)}")
+        print(f"{c}\t{sum(loss_ratios)/(len(gain_ratios) + len(loss_ratios) - 1)}")
 
 
 def check_label_developement_to_gt(df: pd.DataFrame):
@@ -245,9 +247,9 @@ if __name__ == "__main__":
     
     calculate_probabilities(df)
     calculate_rates(df)
+
+    calculate_de_novo_events(df)
     '''
-   # calculate_de_novo_events(df)
-    
     #check_label_distribution_over_time(df)
     #check_label_developement_to_gt(df)
 
