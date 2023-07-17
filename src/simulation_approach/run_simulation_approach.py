@@ -89,7 +89,7 @@ class DIPPopulationSimulator():
             new_candidates_list = list()
             if i % 100 == 0:
                 print(i)
-            loss_event_p = 0.1
+            loss_event_p = 0.05
             loss_event = True if loss_event_p > np.random.random() else False
 
             count_max = self.get_recent_population().count_max
@@ -104,7 +104,7 @@ class DIPPopulationSimulator():
                     change = round(cand.get_count() * (self.get_recent_population().get_population_count() / count_max) * cand.get_class().get_rate_decrease())
 
                 if change <= 0:
-                    change = min(change, -3)
+                    change = min(change, -2)
 
                 new_count = cand.get_count() + change
                 if new_count > 0:
@@ -120,7 +120,7 @@ class DIPPopulationSimulator():
                     else:
                         cls = "loss"
                     
-                    new_candidates_list.append(DIPCandidate(DIPClass(cls), np.random.randint(1, 20)))
+                    new_candidates_list.append(DIPCandidate(DIPClass(cls), np.random.randint(1, 10)))
 
             n_cand_max = self.get_recent_population().n_cand_max
 
@@ -163,7 +163,7 @@ class DIPPopulationSimulator():
     def show_candidate_developement(self):
         x = list()
         for i, p in enumerate(self.population_timeseries):
-            if i % round(len(self.population_timeseries)/10) == 0:
+            if i % round(len(self.population_timeseries)/50) == 0:
                 x.append([c.get_count() for c in p.candidates])
 
         fig, axs = plt.subplots(1,1)
@@ -176,14 +176,14 @@ class DIPPopulationSimulator():
 
 
 if __name__ == "__main__":
-    steps = 1000
+    steps = 500
        
     candidates = list()
 
     for _ in range(261):
-        candidates.append(DIPCandidate(DIPClass("gain"), np.random.randint(1, 20)))
+        candidates.append(DIPCandidate(DIPClass("gain"), np.random.randint(1, 10)))
     for _ in range(373):
-        candidates.append(DIPCandidate(DIPClass("loss"), np.random.randint(1, 20)))
+        candidates.append(DIPCandidate(DIPClass("loss"), np.random.randint(1, 10)))
 
     start_population = DIPPopulation(candidates, 50000, 1400)
 

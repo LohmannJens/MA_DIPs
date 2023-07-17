@@ -18,7 +18,7 @@ def load_excel()-> pd.DataFrame:
     '''
     
     '''
-    use_abs = False
+    use_abs = True
     if use_abs:
         file_path = os.path.join(DATAPATH, "Pelz2021", "rates_for_simulation.xlsx")
     else:
@@ -154,6 +154,15 @@ def calculate_de_novo_events(df: pd.DataFrame):
         print(f"{c}\t{sum(loss_ratios)/(len(gain_ratios) + len(loss_ratios) - 1)}")
 
 
+def calculate_initialising_range(df: pd.DataFrame):
+    '''
+    
+    '''
+    for i in range(3, df.shape[1]-2):
+        a_df = df[(df.iloc[:,i] == 0) & (df.iloc[:,i+1] != 0)]
+        print(a_df.iloc[:,i+1].mean())
+
+
 def check_label_developement_to_gt(df: pd.DataFrame):
     '''
     
@@ -253,4 +262,6 @@ if __name__ == "__main__":
     #check_label_distribution_over_time(df)
     #check_label_developement_to_gt(df)
 
-    ground_truth_population(df)
+    calculate_initialising_range(df)
+
+    #ground_truth_population(df)
