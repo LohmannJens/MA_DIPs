@@ -53,10 +53,9 @@ class DIPCandidate():
         return self.cls
 
 class DIPPopulation():
-    def __init__(self, candidates, count_max, n_cand_max):
+    def __init__(self, candidates, count_max):
         self.candidates = candidates
         self.count_max = count_max
-        self.n_cand_max = n_cand_max
         
     def get_population_n_cand(self):
         return len(self.candidates)
@@ -83,6 +82,9 @@ class DIPPopulationSimulator():
 
     def get_recent_population(self):
         return self.recent_population
+    
+    def set_recent_population(self, new_population):
+        self.recent_population = new_population
 
     def run_simulation(self, steps):
         for i in range(steps):
@@ -110,8 +112,8 @@ class DIPPopulationSimulator():
                 if new_count > 0:
                     new_candidates_list.append(DIPCandidate(cand.get_class(), new_count))
 
-            de_novo_event_prob = 0.1
-            for _ in range(round((count_max - self.get_recent_population().get_population_count())/50)):
+            de_novo_event_prob = 0.15
+            for _ in range(round((count_max - self.get_recent_population().get_population_count()) / 50)):
                 de_novo_event = np.random.random()
                 if de_novo_event < de_novo_event_prob:
                     class_p = np.random.random()
@@ -122,13 +124,12 @@ class DIPPopulationSimulator():
                     
                     new_candidates_list.append(DIPCandidate(DIPClass(cls), np.random.randint(1, 10)))
 
-            n_cand_max = self.get_recent_population().n_cand_max
 
-            self.recent_population = DIPPopulation(new_candidates_list, count_max, n_cand_max)
+            self.set_recent_population(DIPPopulation(new_candidates_list, count_max))
             self.population_timeseries.append(copy.deepcopy(self.get_recent_population()))
 
     def show_results(self):
-        fig, axs = plt.subplots(1,2)
+        fig, axs = plt.subplots(2,1)
         t = list()
         counts = list()
         gain_counts = list()
@@ -148,6 +149,7 @@ class DIPPopulationSimulator():
         axs[0].plot(t, loss_n_cand, label="loss")
         axs[0].set_xlabel("time point")
         axs[0].set_ylabel("number of candidates")
+        axs[0].set_xlim(left=0)
         axs[0].set_ylim(bottom=0)
         axs[0].legend()
 
@@ -155,6 +157,7 @@ class DIPPopulationSimulator():
         axs[1].plot(t, loss_counts, label="loss")
         axs[1].set_xlabel("time point")
         axs[1].set_ylabel("count of candidates")
+        axs[1].set_xlim(left=0)
         axs[1].set_ylim(bottom=0)
         axs[1].legend()
 
@@ -163,14 +166,13 @@ class DIPPopulationSimulator():
     def show_candidate_developement(self):
         x = list()
         for i, p in enumerate(self.population_timeseries):
-            if i % round(len(self.population_timeseries)/50) == 0:
+            if i % round(len(self.population_timeseries) / 50) == 0:
                 x.append([c.get_count() for c in p.candidates])
 
         fig, axs = plt.subplots(1,1)
         axs.boxplot(x)
         axs.set_xlabel("time point")
         axs.set_ylabel("number of counts")
-        axs.legend()        
 
         plt.show()        
 
@@ -185,7 +187,7 @@ if __name__ == "__main__":
     for _ in range(373):
         candidates.append(DIPCandidate(DIPClass("loss"), np.random.randint(1, 10)))
 
-    start_population = DIPPopulation(candidates, 50000, 1400)
+    start_population = DIPPopulation(candidates, 50000)
 
     Simulator = DIPPopulationSimulator(start_population)
     Simulator.run_simulation(steps)
