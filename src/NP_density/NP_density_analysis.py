@@ -22,7 +22,7 @@ from matplotlib.patches import Rectangle
 
 sys.path.insert(0, "..")
 from utils import DATAPATH, RESULTSPATH, SEGMENTS, STRAINS, QUANT, N_SAMPLES
-from utils import load_alnaji_excel, load_short_reads, get_sequence, get_seq_len, get_stat_symbol, generate_sampling_data
+from utils import load_alnaji_excel, load_short_reads, get_sequence, get_seq_len, get_stat_symbol, generate_sampling_data, load_full_alnaji2021, load_pelz_dataset
 
 
 def load_Lee_density_data(path: str)-> dict:
@@ -78,16 +78,67 @@ def load_Sage_density_data(path: str)-> dict:
     return density_dict
 
 
-def load_WSN_data(dir: str)-> dict:
+def load_Williams_density_data(path: str, mode: str)-> dict:
+    '''
+        Loads the density data for all eight segments. Uses the Williams et al.
+        2018 paper as source.
+        :param path: path to the location where the tsv files are stored
+
+        :return: dictionary with segment name as key and data frame as value
+    '''
+    density_dict = dict()
+    filepath = os.path.join(path, "Williams_2018.csv")
+    df = pd.read_csv(filepath,
+                     na_values=["", "None"],
+                     keep_default_na=False,
+                     converters={"Segment": str, "Start": int,"End": int, "Peak": int})
+
+    if mode == "high":
+        n = 100
+    elif mode == "low":
+        n = -100
+
+    df = df[df["Peak"] == n]
+
+    for s in SEGMENTS:
+        s_df = df.loc[df["Segment"] == s]
+
+        start_df = pd.concat([s_df[["Start", "Peak"]],
+                              (s_df["Start"] - 1).to_frame()],
+                             ignore_index=True)
+        end_df = pd.concat([s_df[["End", "Peak"]],
+                            (s_df["End"] + 1).to_frame()],
+                           ignore_index=True)
+        start_df.rename(columns={"Start": "x", "Peak": "y"}, inplace=True)
+        end_df.rename(columns={"End": "x", "Peak": "y"}, inplace=True)
+
+        final_df = pd.concat([start_df, end_df], ignore_index=True, sort=True)
+
+        extra_points_df = pd.DataFrame({"x": [0, get_seq_len("PR8", s)], "y": [0, 0]})
+        final_df = pd.concat([final_df, extra_points_df], ignore_index=True)
+        final_df = final_df.fillna(0)
+        final_df.sort_values(by=["x"], inplace=True)
+
+        density_dict[s] = final_df
+    return density_dict
+
+
+def load_WSN_data(source: str)-> dict:
     '''
         Loads junction sites data for WSN strain from Boussier 2020.
         Formats it in the same way as the dataset from Alnaji 2019.
-        :param dir: directory to excel file with the data set
+        :param source: Indicating which source to use either Boussier or Mendes
 
         :return: dictionary with one key (strain), value (data frame) pair
     '''
-    df = pd.read_excel(dir, sheet_name=3, na_values=["", "None"], keep_default_na=False)
-    df = df[df["Virus"] == "WT"].reset_index(drop=True)
+    if source == "Boussier":
+        dir = os.path.join(DATAPATH, "Boussier2020", "Supplemental_Table_S2.xlsx")
+        df = pd.read_excel(dir, sheet_name=3, na_values=["", "None"], keep_default_na=False)
+        df = df[df["Virus"] == "WT"].reset_index(drop=True)
+    elif source == "Mendes":
+        dir = os.path.join(DATAPATH, "Mendes2021", "Mendes_combined.xlsx")
+        df = pd.read_excel(dir, na_values=["", "None"], keep_default_na=False)
+
     data = dict({"WSN": df})
     return data
 
@@ -279,12 +330,22 @@ if __name__ == "__main__":
     NGS_count_dict = map_positions_to_density(all_reads_dict, Cal07_dens_data)
     compare_position_with_density(NGS_count_dict, Cal07_dens_data, all_reads_dict)
     
-    #    WSN data from Mendes 2021
-    WSN_count_file = os.path.join(DATAPATH, "Boussier2020", "Supplemental_Table_S2.xlsx")
-    WSN_reads_dict = load_WSN_data(WSN_count_file)
+    #    WSN data from Mendes 2021 or Boussier 2020
+    source = "Boussier"
+    source = "Mendes"
+    WSN_reads_dict = load_WSN_data(source)
     WSN_dens_path = os.path.join(density_path, "WSN")
     WSN_dens_data = load_Sage_density_data(WSN_dens_path)
     map_dens_to_dens("WSN", load_Lee_density_data(WSN_dens_path), WSN_dens_data)
     WSN_NGS_count_dict = map_positions_to_density(WSN_reads_dict, WSN_dens_data)
     compare_position_with_density(WSN_NGS_count_dict, WSN_dens_data, WSN_reads_dict)
     
+    # NP data from Williams 2021 they define high and low areas
+    #   PR8 data from Pelz and Alnaji2021
+    PR8_dens_path = os.path.join(density_path, "PR8")
+    PR8_dens_data = load_Williams_density_data(PR8_dens_path, "low")
+    PR8_dens_data = load_Williams_density_data(PR8_dens_path, "high")
+    PR8_reads_dict = {"PR8": load_full_alnaji2021()}
+    PR8_reads_dict = load_pelz_dataset()
+    PR8_NGS_count_dict = map_positions_to_density(PR8_reads_dict, PR8_dens_data)
+    compare_position_with_density(NGS_count_dict, Cal07_dens_data, all_reads_dict)
