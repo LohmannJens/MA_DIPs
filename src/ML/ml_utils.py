@@ -193,7 +193,8 @@ def get_3_to_5_ratio(row: pd.Series)-> float:
     seq_len = get_seq_len(row["Strain"], row["Segment"])
     len3 = row["Start"]
     len5 = seq_len - row["End"] + 1
-    return len3/len5
+    # this is not a ratio anymore but the difference
+    return len3 - len5
 
 def get_length_proportion(row: pd.Series)-> float:
     '''
