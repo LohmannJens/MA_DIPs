@@ -96,7 +96,7 @@ def test_classifiers(df: pd.DataFrame,
     clf_names = ["logistic_regression", "svc", "random_forest", "mlp", "ada_boost", "naive_bayes"]
     clf_names = ["random_forest", "mlp", "ada_boost", "naive_bayes"]
     data_dict = dict()
-    data_dict["param"] = ["validation accuracy"]
+    data_dict["param"] = ["validation f1 score"]
     for clf_name in clf_names:
         print(clf_name)
         data_dict[clf_name] = list()
@@ -114,12 +114,12 @@ def test_classifiers(df: pd.DataFrame,
 
         # fit on overall model and create confusion matrix for validation set
         predicted_val = grid_search.predict(X_val)
-        acc_score = f1_score(predicted_val, y_val, average="weighted")
+        f1_score = f1_score(predicted_val, y_val, average="weighted")
         confusion_m = confusion_matrix(predicted_val, y_val)
 
-        print(acc_score)
+        print(f1_score)
         print(confusion_m)
-        data_dict[clf_name].append(acc_score)
+        data_dict[clf_name].append(f1_score)
 
 #    o_df = pd.DataFrame(data_dict)
 #    path = os.path.join(RESULTSPATH, "ML", f"{dataset_name}_means.tex")
