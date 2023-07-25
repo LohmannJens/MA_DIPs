@@ -105,6 +105,96 @@ def binomial_test_nucleotide_ratios(ratio1, n_samples, ratio2):
     result = stats.binomtest(int(count), n_samples, ratio2)
     return result
 
+def get_deleted_sequence(dip_id, strain):
+    """return the sequence of a dip_id
+
+    Args:
+        dip_id (str): the id of the dip
+
+    Returns:
+        str: the sequence of the dip
+    """
+    seg, start, end = dip_id.split('_')
+    seq = get_sequence(strain, seg)
+    return seq[int(start):int(end)-1]
+
+def get_dip_sequence(dip_id, strain):
+    seg, start, end = dip_id.split('_')
+    fl_seq = get_sequence(strain, seg)
+    seq_head = fl_seq[:int(start)]
+    seq_foot = fl_seq[int(end)-1:]
+    del_length = int(end)-int(start)
+    return seq_head + '*'*del_length + seq_foot
+
+def sequence_df(df, strain, isize=5):
+    """Generate a DataFrame with sequence information.
+
+    Args:
+        df (pandas.DataFrame): The input DataFrame containing the DIP candidates in the 'key' column. Nomenclature: {seg}_{start}_{end}
+        isize (int, optional): The size of the sequence before and after the start and end positions. Default is 5.
+
+    Returns:
+        pandas.DataFrame: A DataFrame with the following columns:
+            - 'key': The original key from the input DataFrame.
+            - 'seg': The segment extracted from the key.
+            - 'start': The start position extracted from the key.
+            - 'end': The end position extracted from the key.
+            - 'seq': The dip sequence obtained from the 'key'.
+            - 'deleted_sequence': The deleted sequence obtained from the 'key'.
+            - 'isize': The specified size for the before and after sequences.
+            - 'seq_before_start': The sequence before the start position of length 'isize'.
+            - 'seq_after_start': The sequence after the start position of length 'isize'.
+            - 'seq_before_end': The sequence before the end position of length 'isize'.
+            - 'seq_after_end': The sequence after the end position of length 'isize'.
+    """
+    res_df = pd.DataFrame(columns=['key','Segment', 'Start','End','seq', 'deleted_sequence', 'isize', 'full_seq', 'Strain', 'seq_before_start', 'seq_after_start',
+                                   'seq_before_end', 'seq_after_end', 'seq_around_deletion_junction'])
+    for k in df.key:
+        seq = get_dip_sequence(k, strain)
+        start = int(k.split('_')[1].split('_')[0])
+        end = int(k.split('_')[2])
+        seg = k.split('_')[0]
+        full_seq = get_sequence(strain, seg)
+        deleted_seq = get_deleted_sequence(k, strain)
+        seq_before_start = seq[start-isize:start]
+        seq_after_start = deleted_seq[:isize]
+        seq_before_end = deleted_seq[-isize:]
+        seq_after_end = seq[end+1:end+isize+1]
+
+        seq_around_deletion_junction = seq_before_start + seq_after_start + seq_before_end + seq_after_end
+        res_df = pd.concat([res_df, pd.DataFrame({'key':k, 'Segment':seg, 'Start':start, 'End':end, 'seq':seq, 'isize':isize, 'full_seq': full_seq, 'Strain': strain,
+                                'deleted_sequence':deleted_seq, 'seq_before_start':seq_before_start, 'seq_after_start':seq_after_start,
+                                'seq_before_end':seq_before_end, 'seq_after_end':seq_after_end, 'seq_around_deletion_junction': seq_around_deletion_junction}, index=[0])], ignore_index=True)
+    return res_df
+
+def preprocess(strain, df):
+    '''
+    
+    '''
+    df["key"] = df["Segment"] + "_" + df["Start"].map(str) + "_" + df["End"].map(str)
+    return sequence_df(df, strain)
+
+def generate_expected_data(k, v):
+    '''
+    
+    '''
+    for seg in SEGMENTS:
+        df = v.loc[v["Segment"] == seg]
+        if len(df) == 0:
+            continue
+        seq = get_sequence(k, seg)        
+        s = (int(df.Start.quantile(QUANT)), int(df.Start.quantile(1-QUANT)))
+        e = (int(df.End.quantile(QUANT)), int(df.End.quantile(1-QUANT)))
+        if "samp_df" in locals():
+            temp_df = generate_sampling_data(seq, s, e, N_SAMPLES)
+            temp_df["Segment"] = seg
+            samp_df = pd.concat([samp_df, temp_df], ignore_index=True)
+        else:
+            samp_df = generate_sampling_data(seq, s, e, N_SAMPLES)
+            samp_df["Segment"] = seg
+    
+    return samp_df
+
 ### create sequence DF
 def plot_heatmap(y,x,vals,ax, format='.2f', cmap='coolwarm', vmin=0, vmax=1, cbar=False,cbar_ax=None, cbar_kws=None):
     '''Plot heatmap for values in vals, with x (columns) and y (rows) as labels.'''
@@ -274,7 +364,6 @@ def plot_expected_vs_observed_nucleotide_enrichment_heatmaps(dfs, dfnames, expec
 
     return fig, axs
 
-
 def plot_direct_repeat_ratio_heatmaps(dfs, dfnames, height = 14, width = 10, nucleotides=['A','C','G','T']):
     """Plot heatmaps of nucleotide ratios around deletion junctions.
 
@@ -334,7 +423,6 @@ def plot_direct_repeat_ratio_heatmaps(dfs, dfnames, height = 14, width = 10, nuc
     plt.show()
 
     return fig, axs
-
 
 def plot_expected_vs_observed_direct_repeat_heatmaps(dfs, dfnames, expected_dfs , height = 14, width = 10, 
                                                  nucleotides=['A','C','G','T']):
@@ -427,98 +515,6 @@ def plot_expected_vs_observed_direct_repeat_heatmaps(dfs, dfnames, expected_dfs 
     plt.show()
 
     return fig, axs
-
-
-
-def get_deleted_sequence(dip_id, strain):
-    """return the sequence of a dip_id
-
-    Args:
-        dip_id (str): the id of the dip
-
-    Returns:
-        str: the sequence of the dip
-    """
-    seg, start, end = dip_id.split('_')
-    seq = get_sequence(strain, seg)
-    return seq[int(start):int(end)-1]
-
-def get_dip_sequence(dip_id, strain):
-    seg, start, end = dip_id.split('_')
-    fl_seq = get_sequence(strain, seg)
-    seq_head = fl_seq[:int(start)]
-    seq_foot = fl_seq[int(end)-1:]
-    del_length = int(end)-int(start)
-    return seq_head + '*'*del_length + seq_foot
-
-def sequence_df(df, strain, isize=5):
-    """Generate a DataFrame with sequence information.
-
-    Args:
-        df (pandas.DataFrame): The input DataFrame containing the DIP candidates in the 'key' column. Nomenclature: {seg}_{start}_{end}
-        isize (int, optional): The size of the sequence before and after the start and end positions. Default is 5.
-
-    Returns:
-        pandas.DataFrame: A DataFrame with the following columns:
-            - 'key': The original key from the input DataFrame.
-            - 'seg': The segment extracted from the key.
-            - 'start': The start position extracted from the key.
-            - 'end': The end position extracted from the key.
-            - 'seq': The dip sequence obtained from the 'key'.
-            - 'deleted_sequence': The deleted sequence obtained from the 'key'.
-            - 'isize': The specified size for the before and after sequences.
-            - 'seq_before_start': The sequence before the start position of length 'isize'.
-            - 'seq_after_start': The sequence after the start position of length 'isize'.
-            - 'seq_before_end': The sequence before the end position of length 'isize'.
-            - 'seq_after_end': The sequence after the end position of length 'isize'.
-    """
-    res_df = pd.DataFrame(columns=['key','Segment', 'Start','End','seq', 'deleted_sequence', 'isize', 'full_seq', 'Strain', 'seq_before_start', 'seq_after_start',
-                                   'seq_before_end', 'seq_after_end', 'seq_around_deletion_junction'])
-    for k in df.key:
-        seq = get_dip_sequence(k, strain)
-        start = int(k.split('_')[1].split('_')[0])
-        end = int(k.split('_')[2])
-        seg = k.split('_')[0]
-        full_seq = get_sequence(strain, seg)
-        deleted_seq = get_deleted_sequence(k, strain)
-        seq_before_start = seq[start-isize:start]
-        seq_after_start = deleted_seq[:isize]
-        seq_before_end = deleted_seq[-isize:]
-        seq_after_end = seq[end+1:end+isize+1]
-
-        seq_around_deletion_junction = seq_before_start + seq_after_start + seq_before_end + seq_after_end
-        res_df = pd.concat([res_df, pd.DataFrame({'key':k, 'Segment':seg, 'Start':start, 'End':end, 'seq':seq, 'isize':isize, 'full_seq': full_seq, 'Strain': strain,
-                                'deleted_sequence':deleted_seq, 'seq_before_start':seq_before_start, 'seq_after_start':seq_after_start,
-                                'seq_before_end':seq_before_end, 'seq_after_end':seq_after_end, 'seq_around_deletion_junction': seq_around_deletion_junction}, index=[0])], ignore_index=True)
-    return res_df
-
-def preprocess(strain, df):
-    '''
-    
-    '''
-    df["key"] = df["Segment"] + "_" + df["Start"].map(str) + "_" + df["End"].map(str)
-    return sequence_df(df, strain)
-
-def generate_expected_data(k, v):
-    '''
-    
-    '''
-    for seg in SEGMENTS:
-        df = v.loc[v["Segment"] == seg]
-        if len(df) == 0:
-            continue
-        seq = get_sequence(k, seg)        
-        s = (int(df.Start.quantile(QUANT)), int(df.Start.quantile(1-QUANT)))
-        e = (int(df.End.quantile(QUANT)), int(df.End.quantile(1-QUANT)))
-        if "samp_df" in locals():
-            temp_df = generate_sampling_data(seq, s, e, N_SAMPLES)
-            temp_df["Segment"] = seg
-            samp_df = pd.concat([samp_df, temp_df], ignore_index=True)
-        else:
-            samp_df = generate_sampling_data(seq, s, e, N_SAMPLES)
-            samp_df["Segment"] = seg
-    
-    return samp_df
 
 
 if __name__ == "__main__":
