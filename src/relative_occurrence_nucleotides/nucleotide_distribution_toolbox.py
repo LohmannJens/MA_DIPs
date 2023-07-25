@@ -283,14 +283,14 @@ def get_deleted_sequence(dip_id, strain):
     """
     seg, start, end = dip_id.split('_')
     seq = get_sequence(strain, seg)
-    return seq[int(start):int(end)]
+    return seq[int(start):int(end)-1]
 
 def get_dip_sequence(dip_id, strain):
     seg, start, end = dip_id.split('_')
     fl_seq = get_sequence(strain, seg)
     seq_head = fl_seq[:int(start)]
-    seq_foot = fl_seq[int(end):]
-    del_length = int(end)-int(start) + 1
+    seq_foot = fl_seq[int(end)-1:]
+    del_length = int(end)-int(start)
     return seq_head + '*'*del_length + seq_foot
 
 def sequence_df(df, strain, isize=5):
