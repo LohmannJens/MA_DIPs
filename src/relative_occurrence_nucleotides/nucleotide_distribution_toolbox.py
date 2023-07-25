@@ -6,6 +6,7 @@ import numpy as np
 #two-way anova
 import statsmodels.api as sm
 from statsmodels.formula.api import ols
+from decimal import Decimal, ROUND_HALF_UP
 
 #binomial test
 import scipy.stats as stats
@@ -17,6 +18,9 @@ import seaborn as sns
 sys.path.insert(0, "..")
 from utils import get_sequence, load_alnaji_excel, load_short_reads, load_full_alnaji2021, load_pelz_dataset, load_kupke, generate_sampling_data
 from utils import SEGMENTS, QUANT, N_SAMPLES
+
+sys.path.insert(0, "../direct_repeats")
+from search_direct_repeats import count_direct_repeats_overall, include_correction
 
 
 def create_nucleotide_ratio_matrix(df, col):
@@ -110,7 +114,7 @@ def plot_heatmap(y,x,vals,ax, format='.2f', cmap='coolwarm', vmin=0, vmax=1, cba
     return ax
 
 def plot_nucleotide_ratio_around_deletion_junction_heatmaps(dfs, dfnames, col='seq_around_deletion_junction', 
-                                                            height = 20, width = 16, nucleotides=['A','C','G','T']):
+                                                            height = 14, width = 10, nucleotides=['A','C','G','T']):
     """Plot heatmaps of nucleotide ratios around deletion junctions.
 
     Args:
@@ -178,7 +182,7 @@ def plot_nucleotide_ratio_around_deletion_junction_heatmaps(dfs, dfnames, col='s
 
     return fig, axs
 
-def plot_expected_vs_observed_nucleotide_enrichment_heatmaps(dfs, dfnames, expected_dfs , col='seq_around_deletion_junction', height = 20, width = 16, 
+def plot_expected_vs_observed_nucleotide_enrichment_heatmaps(dfs, dfnames, expected_dfs , col='seq_around_deletion_junction', height = 14, width = 10, 
                                                  nucleotides=['A','C','G','T']):
     """Plot difference of expected vs observed nucleotide enrichment around deletion junctions as heatmap.
 
@@ -271,6 +275,160 @@ def plot_expected_vs_observed_nucleotide_enrichment_heatmaps(dfs, dfnames, expec
     return fig, axs
 
 
+def plot_direct_repeat_ratio_heatmaps(dfs, dfnames, height = 14, width = 10, nucleotides=['A','C','G','T']):
+    """Plot heatmaps of nucleotide ratios around deletion junctions.
+
+    Args:
+        dfs (list of pandas.DataFrame): The list of DataFrames containing the data. 
+                                        Each dataframe should be preprocessed with sequence_df(df)
+        dfnames (list of str): The names associated with each DataFrame in `dfs`.
+        col (str, optional): The column name in the DataFrames that contains the sequence segments of interest. 
+                             Default is 'seq_around_deletion_junction'.
+        height (float, optional): The height of the figure in inches. Default is 20.
+        width (float, optional): The width of the figure in inches. Default is 16.
+        nucleotides (list of str, optional): The nucleotides to be plotted. Default is ['A', 'C', 'G', 'T'].
+
+    Returns:
+        tuple: A tuple containing the figure and the axes of the subplots.
+            - fig (matplotlib.figure.Figure): The generated figure.
+            - axs (numpy.ndarray of matplotlib.axes.Axes): The axes of the subplots.
+
+    """
+    fig, axs = plt.subplots(figsize=(width,height))
+
+    x = list()
+    y = list()
+    vals = list()
+        
+    # calculate direct repeats
+    for dfname, df in zip(dfnames, dfs):
+        final_d = dict()
+
+        for s in SEGMENTS:
+            df_s = df[df["Segment"] == s]
+            if len(df_s) == 0:
+                continue
+            seq = get_sequence(df_s["Strain"].unique()[0], s)
+            
+            counts, _ = count_direct_repeats_overall(df, seq, mode=1)
+            counts = include_correction(counts)
+
+            for k, v in counts.items():
+                if k in final_d:
+                    final_d[k] += v
+                else:
+                    final_d[k] = v
+
+        x.extend(final_d.keys())
+        y.extend([dfname for _ in range(16)])
+        final = np.array(list(final_d.values()))
+        vals.extend(final/final.sum())
+                        
+    axs = plot_heatmap(x,y,vals, axs, vmin=0, vmax=1, cbar=False, format='.5f')
+    axs.set_title('direct repeat ratios around deletion junction')
+    axs.set_ylabel('')
+    axs.set_yticks([ytick + 0.5 for ytick in range(len(dfnames))])
+    axs.set_xlabel('direct repeat length')  
+          
+    fig.tight_layout()
+    plt.show()
+
+    return fig, axs
+
+
+def plot_expected_vs_observed_direct_repeat_heatmaps(dfs, dfnames, expected_dfs , height = 14, width = 10, 
+                                                 nucleotides=['A','C','G','T']):
+    """Plot difference of expected vs observed nucleotide enrichment around deletion junctions as heatmap.
+
+    Args:
+        dfs (list of pandas.DataFrame): The list of DataFrames containing the data.
+                                        data should be preprocessed with sequence_df(df)
+        dfnames (list of str): The names associated with each DataFrame in `dfs`.
+        expected_df (pandas.DataFrame): The DataFrame containing the expected data.
+                                        data should be preprocessed with sequence_df(df)
+        col (str, optional): The column name in the DataFrames that contains the sequences of interest. 
+                             Default is 'seq_around_deletion_junction'.
+        height (float, optional): The height of the figure in inches. Default is 20.
+        width (float, optional): The width of the figure in inches. Default is 16.
+        nucleotides (list of str, optional): The nucleotides to be plotted. Default is ['A', 'C', 'G', 'T'].
+
+    Returns:
+        tuple: A tuple containing the figure and the axes of the subplots.
+            - fig (matplotlib.figure.Figure): The generated figure.
+            - axs (numpy.ndarray of matplotlib.axes.Axes): The axes of the subplots.
+
+    """
+    fig, axs = plt.subplots(figsize=(width,height))
+
+    x = list()
+    y = list()
+    vals = list()
+        
+    # calculate direct repeats
+    for dfname, df, expected_df in zip(dfnames, dfs, expected_dfs):
+        final_d = dict()
+        expected_final_d = dict()
+        pval_labels = list()
+
+        for s in SEGMENTS:
+            df_s = df[df["Segment"] == s]
+            expected_df_s = expected_df[expected_df["Segment"] == s]
+            n_samples = len(df_s)
+            if n_samples == 0:
+                continue
+
+            seq = get_sequence(df_s["Strain"].unique()[0], s)
+            
+            counts, _ = count_direct_repeats_overall(df_s, seq, mode=1)
+            counts = include_correction(counts)
+            for k, v in counts.items():
+                if k in final_d:
+                    final_d[k] += v
+                else:
+                    final_d[k] = v
+
+            expected_counts, _ = count_direct_repeats_overall(expected_df_s, seq, mode=1)
+            expected_counts = include_correction(expected_counts)
+            for k, v in expected_counts.items():
+                if k in expected_final_d:
+                    expected_final_d[k] += v
+                else:
+                    expected_final_d[k] = v
+
+        # test statistical significance
+      #  f_obs = list()
+       # f_exp = list()
+        #for a in final_d.keys():
+         #   f_obs.extend([a]*int(Decimal(final_d[a]).to_integral_value(rounding=ROUND_HALF_UP)))
+          #  f_exp.extend([a]*int(Decimal(expected_final_d[a]).to_integral_value(rounding=ROUND_HALF_UP)))
+        #stat, pvalue = stats.ks_2samp(f_obs, f_exp)
+
+        final = np.array(list(final_d.values()))
+        expected_final = np.array(list(expected_final_d.values()))
+        f_obs = final/final.sum()
+        f_exp = expected_final/expected_final.sum()
+        stat, pvalue = stats.chisquare(f_obs, f_exp)
+
+        symbol=get_p_value_symbol(pvalue)
+
+        x.extend(final_d.keys())
+        y.extend([f"{dfname} {symbol}" for _ in range(16)])
+        final = np.array(list(final_d.values()))
+        expected_final = np.array(list(expected_final_d.values()))
+        vals.extend(final/final.sum() - expected_final/expected_final.sum())
+
+    m = abs(min(vals)) if abs(min(vals)) > max(vals) else max(vals)
+    axs = plot_heatmap(x,y,vals, axs, vmin=-m, vmax=m, cbar=True, format='.5f')
+    axs.set_title('direct repeat ratio difference (observed-expected)')
+    axs.set_ylabel('')
+    axs.set_xlabel('direct repeat length')
+          
+    fig.tight_layout()
+    plt.show()
+
+    return fig, axs
+
+
 
 def get_deleted_sequence(dip_id, strain):
     """return the sequence of a dip_id
@@ -314,13 +472,14 @@ def sequence_df(df, strain, isize=5):
             - 'seq_before_end': The sequence before the end position of length 'isize'.
             - 'seq_after_end': The sequence after the end position of length 'isize'.
     """
-    res_df = pd.DataFrame(columns=['key','seg', 'start','end','seq', 'deleted_sequence', 'isize', 'seq_before_start', 'seq_after_start',
+    res_df = pd.DataFrame(columns=['key','Segment', 'Start','End','seq', 'deleted_sequence', 'isize', 'full_seq', 'Strain', 'seq_before_start', 'seq_after_start',
                                    'seq_before_end', 'seq_after_end', 'seq_around_deletion_junction'])
     for k in df.key:
         seq = get_dip_sequence(k, strain)
         start = int(k.split('_')[1].split('_')[0])
         end = int(k.split('_')[2])
         seg = k.split('_')[0]
+        full_seq = get_sequence(strain, seg)
         deleted_seq = get_deleted_sequence(k, strain)
         seq_before_start = seq[start-isize:start]
         seq_after_start = deleted_seq[:isize]
@@ -328,9 +487,8 @@ def sequence_df(df, strain, isize=5):
         seq_after_end = seq[end+1:end+isize+1]
 
         seq_around_deletion_junction = seq_before_start + seq_after_start + seq_before_end + seq_after_end
-        res_df = pd.concat([res_df, pd.DataFrame({'key':k, 'seg':seg, 'start':start, 'end':end, 'seq':seq, 'isize':isize,
-                                'deleted_sequence':deleted_seq,
-                                'seq_before_start':seq_before_start, 'seq_after_start':seq_after_start,
+        res_df = pd.concat([res_df, pd.DataFrame({'key':k, 'Segment':seg, 'Start':start, 'End':end, 'seq':seq, 'isize':isize, 'full_seq': full_seq, 'Strain': strain,
+                                'deleted_sequence':deleted_seq, 'seq_before_start':seq_before_start, 'seq_after_start':seq_after_start,
                                 'seq_before_end':seq_before_end, 'seq_after_end':seq_after_end, 'seq_around_deletion_junction': seq_around_deletion_junction}, index=[0])], ignore_index=True)
     return res_df
 
@@ -341,18 +499,26 @@ def preprocess(strain, df):
     df["key"] = df["Segment"] + "_" + df["Start"].map(str) + "_" + df["End"].map(str)
     return sequence_df(df, strain)
 
-def generate_expected_data(strain, v):
+def generate_expected_data(k, v):
     '''
     
     '''
     for seg in SEGMENTS:
         df = v.loc[v["Segment"] == seg]
+        if len(df) == 0:
+            continue
         seq = get_sequence(k, seg)        
         s = (int(df.Start.quantile(QUANT)), int(df.Start.quantile(1-QUANT)))
         e = (int(df.End.quantile(QUANT)), int(df.End.quantile(1-QUANT)))
-        samp_df = generate_sampling_data(seq, s, e, N_SAMPLES)
-        samp_df["Segment"] = seg
-        return samp_df
+        if "samp_df" in locals():
+            temp_df = generate_sampling_data(seq, s, e, N_SAMPLES)
+            temp_df["Segment"] = seg
+            samp_df = pd.concat([samp_df, temp_df], ignore_index=True)
+        else:
+            samp_df = generate_sampling_data(seq, s, e, N_SAMPLES)
+            samp_df["Segment"] = seg
+    
+    return samp_df
 
 
 if __name__ == "__main__":
@@ -371,13 +537,7 @@ if __name__ == "__main__":
     df_alnaji = load_full_alnaji2021()
     dfs.append(preprocess("PR8", df_alnaji))
     dfnames.append("Alnaji2021")
-    expected_dfs.append(preprocess("PR8", generate_expected_data("PR8", v)))
-
-    df_pelz = load_pelz_dataset()
-    for k, v in df_pelz.items():
-        dfs.append(preprocess(k, v))
-        dfnames.append("Pelz")
-        expected_dfs.append(preprocess(k, generate_expected_data(k, v)))
+    expected_dfs.append(preprocess("PR8", generate_expected_data("PR8", df_alnaji)))
 
     df_kupke = load_kupke(True)
     for k, v in df_kupke.items():
@@ -385,5 +545,33 @@ if __name__ == "__main__":
         dfnames.append("Kupke")
         expected_dfs.append(preprocess(k, generate_expected_data(k, v)))
 
-   # plot_nucleotide_ratio_around_deletion_junction_heatmaps(dfs, dfnames, col='seq_around_deletion_junction', nucleotides=['A','C','G','U'])
+    df_alnaji = load_full_alnaji2021()
+    for t in ["3hpi", "6hpi", "14hpi_internal", "14hpi_external", "24hpi"]:
+        df = df_alnaji[df_alnaji["Timepoint"] == t].copy()
+        dfs.append(preprocess("PR8", df))
+        dfnames.append(f"Alnaji2021_{t}")
+        expected_dfs.append(preprocess("PR8", generate_expected_data("PR8", df)))      
+    
+    df_pelz = load_pelz_dataset()
+    for k, v in df_pelz.items():
+        dfs.append(preprocess(k, v))
+        dfnames.append("Pelz")
+        expected_dfs.append(preprocess(k, generate_expected_data(k, v)))
+
+    df_pelz = load_pelz_dataset(long_dirna=True)
+    for k, v in df_pelz.items():
+        dfs.append(preprocess(k, v))
+        dfnames.append("Pelz_long")
+        expected_dfs.append(preprocess(k, generate_expected_data(k, v)))
+    
+    df_pelz = load_pelz_dataset(long_dirna=True, de_novo=True)
+    for k, v in df_pelz.items():
+        dfs.append(preprocess(k, v))
+        dfnames.append("Pelz_denovo")
+        expected_dfs.append(preprocess(k, generate_expected_data(k, v)))
+
+    plot_nucleotide_ratio_around_deletion_junction_heatmaps(dfs, dfnames, col='seq_around_deletion_junction', nucleotides=['A','C','G','U'])
     plot_expected_vs_observed_nucleotide_enrichment_heatmaps(dfs, dfnames, expected_dfs , col='seq_around_deletion_junction', nucleotides=['A','C','G','U'])
+
+    plot_direct_repeat_ratio_heatmaps(dfs, dfnames, nucleotides=['A','C','G','U'])
+    plot_expected_vs_observed_direct_repeat_heatmaps(dfs, dfnames, expected_dfs, nucleotides=['A','C','G','U'])

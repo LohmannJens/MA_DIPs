@@ -197,7 +197,7 @@ def load_pelz_dataset(de_novo: bool=False,
 
     if de_novo:
         d = data_dict["PR8"]
-        d = d[d["class"].isin(["de_novo_loss", "de_novo_gain"])]
+        d = d[d["class"].isin(["de novo loss", "de novo gain"])]
         data_dict["PR8"] = d
 
     return data_dict
