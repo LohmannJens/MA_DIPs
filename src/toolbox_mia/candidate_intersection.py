@@ -1,0 +1,134 @@
+
+import sys
+
+import pandas as pd
+import numpy as np
+
+#plotting
+import matplotlib.pyplot as plt
+import seaborn as sns
+
+from collections import Counter
+
+
+sys.path.insert(0, "..")
+from utils import get_sequence, load_alnaji_excel, load_short_reads, load_full_alnaji2021, load_pelz_dataset, load_kupke, generate_sampling_data
+from utils import SEGMENTS, QUANT, N_SAMPLES
+
+sys.path.insert(0, "../direct_repeats")
+from search_direct_repeats import count_direct_repeats_overall, include_correction
+
+
+def get_p_value_symbol(p):
+    if p < 0.00001:
+        return "*****"
+    if p < 0.0001:
+        return "****"
+    elif p < 0.001:
+        return "***"
+    elif p < 0.01:
+        return "**"
+    elif p < 0.05:
+        return "*"
+    else:
+        return ""
+
+def preprocess(strain, df):
+    '''
+    
+    '''
+    df["DI"] = df["Segment"] + "_" + df["Start"].map(str) + "_" + df["End"].map(str)
+    return df
+
+def plot_heatmap(y,x,vals,ax, format='.2f', cmap='coolwarm', vmin=0, vmax=1, cbar=False,cbar_ax=None, cbar_kws=None):
+    '''Plot heatmap for values in vals, with x (columns) and y (rows) as labels.'''
+    df = pd.DataFrame({'x':x,'y':y,'vals':vals})
+    df = pd.pivot_table(df, index='x', columns='y', values='vals', sort=False)
+    ax = sns.heatmap(df, fmt=format, annot=True, vmin=vmin, vmax=vmax, ax=ax, cbar=cbar, cmap=cmap, cbar_ax=cbar_ax, cbar_kws=cbar_kws)
+    return ax
+
+
+def generate_overlap_matrix_plot(dfs: list, dfnames: list):
+    '''
+    
+    '''
+    # initialize an empty matrix
+    matrix_size = len(dfs)
+    matrix = [[0] * matrix_size for _ in range(matrix_size)]
+
+    # calculate the differences and populate the matrix
+    for i in range(matrix_size):
+        for j in range(matrix_size):
+            set1 = set(dfs[i]["DI"])
+            set2 = set(dfs[j]["DI"])
+
+            matrix[i][j] = len(set1 & set2) / (len(set1) + len(set2))
+
+    plt.imshow(matrix, cmap='viridis', interpolation='nearest')
+    plt.colorbar()
+    plt.xticks(np.arange(len(dfnames)), dfnames)
+    plt.yticks(np.arange(len(dfnames)), dfnames)
+    plt.xticks(rotation=45)
+    plt.show()
+
+
+def generate_maximum_overlap_candidates(dfs: list, dfnames: list):
+    '''
+    
+    '''
+    all_candidates = list()
+    for df in dfs:
+        all_candidates.extend(df["DI"].tolist())
+
+    candidate_counts = Counter(all_candidates)
+
+    for cand, count in candidate_counts.items():
+        if count > 5:
+            print(f"{cand}: {count}")
+
+if __name__ == "__main__":
+    # load all data frames and preprocess with sequence_df(df)
+    dfs = list()
+    dfnames = list()
+
+    '''
+    cleaned_data_dict = load_alnaji_excel()
+    all_reads_dict = load_short_reads(cleaned_data_dict)
+    for k, v in all_reads_dict.items():
+        dfs.append(preprocess(k, v))
+        dfnames.append(k)
+    
+    df_alnaji = load_full_alnaji2021()
+    df_alnaji = df_alnaji.groupby(["DI"]).sum(["NGS_read_count"]).reset_index()
+    dfs.append(preprocess("PR8", df_alnaji))
+    dfnames.append("Alnaji2021")
+    
+    df_kupke = load_kupke(True)
+    for k, v in df_kupke.items():
+        dfs.append(preprocess(k, v))
+        dfnames.append("Kupke")
+    '''
+    df_alnaji = load_full_alnaji2021()
+    for t in ["3hpi", "6hpi", "14hpi_internal", "14hpi_external", "24hpi"]:
+        df = df_alnaji[df_alnaji["Timepoint"] == t].copy()
+        df = df.groupby(["DI", "Segment", "Start", "End"]).sum(["NGS_read_count"]).reset_index()
+        dfs.append(preprocess("PR8", df))
+        dfnames.append(f"Alnaji2021_{t}")   
+    '''
+    df_pelz = load_pelz_dataset()
+    for k, v in df_pelz.items():
+        dfs.append(preprocess(k, v))
+        dfnames.append("Pelz")
+    '''
+    df_pelz = load_pelz_dataset(long_dirna=True)
+    for k, v in df_pelz.items():
+        dfs.append(preprocess(k, v))
+        dfnames.append("Pelz_long")
+    '''
+    df_pelz = load_pelz_dataset(long_dirna=True, de_novo=True)
+    for k, v in df_pelz.items():
+        dfs.append(preprocess(k, v))
+        dfnames.append("Pelz_denovo")
+    '''
+    generate_overlap_matrix_plot(dfs, dfnames)
+    generate_maximum_overlap_candidates(dfs, dfnames)
