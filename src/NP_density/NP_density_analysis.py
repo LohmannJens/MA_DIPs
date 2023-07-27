@@ -262,61 +262,61 @@ def compare_position_with_density(data: dict,
                 return y
         return 0
 
+    thresh_dict = dict({
+        "PB2": 800, "PB1": 600, "PA": 700, "HA": 700, "NP": 600, "NA": 600, "M": 900, "NS": 500
+    })
+
+    obs_ratios = list()
+    exp_ratios = list()
+
     plt.rc("font", size=18)
     for k, v in data.items():
         fig, ax = plt.subplots(1, 1, figsize=(10, 5), tight_layout=True)
 
         for i, s in enumerate(SEGMENTS):
             count_dict = v[s]
-            n = len(count_dict)
             if len(count_dict) == 0:
+                obs_ratios.append(0.0)
+                exp_ratios.append(0.0)
                 continue
 
-            exp_mode = "full"
-            exp_mode = "sampling"
-            if exp_mode == "sampling":
-                # get expected values by sampling approach
-                seq = get_sequence(k, s)
-                seg_reads = all_reads[k].loc[all_reads[k]["Segment"] == s]
-                start = (int(seg_reads.Start.quantile(QUANT)), int(seg_reads.Start.quantile(1-QUANT)))
-                end = (int(seg_reads.End.quantile(QUANT)), int(seg_reads.End.quantile(1-QUANT)))
-                sampling_data = generate_sampling_data(seq, start, end, N_SAMPLES)
-                samp_pos = sampling_data["Start"].tolist() + sampling_data["End"].tolist()
+            # get expected values by sampling approach
+            seq = get_sequence(k, s)
+            seg_reads = all_reads[k].loc[all_reads[k]["Segment"] == s]
+            start = (int(seg_reads.Start.quantile(QUANT)), int(seg_reads.Start.quantile(1-QUANT)))
+            end = (int(seg_reads.End.quantile(QUANT)), int(seg_reads.End.quantile(1-QUANT)))
+            sampling_data = generate_sampling_data(seq, start, end, N_SAMPLES)
+            samp_pos = sampling_data["Start"].tolist()
                 
-                # grouping by NP high/low
-                y = [get_dens_at_pos(p, density_data[s]) for p in count_dict.keys()]
-                y_exp = [get_dens_at_pos(p, density_data[s]) for p in samp_pos]
-                below = y.count(0)
-                below_exp = y_exp.count(0)
-                obs_ratio = below/len(y)
-                exp_ratio = below_exp/len(y_exp)
+            rel_pos = count_dict.keys()
+            rel_pos = [element for element in rel_pos if element < thresh_dict[s]]
+            rel_pos_samp = [element for element in samp_pos if element < thresh_dict[s]]
+            n = len(rel_pos)
 
-            elif exp_mode == "full":
-                # get expected with full sequence
-                y = list()
-                for p in count_dict.keys():
-                    y.append(get_dens_at_pos(p, density_data[s]))
+            # grouping by NP high/low
+            y = [get_dens_at_pos(p, density_data[s]) for p in rel_pos]
+            y_exp = [get_dens_at_pos(p, density_data[s]) for p in rel_pos_samp]
+            below = y.count(0)
+            below_exp = y_exp.count(0)
+            obs_ratio = below/len(y)
+            exp_ratio = below_exp/len(y_exp)
+          
+            obs_ratios.append(obs_ratio)
+            exp_ratios.append(exp_ratio)
 
-                seq = get_sequence(k, s)
-                y_exp = [get_dens_at_pos(p, density_data[s]) for p in np.arange(0, len(seq)+1)]
-                
-                below = sum(map(lambda x : x > 10, y))
-                obs_ratio = below/len(y)
-                below_exp = sum(map(lambda x : x > 10, y_exp))
-                exp_ratio = below_exp/len(y_exp)
-            
             # statistical testing
             result = stats.binomtest(below, n, exp_ratio)
             symbol = get_stat_symbol(result.pvalue)
+            ax.annotate(symbol, (i, max(obs_ratio, exp_ratio)), horizontalalignment="center")
 
-            # plotting of the results
-            ax.bar([f"{s} obs", f"{s} exp"], [obs_ratio, exp_ratio])
-            ax.annotate(symbol, (i*2+0.5, max(obs_ratio, exp_ratio)), horizontalalignment="center")
-            ax.set_xlabel("Segments")
-            ax.set_ylabel("$r_{NP}$")
-            ax.set_xticks(ticks=np.arange(0,16), labels=["ob.", "ex."]*8)
-
-        plt.legend(SEGMENTS, bbox_to_anchor=(1.0, 1.0))
+        bar_width = 0.35
+        x = np.arange(len(SEGMENTS))
+        ax.bar(x - bar_width/2, obs_ratios, bar_width, label="expected")
+        ax.bar(x + bar_width/2, exp_ratios, bar_width, label="observed")
+        ax.set_xticks(x, SEGMENTS)
+        ax.set_xlabel("Segment")
+        ax.set_ylabel("$r_{NP}$")
+        plt.legend(bbox_to_anchor=(1.0, 1.0))
         fig.suptitle(f"{STRAINS[k]}")
 
         savepath = os.path.join(RESULTSPATH, "NP_density", f"{k}_high_low_NP_areas.png")
@@ -325,13 +325,15 @@ def compare_position_with_density(data: dict,
 
 
 if __name__ == "__main__":
+    plt.style.use('seaborn')
+
     density_path = os.path.join(DATAPATH, "Lee2017", "csv_NPdensity")
     cleaned_data_dict = load_alnaji_excel()
     all_reads_dict = load_short_reads(cleaned_data_dict)
     del all_reads_dict["NC"]
     del all_reads_dict["Perth"]
     del all_reads_dict["BLEE"]
-
+    
     # Plotting NP data (from Sage 2019) against junction sites
     #    Cal07 data from Alnaji 2019
     Cal07_dens_path = os.path.join(density_path, "Cal07")
@@ -356,6 +358,6 @@ if __name__ == "__main__":
     PR8_high_dens_data = load_Williams_density_data(PR8_dens_path, "high")
     PR8_low_dens_data = load_Williams_density_data(PR8_dens_path, "low")
     PR8_reads_dict = {"PR8": load_full_alnaji2021()}
-    PR8_reads_dict = load_pelz_dataset()
+  #  PR8_reads_dict = load_pelz_dataset()
     PR8_NGS_count_dict = map_positions_to_density(PR8_reads_dict, PR8_high_dens_data, PR8_low_dens_data)
     compare_position_with_density(PR8_NGS_count_dict, PR8_high_dens_data, PR8_reads_dict)
