@@ -312,3 +312,21 @@ def load_full_alnaji2021()-> dict:
 
     return data_df
 
+def load_WSN_data(source: str)-> dict:
+    '''
+        Loads junction sites data for WSN strain from Boussier 2020.
+        Formats it in the same way as the dataset from Alnaji 2019.
+        :param source: Indicating which source to use either Boussier or Mendes
+
+        :return: dictionary with one key (strain), value (data frame) pair
+    '''
+    if source == "Boussier":
+        dir = os.path.join(DATAPATH, "Boussier2020", "Supplemental_Table_S2.xlsx")
+        df = pd.read_excel(dir, sheet_name=3, na_values=["", "None"], keep_default_na=False)
+        df = df[df["Virus"] == "WT"].reset_index(drop=True)
+    elif source == "Mendes":
+        dir = os.path.join(DATAPATH, "Mendes2021", "Mendes_combined.xlsx")
+        df = pd.read_excel(dir, na_values=["", "None"], keep_default_na=False)
+
+    data = dict({"WSN": df})
+    return data
