@@ -144,7 +144,8 @@ def load_WSN_data(source: str)-> dict:
 
 
 def map_positions_to_density(data: dict,
-                             density_data: dict
+                             density_data: dict,
+                             density_data_2: dict=dict()
                              )-> dict:
     '''
         Maps the NP density to the start and end position of the deletion
@@ -182,8 +183,17 @@ def map_positions_to_density(data: dict,
                 y = 0
                 width = l[j+1] - x
                 height = max(counts) if len(counts) != 0 else 1
-                axs[i].add_patch(Rectangle((x, y), width, height, alpha=0.2, color="g"))
+                axs[i].add_patch(Rectangle((x, y), width, height, alpha=0.2, color="r"))
             
+            if density_data_2:
+                l = density_data_2[s]["x"].tolist()
+                for j in range(2, len(l)-1, 4):
+                    x = l[j]
+                    y = 0
+                    width = l[j+1] - x
+                    height = max(counts) if len(counts) != 0 else 1
+                    axs[i].add_patch(Rectangle((x, y), width, height, alpha=0.2, color="g"))
+                
             axs[i].set_title(f"{s}")
             axs[i].set_xlim(left=0, right=max(density_data[s]["x"]))
             axs[i].set_ylim(bottom=0)
@@ -343,9 +353,9 @@ if __name__ == "__main__":
     # NP data from Williams 2021 they define high and low areas
     #   PR8 data from Pelz and Alnaji2021
     PR8_dens_path = os.path.join(density_path, "PR8")
-    PR8_dens_data = load_Williams_density_data(PR8_dens_path, "low")
-    PR8_dens_data = load_Williams_density_data(PR8_dens_path, "high")
+    PR8_high_dens_data = load_Williams_density_data(PR8_dens_path, "high")
+    PR8_low_dens_data = load_Williams_density_data(PR8_dens_path, "low")
     PR8_reads_dict = {"PR8": load_full_alnaji2021()}
     PR8_reads_dict = load_pelz_dataset()
-    PR8_NGS_count_dict = map_positions_to_density(PR8_reads_dict, PR8_dens_data)
-    compare_position_with_density(NGS_count_dict, Cal07_dens_data, all_reads_dict)
+    PR8_NGS_count_dict = map_positions_to_density(PR8_reads_dict, PR8_high_dens_data, PR8_low_dens_data)
+    compare_position_with_density(PR8_NGS_count_dict, PR8_high_dens_data, PR8_reads_dict)
