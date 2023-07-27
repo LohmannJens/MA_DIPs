@@ -171,7 +171,8 @@ def get_stat_symbol(p: float)-> str:
 
 def load_pelz_dataset(de_novo: bool=False,
                       long_dirna: bool=False,
-                      by_time: bool=False)-> dict:
+                      by_time: bool=False,
+                      follow_up: bool=False)-> dict:
     '''
         Loads the data from Pelz et al 2021 publication.
         Is structured the same way as data from Alnaji 2019.
@@ -186,6 +187,8 @@ def load_pelz_dataset(de_novo: bool=False,
         filename = "NGS_SC_3_cutoffMPI_numbers_long_DI_RNAs.xlsx"
     elif by_time:
         filename = "ShortDeletions_by_timepoints.xlsx"
+    elif follow_up:
+        filename = "Follow_up_ExpA.xlsx"
     else:
         filename = "ShortDeletions_AbsoluteValues.xlsx"
     file_path = os.path.join(DATAPATH, "Pelz2021", filename)

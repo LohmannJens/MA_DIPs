@@ -124,7 +124,7 @@ def get_dip_sequence(dip_id, strain):
     seq_head = fl_seq[:int(start)]
     seq_foot = fl_seq[int(end)-1:]
     del_length = int(end)-int(start)
-    return seq_head + '*'*del_length + seq_foot
+    return seq_head + '*'*del_length + seq_foot, seq_head, seq_foot
 
 def sequence_df(df, strain, isize=5):
     """Generate a DataFrame with sequence information.
@@ -150,16 +150,16 @@ def sequence_df(df, strain, isize=5):
     res_df = pd.DataFrame(columns=['key','Segment', 'Start','End','seq', 'deleted_sequence', 'isize', 'full_seq', 'Strain', 'seq_before_start', 'seq_after_start',
                                    'seq_before_end', 'seq_after_end', 'seq_around_deletion_junction'])
     for k in df.key:
-        seq = get_dip_sequence(k, strain)
+        seq, seq_head, seq_foot = get_dip_sequence(k, strain)
         start = int(k.split('_')[1].split('_')[0])
         end = int(k.split('_')[2])
         seg = k.split('_')[0]
         full_seq = get_sequence(strain, seg)
         deleted_seq = get_deleted_sequence(k, strain)
-        seq_before_start = seq[start-isize:start]
+        seq_before_start = seq_head[-isize:]
         seq_after_start = deleted_seq[:isize]
         seq_before_end = deleted_seq[-isize:]
-        seq_after_end = seq[end+1:end+isize+1]
+        seq_after_end = seq_foot[:isize]
 
         seq_around_deletion_junction = seq_before_start + seq_after_start + seq_before_end + seq_after_end
         res_df = pd.concat([res_df, pd.DataFrame({'key':k, 'Segment':seg, 'Start':start, 'End':end, 'seq':seq, 'isize':isize, 'full_seq': full_seq, 'Strain': strain,
@@ -523,6 +523,7 @@ if __name__ == "__main__":
     dfnames = list()
     expected_dfs = list()
 
+
     cleaned_data_dict = load_alnaji_excel()
     all_reads_dict = load_short_reads(cleaned_data_dict)
     for k, v in all_reads_dict.items():
@@ -565,9 +566,25 @@ if __name__ == "__main__":
         dfs.append(preprocess(k, v))
         dfnames.append("Pelz_denovo")
         expected_dfs.append(preprocess(k, generate_expected_data(k, v)))
+    '''
+    df_pelz = load_pelz_dataset(by_time=True)
+    for k, v in df_pelz.items():
+        for t in ["VB3-Saat","VB3-7","VB3-8","VB3-9","VB3-13","VB3-14","VB3-15","VB3-16","VB3-17","VB3-22","VB3-24","VB3-25","VB3-31","VB3-32","VB3-33","VB3-38","VB3-40","VB3-41","VB3-42","VB3-45","VB3-46","VB3-47","VB3-48"]:
+            df = v[v[t] != 0].copy()
+            dfs.append(preprocess(k, df))
+            dfnames.append(f"Pelz_{t}")
+            expected_dfs.append(preprocess(k, generate_expected_data(k, df)))
 
-    plot_nucleotide_ratio_around_deletion_junction_heatmaps(dfs, dfnames, col='seq_around_deletion_junction', nucleotides=['A','C','G','U'])
-    plot_expected_vs_observed_nucleotide_enrichment_heatmaps(dfs, dfnames, expected_dfs , col='seq_around_deletion_junction', nucleotides=['A','C','G','U'])
+    df_pelz = load_pelz_dataset(follow_up=True)
+    for k, v in df_pelz.items():
+        for t in ["A1", "A2", "A3", "A4", "A5"]:
+            df = v[v[t] != 0].copy()
+            dfs.append(preprocess(k, df))
+            dfnames.append(f"Pelz_{t}")
+            expected_dfs.append(preprocess(k, generate_expected_data(k, df)))
+    '''
+ #   plot_nucleotide_ratio_around_deletion_junction_heatmaps(dfs, dfnames, col='seq_around_deletion_junction', nucleotides=['A','C','G','U'])
+  #  plot_expected_vs_observed_nucleotide_enrichment_heatmaps(dfs, dfnames, expected_dfs , col='seq_around_deletion_junction', nucleotides=['A','C','G','U'])
 
     plot_direct_repeat_ratio_heatmaps(dfs, dfnames, nucleotides=['A','C','G','U'])
     plot_expected_vs_observed_direct_repeat_heatmaps(dfs, dfnames, expected_dfs, nucleotides=['A','C','G','U'])
