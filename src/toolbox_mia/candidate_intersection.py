@@ -108,12 +108,13 @@ if __name__ == "__main__":
         dfs.append(preprocess(k, v))
         dfnames.append("Kupke")
     '''
-    df_alnaji = load_full_alnaji2021()
-    for t in ["3hpi", "6hpi", "14hpi_internal", "14hpi_external", "24hpi"]:
-        df = df_alnaji[df_alnaji["Timepoint"] == t].copy()
-        df = df.groupby(["DI", "Segment", "Start", "End"]).sum(["NGS_read_count"]).reset_index()
-        dfs.append(preprocess("PR8", df))
-        dfnames.append(f"Alnaji2021_{t}")   
+    alnaji_dict = load_full_alnaji2021()
+    for k, v in alnaji_dict.items():
+        for t in ["3hpi", "6hpi", "14hpi_internal", "14hpi_external", "24hpi"]:
+            df = v[v["Timepoint"] == t].copy()
+            df = df.groupby(["DI", "Segment", "Start", "End"]).sum(["NGS_read_count"]).reset_index()
+            dfs.append(preprocess(k, df))
+            dfnames.append(f"Alnaji2021_{t}")   
     '''
     df_pelz = load_pelz_dataset()
     for k, v in df_pelz.items():

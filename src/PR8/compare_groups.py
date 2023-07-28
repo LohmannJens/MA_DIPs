@@ -358,7 +358,7 @@ if __name__ == "__main__":
     venn_different_timepoints(data_dict)
     
     # load full alnaji 2021 data set
-    data_df = load_full_alnaji2021()
+    data_df = load_full_alnaji2021()["PR8"]
 
     # analyze alanji data set over the five timepoints
     analyze_over_timepoints(data_df)

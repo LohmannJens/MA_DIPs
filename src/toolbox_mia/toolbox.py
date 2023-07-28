@@ -537,10 +537,11 @@ if __name__ == "__main__":
         dfnames.append(k)
         expected_dfs.append(preprocess(k, generate_expected_data(k, v)))
     
-    df_alnaji = load_full_alnaji2021()
-    dfs.append(preprocess("PR8", df_alnaji))
-    dfnames.append("Alnaji2021")
-    expected_dfs.append(preprocess("PR8", generate_expected_data("PR8", df_alnaji)))
+    alnaji_dict = load_full_alnaji2021()
+    for k, v in alnaji_dict.items():
+        dfs.append(preprocess(k, v))
+        dfnames.append("Alnaji2021")
+        expected_dfs.append(preprocess("PR8", generate_expected_data("PR8", df_alnaji)))
 
 #    df_alnaji = load_full_alnaji2021()
  #   for t in ["3hpi", "6hpi", "14hpi_internal", "14hpi_external", "24hpi"]:

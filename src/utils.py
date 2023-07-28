@@ -64,6 +64,67 @@ def get_seq_len(strain: str, seg: str)-> int:
     '''
     return len(get_sequence(strain, seg))
 
+
+
+def get_stat_symbol(p: float)-> str:
+    '''
+        Indicates the statistical significance by letters. Is used for plots.
+        :param p: p-value of the test
+
+        :return: letter indicating the significance level
+    '''
+    if p < 0.0001:
+        return "****"
+    elif p < 0.001:
+        return "***"
+    elif p < 0.01:
+        return "**"
+    elif p < 0.05:
+        return "*"
+    else:
+        return ""
+
+def generate_sampling_data(seq: str, s: Tuple[int, int], e: Tuple[int, int],  n: int) -> object:
+    '''
+        Generates sampling data by creating random start and end points for
+        artificial deletion sites. Generated data is used to calculate the
+        expected values.
+        :param seq: RNA sequence
+        :param s: tuple with start and end point of the range for the artifical
+                  start point of the deletion site
+        :param e: tuple with start and end point of the range for the artifical
+                  end point of the deletion site
+        :param n: number of samples to generate
+
+        :return: dataframe with the artifical data set
+    '''
+    sampling = dict({"Start": [], "End": []})
+    for _ in range(n):
+        sampling["Start"].append(random.randint(s[0], s[1]))
+        sampling["End"].append(random.randint(e[0], e[1]))
+    return pd.DataFrame(data=sampling)
+
+def create_sequence_library(data_dict: dict)-> dict:
+    '''
+        Gets the raw loaded sequence data, which is a dict over all strains.
+        In each dict the value is a data frame including DI RNA candidates.
+        Creates the DI RNA sequence and adds it to the data frame.
+        :param data_dict: dictionary key is strain names, value is df of DI RNA
+                          candiates
+
+        :return: dictionary with key for each strain. Value is a pandas df.
+    '''
+    for k, v in data_dict.items():
+        del_seq_list = list()
+        for i, row in v.iterrows():
+            full_seq = get_sequence(k, row["Segment"])
+            del_seq = full_seq[:row["Start"]] + full_seq[row["End"]-1:]
+            del_seq_list.append(del_seq)
+
+        data_dict[k]["DIRNASequence"] = del_seq_list
+
+    return data_dict
+
 def load_alnaji_excel()-> dict:
     '''
         Loads the excel file of Alnaji2019 containing the start and end
@@ -151,24 +212,6 @@ def load_short_reads(data_dict: dict)-> dict:
 
     return short_data_dict
 
-def get_stat_symbol(p: float)-> str:
-    '''
-        Indicates the statistical significance by letters. Is used for plots.
-        :param p: p-value of the test
-
-        :return: letter indicating the significance level
-    '''
-    if p < 0.0001:
-        return "****"
-    elif p < 0.001:
-        return "***"
-    elif p < 0.01:
-        return "**"
-    elif p < 0.05:
-        return "*"
-    else:
-        return ""
-
 def load_pelz_dataset(de_novo: bool=False,
                       long_dirna: bool=False,
                       by_time: bool=False,
@@ -202,48 +245,6 @@ def load_pelz_dataset(de_novo: bool=False,
         d = data_dict["PR8"]
         d = d[d["class"].isin(["de novo loss", "de novo gain"])]
         data_dict["PR8"] = d
-
-    return data_dict
-
-
-def generate_sampling_data(seq: str, s: Tuple[int, int], e: Tuple[int, int],  n: int) -> object:
-    '''
-        Generates sampling data by creating random start and end points for
-        artificial deletion sites. Generated data is used to calculate the
-        expected values.
-        :param seq: RNA sequence
-        :param s: tuple with start and end point of the range for the artifical
-                  start point of the deletion site
-        :param e: tuple with start and end point of the range for the artifical
-                  end point of the deletion site
-        :param n: number of samples to generate
-
-        :return: dataframe with the artifical data set
-    '''
-    sampling = dict({"Start": [], "End": []})
-    for _ in range(n):
-        sampling["Start"].append(random.randint(s[0], s[1]))
-        sampling["End"].append(random.randint(e[0], e[1]))
-    return pd.DataFrame(data=sampling)
-
-def create_sequence_library(data_dict: dict)-> dict:
-    '''
-        Gets the raw loaded sequence data, which is a dict over all strains.
-        In each dict the value is a data frame including DI RNA candidates.
-        Creates the DI RNA sequence and adds it to the data frame.
-        :param data_dict: dictionary key is strain names, value is df of DI RNA
-                          candiates
-
-        :return: dictionary with key for each strain. Value is a pandas df.
-    '''
-    for k, v in data_dict.items():
-        del_seq_list = list()
-        for i, row in v.iterrows():
-            full_seq = get_sequence(k, row["Segment"])
-            del_seq = full_seq[:row["Start"]] + full_seq[row["End"]-1:]
-            del_seq_list.append(del_seq)
-
-        data_dict[k]["DIRNASequence"] = del_seq_list
 
     return data_dict
 
@@ -310,7 +311,7 @@ def load_full_alnaji2021()-> dict:
     data_df.loc[(data_df["Timepoint"] == "14hpi") & (data_df["Class"] == "internal"), "Timepoint"] = "14hpi_internal"
     data_df.loc[(data_df["Timepoint"] == "14hpi") & (data_df["Class"] == "external"), "Timepoint"] = "14hpi_external"
 
-    return data_df
+    return dict({"PR8": data_df})
 
 def load_WSN_data(source: str)-> dict:
     '''

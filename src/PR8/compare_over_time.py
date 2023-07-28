@@ -184,7 +184,7 @@ def pelz_analyze_over_time()-> None:
 if __name__ == "__main__":
     data_dict = load_alnaji_2021()
     venn_different_timepoints(data_dict)
-    analyze_over_timepoints(load_full_alnaji2021())
+    analyze_over_timepoints(load_full_alnaji2021()["PR8"])
 
     pelz_analyze_over_time()
 

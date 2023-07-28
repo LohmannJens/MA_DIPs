@@ -71,7 +71,7 @@ if __name__ == "__main__":
     ds.append(load_short_reads(load_alnaji_excel()))
     dnames.append("Alnaji2019")
 
-    ds.append(dict({"PR8":load_full_alnaji2021()}))
+    ds.append(load_full_alnaji2021())
     dnames.append("Alnaji2021")
 
     ds.append(load_WSN_data("Mendes"))

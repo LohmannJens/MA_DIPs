@@ -380,7 +380,7 @@ if __name__ == "__main__":
     PR8_dens_path = os.path.join(density_path, "PR8")
     PR8_high_dens_data = load_Williams_density_data(PR8_dens_path, "high")
     PR8_low_dens_data = load_Williams_density_data(PR8_dens_path, "low")
-    PR8_reads_dict = {"PR8": load_full_alnaji2021()}
+    PR8_reads_dict = load_full_alnaji2021()
   #  PR8_reads_dict = load_pelz_dataset()
     PR8_NGS_count_dict = map_positions_to_density(PR8_reads_dict, PR8_high_dens_data, PR8_low_dens_data)
     ratio_data["PR8"] = compare_position_with_density(PR8_NGS_count_dict, PR8_high_dens_data, PR8_reads_dict)
