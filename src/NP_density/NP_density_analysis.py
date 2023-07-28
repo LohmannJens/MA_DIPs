@@ -123,8 +123,6 @@ def load_Williams_density_data(path: str, mode: str)-> dict:
     return density_dict
 
 
-
-
 def map_positions_to_density(data: dict,
                              density_data: dict,
                              density_data_2: dict=dict()
@@ -250,8 +248,9 @@ def compare_position_with_density(data: dict,
 
     obs_ratios = list()
     exp_ratios = list()
+    symbols = list()
 
-   # SEGMENTS = ["PB2", "PB1", "PA", "HA"]
+    SEGMENTS = ["PB2", "PB1", "PA", "HA"]
 
     plt.rc("font", size=18)
     for k, v in data.items():
@@ -262,6 +261,7 @@ def compare_position_with_density(data: dict,
             if len(count_dict) == 0:
                 obs_ratios.append(0.0)
                 exp_ratios.append(0.0)
+                symbols.append("")
                 continue
 
             # get expected values by sampling approach
@@ -292,6 +292,7 @@ def compare_position_with_density(data: dict,
             result = stats.binomtest(below, n, exp_ratio)
             symbol = get_stat_symbol(result.pvalue)
             ax.annotate(symbol, (i, max(obs_ratio, exp_ratio)), horizontalalignment="center")
+            symbols.append(symbol)
 
         bar_width = 0.35
         x = np.arange(len(SEGMENTS))
@@ -307,9 +308,47 @@ def compare_position_with_density(data: dict,
         fig.savefig(savepath)
         plt.close()
 
+    plot_data = dict({"obs": obs_ratios, "exp": exp_ratios, "symbol": symbols})
+
+    return plot_data
+
+
+def plot_ratios_together(data: dict)-> None:
+    '''
+
+    '''
+    plt.rc("font", size=18)
+    fig, ax = plt.subplots(1, 1, figsize=(10, 4), tight_layout=True)
+    for i, (k, v) in enumerate(data.items()):
+        obs = v["obs"]
+        exp = v["exp"]
+        symbol = v["symbol"]
+
+        bar_width = 0.1
+        xs = np.arange(len(obs))
+        move = i * 0.25 - 0.25
+        for x in xs:
+            ax.annotate(symbol[x], (x - bar_width/2 + move + 0.05, max(obs[x], exp[x])), horizontalalignment="center")
+
+        ax.bar(xs - bar_width/2 + move, obs, bar_width, label=f"{k} exp.")
+        ax.bar(xs + bar_width/2 + move, exp, bar_width, label=f"{k} obs.")
+
+    SEGMENTS = ["PB2", "PB1", "PA", "HA"]
+
+    ax.set_xticks(xs, SEGMENTS)
+    ax.set_xlabel("Segment")
+    ax.set_ylabel("$r_{NP}$")
+    plt.legend(bbox_to_anchor=(1.0, 1.0))
+  #  fig.suptitle(f"{STRAINS[k]}")
+
+    savepath = os.path.join(RESULTSPATH, "NP_density", f"all_high_low_NP_areas.png")
+    fig.savefig(savepath)
+    plt.close()
+
 
 if __name__ == "__main__":
     plt.style.use('seaborn')
+    ratio_data = dict()
 
     density_path = os.path.join(DATAPATH, "Lee2017", "csv_NPdensity")
     cleaned_data_dict = load_alnaji_excel()
@@ -324,7 +363,7 @@ if __name__ == "__main__":
     Cal07_dens_data = load_Sage_density_data(Cal07_dens_path)
     map_dens_to_dens("Cal07", load_Lee_density_data(Cal07_dens_path), Cal07_dens_data)
     NGS_count_dict = map_positions_to_density(all_reads_dict, Cal07_dens_data)
-    compare_position_with_density(NGS_count_dict, Cal07_dens_data, all_reads_dict)
+    ratio_data["Cal07"] = compare_position_with_density(NGS_count_dict, Cal07_dens_data, all_reads_dict)
     
     #    WSN data from Mendes 2021 or Boussier 2020
     source = "Boussier"
@@ -334,7 +373,7 @@ if __name__ == "__main__":
     WSN_dens_data = load_Sage_density_data(WSN_dens_path)
     map_dens_to_dens("WSN", load_Lee_density_data(WSN_dens_path), WSN_dens_data)
     WSN_NGS_count_dict = map_positions_to_density(WSN_reads_dict, WSN_dens_data)
-    compare_position_with_density(WSN_NGS_count_dict, WSN_dens_data, WSN_reads_dict)
+    ratio_data["WSN"] = compare_position_with_density(WSN_NGS_count_dict, WSN_dens_data, WSN_reads_dict)
     
     # NP data from Williams 2021 they define high and low areas
     #   PR8 data from Pelz and Alnaji2021
@@ -344,4 +383,6 @@ if __name__ == "__main__":
     PR8_reads_dict = {"PR8": load_full_alnaji2021()}
   #  PR8_reads_dict = load_pelz_dataset()
     PR8_NGS_count_dict = map_positions_to_density(PR8_reads_dict, PR8_high_dens_data, PR8_low_dens_data)
-    compare_position_with_density(PR8_NGS_count_dict, PR8_high_dens_data, PR8_reads_dict)
+    ratio_data["PR8"] = compare_position_with_density(PR8_NGS_count_dict, PR8_high_dens_data, PR8_reads_dict)
+
+    plot_ratios_together(ratio_data)
