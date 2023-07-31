@@ -17,7 +17,7 @@ from sklearn.model_selection import train_test_split
 
 sys.path.insert(0, "..")
 from utils import DATAPATH, SEGMENTS
-from utils import load_pelz_dataset, load_kupke, load_full_alnaji2021, load_short_reads, load_alnaji_excel, get_sequence, get_seq_len
+from utils import load_pelz_dataset, load_kupke, load_full_alnaji2021, load_short_reads, load_alnaji_excel, get_sequence, get_seq_len, load_WSN_data
 
 sys.path.insert(0, "../direct_repeats")
 from search_direct_repeats import calculate_direct_repeat
@@ -341,7 +341,7 @@ def load_all_sets()-> pd.DataFrame:
     df["int_dup"] = 0
 
     # load alnaji 2021 dataset
-    alnaji2021 = load_full_alnaji2021()
+    alnaji2021 = load_full_alnaji2021()["PR8"]
 
     t_df = pd.DataFrame(alnaji2021.groupby(["DI"]).size())
     t_df = t_df.rename(columns={0: "Occurrences"})
@@ -357,6 +357,13 @@ def load_all_sets()-> pd.DataFrame:
     alnaji2021["Strain"] = "PR8"
     alnaji2021 = log_and_norm(alnaji2021)
     df = pd.concat([df, alnaji2021])
+
+    mendes = load_WSN_data("Mendes")["WSN"]
+    mendes = merge_duplicates(mendes)
+    mendes["dataset_name"] = "Mendes"
+    mendes["Strain"] = "WSN"
+    mendes = log_and_norm(mendes)
+    df = pd.concat([df, mendes])   
 
     # load four datasets of alnaji 2019
     alnaji2019 = load_short_reads(load_alnaji_excel())
