@@ -322,9 +322,8 @@ def load_WSN_data(source: str)-> dict:
         :return: dictionary with one key (strain), value (data frame) pair
     '''
     if source == "Boussier":
-        dir = os.path.join(DATAPATH, "Boussier2020", "Supplemental_Table_S2.xlsx")
-        df = pd.read_excel(dir, sheet_name=3, na_values=["", "None"], keep_default_na=False)
-        df = df[df["Virus"] == "WT"].reset_index(drop=True)
+        dir = os.path.join(DATAPATH, "Boussier2020", "Boussier_full.xlsx")
+        df = pd.read_excel(dir, na_values=["", "None"], keep_default_na=False)
     elif source == "Mendes":
         dir = os.path.join(DATAPATH, "Mendes2021", "Mendes_combined.xlsx")
         df = pd.read_excel(dir, na_values=["", "None"], keep_default_na=False)
