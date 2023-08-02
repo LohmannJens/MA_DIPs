@@ -339,7 +339,7 @@ def plot_ratios_together(data: dict)-> None:
     ax.set_xlabel("Segment")
     ax.set_ylabel("$r_{NP}$")
     plt.legend(bbox_to_anchor=(1.0, 1.0))
-  #  fig.suptitle(f"{STRAINS[k]}")
+    fig.suptitle("fraction of deletions in low NP areas")
 
     savepath = os.path.join(RESULTSPATH, "NP_density", f"all_high_low_NP_areas.png")
     fig.savefig(savepath)
