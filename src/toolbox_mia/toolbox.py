@@ -183,9 +183,13 @@ def generate_expected_data(k, v):
         df = v.loc[v["Segment"] == seg]
         if len(df) == 0:
             continue
-        seq = get_sequence(k, seg)        
+        seq = get_sequence(k, seg)
         s = (int(df.Start.quantile(QUANT)), int(df.Start.quantile(1-QUANT)))
         e = (int(df.End.quantile(QUANT)), int(df.End.quantile(1-QUANT)))
+        # skip if there is no range given
+        # this would lead to oversampling of a single position
+        if s[0] == s[1] or e[0] == e[1]:
+            continue
         if "samp_df" in locals():
             temp_df = generate_sampling_data(seq, s, e, N_SAMPLES)
             temp_df["Segment"] = seg
@@ -204,8 +208,7 @@ def plot_heatmap(y,x,vals,ax, format='.2f', cmap='coolwarm', vmin=0, vmax=1, cba
     ax = sns.heatmap(df, fmt=format, annot=True, vmin=vmin, vmax=vmax, ax=ax, cbar=cbar, cmap=cmap, cbar_ax=cbar_ax, cbar_kws=cbar_kws)
     return ax
 
-def plot_nucleotide_ratio_around_deletion_junction_heatmaps(dfs, dfnames, col='seq_around_deletion_junction', 
-                                                            height = 14, width = 10, nucleotides=['A','C','G','T']):
+def plot_nucleotide_ratio_around_deletion_junction_heatmaps(dfs, dfnames, mode):
     """Plot heatmaps of nucleotide ratios around deletion junctions.
 
     Args:
@@ -225,9 +228,11 @@ def plot_nucleotide_ratio_around_deletion_junction_heatmaps(dfs, dfnames, col='s
 
     """
     height = len(dfs)
+    width = 10
+    col='seq_around_deletion_junction'
     fig, axs = plt.subplots(figsize=(width,height), nrows=2, ncols=2)
     axs = axs.flatten()
-    for i, nuc in enumerate(nucleotides):
+    for i, nuc in enumerate(NUC.keys()):
         x = []
         y = []
         vals = []
@@ -273,81 +278,13 @@ def plot_nucleotide_ratio_around_deletion_junction_heatmaps(dfs, dfnames, col='s
     fig.subplots_adjust(top=0.9)
     fig.suptitle("nucleotide ratios around deletion junction [%]")
 
-    save_path = os.path.join(RESULTSPATH, "toolbox_mia", f"nuc_occ.png")
+    save_path = os.path.join(RESULTSPATH, "toolbox_mia", f"nuc_occ_{mode}.png")
     plt.savefig(save_path)
     plt.close()
 
     return fig, axs
 
-def plot_nucleotide_ratio_around_deletion_junction_over_time(dfs, dfnames, col='seq_around_deletion_junction', 
-                                                            height = 14, width = 10, nucleotides=['A','C','G','T']):
-    """Plot heatmaps of nucleotide ratios around deletion junctions.
-
-    Args:
-        dfs (list of pandas.DataFrame): The list of DataFrames containing the data. 
-                                        Each dataframe should be preprocessed with sequence_df(df)
-        dfnames (list of str): The names associated with each DataFrame in `dfs`.
-        col (str, optional): The column name in the DataFrames that contains the sequence segments of interest. 
-                             Default is 'seq_around_deletion_junction'.
-        height (float, optional): The height of the figure in inches. Default is 20.
-        width (float, optional): The width of the figure in inches. Default is 16.
-        nucleotides (list of str, optional): The nucleotides to be plotted. Default is ['A', 'C', 'G', 'T'].
-
-    Returns:
-        tuple: A tuple containing the figure and the axes of the subplots.
-            - fig (matplotlib.figure.Figure): The generated figure.
-            - axs (numpy.ndarray of matplotlib.axes.Axes): The axes of the subplots.
-
-    """
-    height = len(dfs)
-    fig, axs = plt.subplots(figsize=(width,height), nrows=2, ncols=2)
-    axs = axs.flatten()
-    for i, nuc in enumerate(nucleotides):
-
-        relevant_indices = [1, 2, 3, 4, 5 ,6 ,7 ,8, 9, 10, 11, 12, 13, 14, 15 ,16 ,17 ,18, 19, 20]
-
-        x = []
-        y = dict()
-        for j in relevant_indices:
-            y[j] = list()
-
-        for df in dfs:
-            probability_matrix = create_nucleotide_ratio_matrix(df, col)
-            for j in relevant_indices:
-                y[j].append(probability_matrix.loc[j,nuc])
-
-        x = range(len(dfnames))
-        for k, v in y.items():
-            # map relevant index to start/end and exact position
-            if k <= 10:
-                pos = "Start"
-            else:
-                pos = "End"
-                k = k - 10
-            label = f"{pos} pos {k}"
-            axs[i].plot(x, v, label=label)
-
-        axs[i].set_title(f'{nuc} nucleotide ratios around deletion junction')
-        axs[i].set_ylabel('relative occurrence')
-        axs[i].set_xlabel('time')
-
-   #     axs[i].axvline(22)
-  #      axs[i].set_xticklabels(dfnames)
-          
-    fig.tight_layout()
-    axs[i].legend()
-
-    plt.show()
-    exit()
-
-    save_path = os.path.join(RESULTSPATH, "toolbox_mia", f"nuc_occ_ot.png")
-  #  plt.savefig(save_path)
-    plt.close()
-
-    return fig, axs
-
-def plot_expected_vs_observed_nucleotide_enrichment_heatmaps(dfs, dfnames, expected_dfs , col='seq_around_deletion_junction', height = 14, width = 10, 
-                                                 nucleotides=['A','C','G','T']):
+def plot_expected_vs_observed_nucleotide_enrichment_heatmaps(dfs, dfnames, expected_dfs, mode):
     """Plot difference of expected vs observed nucleotide enrichment around deletion junctions as heatmap.
 
     Args:
@@ -369,10 +306,12 @@ def plot_expected_vs_observed_nucleotide_enrichment_heatmaps(dfs, dfnames, expec
 
     """
     height = len(dfs)
+    width = 10
+    col='seq_around_deletion_junction'
     fig, axs = plt.subplots(figsize=(width,height), nrows=2, ncols=2)
     axs = axs.flatten()
 
-    for i, nuc in enumerate(nucleotides):
+    for i, nuc in enumerate(NUC.keys()):
         x = []
         y = []
         vals = []
@@ -403,7 +342,12 @@ def plot_expected_vs_observed_nucleotide_enrichment_heatmaps(dfs, dfnames, expec
 
                 diff = p1 - p2
                 vals.append(diff)
-                pval_symbol = get_p_value_symbol(pval)
+                if pval < 0.00001:
+                    pval_symbol = "**"
+                elif pval < 0.0001:
+                    pval_symbol = "*"
+                else:
+                    pval_symbol = ""
                 val_labels.append(pval_symbol)
                 
         m = abs(min(vals)) if abs(min(vals)) > max(vals) else max(vals)
@@ -442,13 +386,13 @@ def plot_expected_vs_observed_nucleotide_enrichment_heatmaps(dfs, dfnames, expec
     fig.subplots_adjust(top=0.9)
     fig.suptitle("ratio difference (observed-expected) around deletion junction")
 
-    save_path = os.path.join(RESULTSPATH, "toolbox_mia", f"nuc_occ_diff.png")
+    save_path = os.path.join(RESULTSPATH, "toolbox_mia", f"nuc_occ_diff_{mode}.png")
     plt.savefig(save_path)
     plt.close()
 
     return fig, axs
 
-def plot_direct_repeat_ratio_heatmaps(dfs, dfnames, height = 14, width = 10, nucleotides=['A','C','G','T']):
+def plot_direct_repeat_ratio_heatmaps(dfs, dfnames, mode):
     """Plot heatmaps of nucleotide ratios around deletion junctions.
 
     Args:
@@ -468,6 +412,7 @@ def plot_direct_repeat_ratio_heatmaps(dfs, dfnames, height = 14, width = 10, nuc
 
     """
     height = len(dfs)/2
+    width = 10
     fig, axs = plt.subplots(figsize=(width,height))
 
     x = list()
@@ -494,7 +439,7 @@ def plot_direct_repeat_ratio_heatmaps(dfs, dfnames, height = 14, width = 10, nuc
                     final_d[k] = v
 
         x.extend(final_d.keys())
-        y.extend([f"{dfname} ({len(df)})" for _ in range(9)])
+        y.extend([f"{dfname} ({len(df)})" for _ in range(6)])
         final = np.array(list(final_d.values()))
         vals.extend(final/final.sum())
 
@@ -509,14 +454,13 @@ def plot_direct_repeat_ratio_heatmaps(dfs, dfnames, height = 14, width = 10, nuc
     axs.set_xticklabels(x_ticks)
     fig.tight_layout()
 
-    save_path = os.path.join(RESULTSPATH, "toolbox_mia", f"direct_repeats.png")
+    save_path = os.path.join(RESULTSPATH, "toolbox_mia", f"direct_repeats_{mode}.png")
     plt.savefig(save_path)
     plt.close()
 
     return fig, axs
 
-def plot_expected_vs_observed_direct_repeat_heatmaps(dfs, dfnames, expected_dfs , height = 14, width = 10, 
-                                                 nucleotides=['A','C','G','T']):
+def plot_expected_vs_observed_direct_repeat_heatmaps(dfs, dfnames, expected_dfs , mode):
     """Plot difference of expected vs observed nucleotide enrichment around deletion junctions as heatmap.
 
     Args:
@@ -538,11 +482,13 @@ def plot_expected_vs_observed_direct_repeat_heatmaps(dfs, dfnames, expected_dfs 
 
     """
     height = len(dfs)/2
+    width = 10
     fig, axs = plt.subplots(figsize=(width,height))
 
     x = list()
     y = list()
     vals = list()
+    val_labels = list()
         
     # calculate direct repeats
     for dfname, df, expected_df in zip(dfnames, dfs, expected_dfs):
@@ -579,29 +525,115 @@ def plot_expected_vs_observed_direct_repeat_heatmaps(dfs, dfnames, expected_dfs 
         f_obs = final/final.sum()
         f_exp = expected_final/expected_final.sum()
         stat, pvalue = stats.chisquare(f_obs, f_exp)
-        #stat, pvalue = stats.power_divergence(f_obs, f_exp)
 
         symbol = get_p_value_symbol(pvalue)
-
         x.extend(final_d.keys())
-        y.extend([f"{dfname} ({len(df)}) {symbol}" for _ in range(9)])
-        final = np.array(list(final_d.values()))
-        expected_final = np.array(list(expected_final_d.values()))
+        y.extend([f"{dfname} ({len(df)}) {symbol}" for _ in range(6)])
         vals.extend(final/final.sum() - expected_final/expected_final.sum())
+
+        for f_ob, f_ex, n_samples in zip(f_obs, f_exp, final_d.values()):
+            if n_samples == 0:
+                pval_symbol = ""
+            else:
+                pvalue = binomial_test_pvalue(f_ob, int(n_samples), f_ex)
+                if pvalue < 0.00001:
+                    pval_symbol = "**"
+                elif pvalue < 0.0001:
+                    pval_symbol = "*"
+                else:
+                    pval_symbol = ""
+            val_labels.append(pval_symbol)
+
 
     m = abs(min(vals)) if abs(min(vals)) > max(vals) else max(vals)
     axs = plot_heatmap(x,y,vals, axs, vmin=-m, vmax=m, cbar=True, format='.5f')
     axs.set_title('direct repeat ratio difference (observed-expected)')
     axs.set_ylabel('')
     axs.set_xlabel('direct repeat length')
+
+    for v_idx, val_label in enumerate(axs.texts):
+        val_label.set_text(f"{val_label.get_text()}\n{val_labels[v_idx]}")
+        val_label.set_size(6)
+
+
+    x_ticks = axs.get_xticklabels()
+    label = x_ticks[-2].get_text()
+    x_ticks[-1].set_text(f"> {label}")
+    axs.set_xticklabels(x_ticks)
     fig.tight_layout()
 
-    save_path = os.path.join(RESULTSPATH, "toolbox_mia", f"direct_repeats_diff.png")
+    save_path = os.path.join(RESULTSPATH, "toolbox_mia", f"direct_repeats_diff_{mode}.png")
     plt.savefig(save_path)
     plt.close()
 
     return fig, axs
 
+
+def plot_over_time(dfs, dfnames):
+    """Plot heatmaps of nucleotide ratios around deletion junctions.
+
+    Args:
+        dfs (list of pandas.DataFrame): The list of DataFrames containing the data. 
+                                        Each dataframe should be preprocessed with sequence_df(df)
+        dfnames (list of str): The names associated with each DataFrame in `dfs`.
+        col (str, optional): The column name in the DataFrames that contains the sequence segments of interest. 
+                             Default is 'seq_around_deletion_junction'.
+        height (float, optional): The height of the figure in inches. Default is 20.
+        width (float, optional): The width of the figure in inches. Default is 16.
+        nucleotides (list of str, optional): The nucleotides to be plotted. Default is ['A', 'C', 'G', 'T'].
+
+    Returns:
+        tuple: A tuple containing the figure and the axes of the subplots.
+            - fig (matplotlib.figure.Figure): The generated figure.
+            - axs (numpy.ndarray of matplotlib.axes.Axes): The axes of the subplots.
+
+    """
+    height = len(dfs)
+    width = 10
+    col='seq_around_deletion_junction'
+    fig, axs = plt.subplots(figsize=(width,height), nrows=2, ncols=2)
+    axs = axs.flatten()
+    for i, nuc in enumerate(NUC.keys()):
+
+        relevant_indices = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15 ,16 ,17 ,18, 19, 20]
+        relevant_indices = [4, 5, 6, 7, 14, 15, 16, 17]
+
+        x = []
+        y = dict()
+        for j in relevant_indices:
+            y[j] = list()
+
+        for df in dfs:
+            probability_matrix = create_nucleotide_ratio_matrix(df, col)
+            for j in relevant_indices:
+                y[j].append(probability_matrix.loc[j,nuc])
+
+        #x = range(len(dfnames))
+        x = [0.00, 0.50, 0.99, 1.40, 3.46, 4.00, 4.47, 5.00, 5.48, 7.95, 8.96, 9.42, 12.43, 12.97, 13.50, 16.01, 16.97, 17.45, 18.00, 19.48, 19.99, 20.44, 21.00, 22.00, 26.44, 29.95, 36.42, 42.42]
+        for k, v in y.items():
+            # map relevant index to start/end and exact position
+            if k <= 10:
+                pos = "Start"
+            else:
+                pos = "End"
+                k = k - 10
+            label = f"{pos} pos {k}"
+            axs[i].plot(x, v, label=label)
+
+        axs[i].set_title(f'{nuc} nucleotide ratios around deletion junction')
+        axs[i].set_ylabel('relative occurrence')
+        axs[i].set_xlabel('time')
+
+        axs[i].axvline(21.5)
+        #axs[i].set_xticklabels(dfnames)
+          
+    fig.tight_layout()
+    axs[i].legend()
+
+    save_path = os.path.join(RESULTSPATH, "toolbox_mia", f"nuc_occ_ot.png")
+    plt.savefig(save_path)
+
+    return fig, axs
 
 if __name__ == "__main__":
     # load all data frames and preprocess with sequence_df(df)
@@ -609,75 +641,96 @@ if __name__ == "__main__":
     dfnames = list()
     expected_dfs = list()
 
-    
-    cleaned_data_dict = load_alnaji_excel()
-    all_reads_dict = load_short_reads(cleaned_data_dict)
-    for k, v in all_reads_dict.items():
-        dfs.append(preprocess(k, v))
-        dfnames.append(k)
-        expected_dfs.append(preprocess(k, generate_expected_data(k, v)))
-    
-    alnaji_dict = load_full_alnaji2021()
-    for k, v in alnaji_dict.items():
-        dfs.append(preprocess(k, v))
-        dfnames.append("Alnaji2021")
-        expected_dfs.append(preprocess(k, generate_expected_data(k, v)))
+    mode = "pelz_ot"
+    mode = "all"
+    #mode = "alnaji_split"
+    #mode = "no_pelz"
 
-#    df_alnaji = load_full_alnaji2021()
- #   for t in ["3hpi", "6hpi", "14hpi_internal", "14hpi_external", "24hpi"]:
-  #      df = df_alnaji[df_alnaji["Timepoint"] == t].copy()
-   #     dfs.append(preprocess("PR8", df))
-    #    dfnames.append(f"Alnaji2021_{t}")
-     #   expected_dfs.append(preprocess("PR8", generate_expected_data("PR8", df)))      
-    
-    df_mendes = load_WSN_data("Mendes")
-    for k, v in df_mendes.items():
-        dfs.append(preprocess(k, v))
-        dfnames.append("Mendes")
-        expected_dfs.append(preprocess(k, generate_expected_data(k, v)))
+    if mode == "pelz_ot":
+        df_pelz = load_pelz_dataset(by_time=True)
+        for k, v in df_pelz.items():
+            for t in ["VB3-Saat","VB3-7","VB3-8","VB3-9","VB3-13","VB3-14","VB3-15","VB3-16","VB3-17","VB3-22","VB3-24","VB3-25","VB3-31","VB3-32","VB3-33","VB3-38","VB3-40","VB3-41","VB3-42","VB3-45","VB3-46","VB3-47","VB3-48"]:
+                df = v[v[t] != 0].copy()
+                dfs.append(preprocess(k, df))
+                dfnames.append(f"Pelz_{t}")
+        
+        df_pelz = load_pelz_dataset(follow_up=True)
+        for k, v in df_pelz.items():
+            for t in ["A1", "A2", "A3", "A4", "A5"]:
+                df = v[v[t] != 0].copy()
+                dfs.append(preprocess(k, df))
+                dfnames.append(f"Pelz_{t}")
+        plot_over_time(dfs, dfnames, col='seq_around_deletion_junction', nucleotides=['A','C','G','U'])
+        exit()
 
-    df_boussier = load_WSN_data("Boussier")
-    for k, v in df_boussier.items():
-        dfs.append(preprocess(k, v))
-        dfnames.append("Boussier")
-        expected_dfs.append(preprocess(k, generate_expected_data(k, v)))
+    elif mode == "no_pelz":
+        cleaned_data_dict = load_alnaji_excel()
+        all_reads_dict = load_short_reads(cleaned_data_dict)
+        for k, v in all_reads_dict.items():
+            dfs.append(preprocess(k, v))
+            dfnames.append(k)
+            expected_dfs.append(preprocess(k, generate_expected_data(k, v)))
+    
+        alnaji_dict = load_full_alnaji2021()
+        for k, v in alnaji_dict.items():
+            dfs.append(preprocess(k, v))
+            dfnames.append("Alnaji2021")
+            expected_dfs.append(preprocess(k, generate_expected_data(k, v)))
 
-    df_pelz = load_pelz_dataset(long_dirna=True)
-    for k, v in df_pelz.items():
-        dfs.append(preprocess(k, v))
-        dfnames.append("Pelz_long")
-        expected_dfs.append(preprocess(k, generate_expected_data(k, v)))
-    
-    '''
-    df_pelz = load_pelz_dataset(by_time=True)
-    for k, v in df_pelz.items():
-        for t in ["VB3-Saat","VB3-7","VB3-8","VB3-9","VB3-13","VB3-14","VB3-15","VB3-16","VB3-17","VB3-22","VB3-24","VB3-25","VB3-31","VB3-32","VB3-33","VB3-38","VB3-40","VB3-41","VB3-42","VB3-45","VB3-46","VB3-47","VB3-48"]:
-            df = v[v[t] != 0].copy()
-            dfs.append(preprocess(k, df))
-            dfnames.append(f"Pelz_{t}")
-  #          expected_dfs.append(preprocess(k, generate_expected_data(k, df)))
-    
-    df_pelz = load_pelz_dataset(follow_up=True)
-    for k, v in df_pelz.items():
-        for t in ["A1", "A2", "A3", "A4", "A5"]:
-            df = v[v[t] != 0].copy()
-            dfs.append(preprocess(k, df))
-            dfnames.append(f"Pelz_{t}")
- #           expected_dfs.append(preprocess(k, generate_expected_data(k, df)))
-    '''
-    
-    df_pelz = load_pelz_dataset(long_dirna=True)
-    for k, v in df_pelz.items():
-        for cl in ["gain", "loss", "de novo gain", "de novo loss"]:
-            df = v[v["class"] == cl].copy()
-            dfs.append(preprocess(k, df))
-            dfnames.append(cl)
-            expected_dfs.append(preprocess(k, generate_expected_data(k, df)))
-    
+        df_mendes = load_WSN_data("Mendes")
+        for k, v in df_mendes.items():
+            dfs.append(preprocess(k, v))
+            dfnames.append("Mendes")
+            expected_dfs.append(preprocess(k, generate_expected_data(k, v)))
 
-    plot_nucleotide_ratio_around_deletion_junction_heatmaps(dfs, dfnames, col='seq_around_deletion_junction', nucleotides=['A','C','G','U'])
-    plot_expected_vs_observed_nucleotide_enrichment_heatmaps(dfs, dfnames, expected_dfs , col='seq_around_deletion_junction', nucleotides=['A','C','G','U'])
+        df_boussier = load_WSN_data("Boussier")
+        for k, v in df_boussier.items():
+            dfs.append(preprocess(k, v))
+            dfnames.append("Boussier")
+            expected_dfs.append(preprocess(k, generate_expected_data(k, v)))
+    
+    elif mode == "alnaji_split":
+        df_alnaji = load_full_alnaji2021()["PR8"]
+        for t in ["3hpi", "6hpi", "14hpi_internal", "14hpi_external", "24hpi"]:
+            df = df_alnaji[df_alnaji["Timepoint"] == t].copy()
+            dfs.append(preprocess("PR8", df))
+            dfnames.append(f"Alnaji2021_{t}")
+            expected_dfs.append(preprocess("PR8", generate_expected_data("PR8", df)))
 
-    plot_direct_repeat_ratio_heatmaps(dfs, dfnames, nucleotides=['A','C','G','U'])
-    plot_expected_vs_observed_direct_repeat_heatmaps(dfs, dfnames, expected_dfs, nucleotides=['A','C','G','U'])
- #   plot_nucleotide_ratio_around_deletion_junction_over_time(dfs, dfnames, col='seq_around_deletion_junction', nucleotides=['A','C','G','U'])
+    elif mode == "all":
+        cleaned_data_dict = load_alnaji_excel()
+        all_reads_dict = load_short_reads(cleaned_data_dict)
+        for k, v in all_reads_dict.items():
+            dfs.append(preprocess(k, v))
+            dfnames.append(k)
+            expected_dfs.append(preprocess(k, generate_expected_data(k, v)))
+    
+        alnaji_dict = load_full_alnaji2021()
+        for k, v in alnaji_dict.items():
+            dfs.append(preprocess(k, v))
+            dfnames.append("Alnaji2021")
+            expected_dfs.append(preprocess(k, generate_expected_data(k, v)))
+
+        df_pelz = load_pelz_dataset(long_dirna=True)
+        for k, v in df_pelz.items():
+            dfs.append(preprocess(k, v))
+            dfnames.append("Pelz_long")
+            expected_dfs.append(preprocess(k, generate_expected_data(k, v)))
+
+        df_mendes = load_WSN_data("Mendes")
+        for k, v in df_mendes.items():
+            dfs.append(preprocess(k, v))
+            dfnames.append("Mendes")
+            expected_dfs.append(preprocess(k, generate_expected_data(k, v)))
+
+        df_boussier = load_WSN_data("Boussier")
+        for k, v in df_boussier.items():
+            dfs.append(preprocess(k, v))
+            dfnames.append("Boussier")
+            expected_dfs.append(preprocess(k, generate_expected_data(k, v)))
+
+    plot_nucleotide_ratio_around_deletion_junction_heatmaps(dfs, dfnames, mode)
+    plot_expected_vs_observed_nucleotide_enrichment_heatmaps(dfs, dfnames, expected_dfs, mode)
+
+    plot_direct_repeat_ratio_heatmaps(dfs, dfnames, mode)
+    plot_expected_vs_observed_direct_repeat_heatmaps(dfs, dfnames, expected_dfs, mode)

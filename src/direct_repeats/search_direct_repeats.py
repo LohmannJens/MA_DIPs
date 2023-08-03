@@ -89,7 +89,7 @@ def count_direct_repeats_overall(df: pd.DataFrame,
                  overlapping sequences and a dict with the overlapping
                  sequences and their count.
     '''
-    w_len = 8
+    w_len = 5
     nuc_overlap_dict = dict({i: 0 for i in range(0, w_len+1)})
     overlap_seq_dict = dict()
  
