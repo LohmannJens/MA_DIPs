@@ -245,12 +245,12 @@ def plot_nucleotide_ratio_around_deletion_junction_heatmaps(dfs, dfnames, mode):
                 vals.append(probability_matrix.loc[j,nuc] * 100)
                 
         axs[i] = plot_heatmap(x,y,vals, axs[i], vmin=min(vals), vmax=max(vals), cbar=True, format='.0f')
+        
         for val_label in axs[i].texts:
             val_label.set_size(8)
         axs[i].set_title(f'{NUC[nuc]}')
         axs[i].set_ylabel('')
         axs[i].set_yticks([ytick + 0.5 for ytick in range(len(dfnames))])
-        
         axs[i].set_xlabel('position')  
         axs[i].set_xticks([xtick - 0.5 for xtick in probability_matrix.index])
         
@@ -261,10 +261,11 @@ def plot_nucleotide_ratio_around_deletion_junction_heatmaps(dfs, dfnames, mode):
             axs[i].set_yticklabels([f'{dfname} ({len(df)})' for dfname,df in zip(dfnames,dfs)])
         else:
             axs[i].set_yticklabels([])
+
         if i < 2:
-            # put x labels at the top
             axs[i].xaxis.set_ticks_position('top')
             axs[i].xaxis.set_label_position('top')
+
         axs[i].set_xticklabels(indexes + indexes)
         xlabels = axs[i].get_xticklabels()
         for x_idx, xlabel in enumerate(xlabels):
@@ -369,8 +370,8 @@ def plot_expected_vs_observed_nucleotide_enrichment_heatmaps(dfs, dfnames, expec
             axs[i].set_yticklabels([f'{dfname} ({len(df)})' for dfname,df in zip(dfnames,dfs)])
         else:
             axs[i].set_yticklabels([])
+
         if i < 2:
-            # put x labels at the top
             axs[i].xaxis.set_ticks_position('top')
             axs[i].xaxis.set_label_position('top')
             
@@ -382,7 +383,7 @@ def plot_expected_vs_observed_nucleotide_enrichment_heatmaps(dfs, dfnames, expec
                 xlabel.set_fontweight('bold')
             else:
                 xlabel.set_color('grey')   
-    #fig.tight_layout()
+
     fig.subplots_adjust(top=0.9)
     fig.suptitle("ratio difference (observed-expected) around deletion junction")
 
@@ -418,7 +419,7 @@ def plot_direct_repeat_ratio_heatmaps(dfs, dfnames, mode):
     x = list()
     y = list()
     vals = list()
-        
+    
     # calculate direct repeats
     for dfname, df in zip(dfnames, dfs):
         final_d = dict()
@@ -427,11 +428,16 @@ def plot_direct_repeat_ratio_heatmaps(dfs, dfnames, mode):
             df_s = df[df["Segment"] == s]
             if len(df_s) == 0:
                 continue
-            seq = get_sequence(df_s["Strain"].unique()[0], s)
             
-            counts, _ = count_direct_repeats_overall(df_s, seq, mode=1)
-            counts = include_correction(counts)
-
+            seq = get_sequence(df_s["Strain"].unique()[0], s)
+            if dfname == "Boussier":
+                counts, _ = count_direct_repeats_overall(df_s, seq, mode=3)
+            else:
+                counts, _ = count_direct_repeats_overall(df_s, seq, mode=1)
+            
+            if dfname not in ["Mendes", "Boussier"]:
+                counts = include_correction(counts)
+            
             for k, v in counts.items():
                 if k in final_d:
                     final_d[k] += v
@@ -503,9 +509,13 @@ def plot_expected_vs_observed_direct_repeat_heatmaps(dfs, dfnames, expected_dfs 
                 continue
 
             seq = get_sequence(df_s["Strain"].unique()[0], s)
+            if dfname == "Boussier":
+                counts, _ = count_direct_repeats_overall(df_s, seq, mode=3)
+            else:
+                counts, _ = count_direct_repeats_overall(df_s, seq, mode=1)
             
-            counts, _ = count_direct_repeats_overall(df_s, seq, mode=1)
-            counts = include_correction(counts)
+            if dfname not in ["Mendes", "Boussier"]:
+                counts = include_correction(counts)
             for k, v in counts.items():
                 if k in final_d:
                     final_d[k] += v
@@ -513,7 +523,6 @@ def plot_expected_vs_observed_direct_repeat_heatmaps(dfs, dfnames, expected_dfs 
                     final_d[k] = v
 
             expected_counts, _ = count_direct_repeats_overall(expected_df_s, seq, mode=1)
-        #    expected_counts = include_correction(expected_counts)
             for k, v in expected_counts.items():
                 if k in expected_final_d:
                     expected_final_d[k] += v
@@ -543,7 +552,6 @@ def plot_expected_vs_observed_direct_repeat_heatmaps(dfs, dfnames, expected_dfs 
                 else:
                     pval_symbol = ""
             val_labels.append(pval_symbol)
-
 
     m = abs(min(vals)) if abs(min(vals)) > max(vals) else max(vals)
     axs = plot_heatmap(x,y,vals, axs, vmin=-m, vmax=m, cbar=True, format='.5f')
@@ -706,11 +714,18 @@ if __name__ == "__main__":
 #    mode = "alnaji_split"
     #mode = "no_pelz"
 
+    mode = "test"
 #    cleaned_data_dict = load_alnaji_excel()
  #   all_reads_dict = load_short_reads(cleaned_data_dict)
   #  for k, v in all_reads_dict.items():
    #     dfs.append(preprocess(k, v))
     #    dfnames.append(k)
+     #   expected_dfs.append(preprocess(k, generate_expected_data(k, v)))
+
+    df_boussier = load_WSN_data("Boussier")
+    for k, v in df_boussier.items():
+        dfs.append(preprocess(k, v))
+        dfnames.append("Boussier")
         #expected_dfs.append(preprocess(k, generate_expected_data(k, v)))
 
 
@@ -800,7 +815,7 @@ if __name__ == "__main__":
 #    plot_nucleotide_ratio_around_deletion_junction_heatmaps(dfs, dfnames, mode)
  #   plot_expected_vs_observed_nucleotide_enrichment_heatmaps(dfs, dfnames, expected_dfs, mode)
 
-  #  plot_direct_repeat_ratio_heatmaps(dfs, dfnames, mode)
-   # plot_expected_vs_observed_direct_repeat_heatmaps(dfs, dfnames, expected_dfs, mode)
+    plot_direct_repeat_ratio_heatmaps(dfs, dfnames, mode)
+    #plot_expected_vs_observed_direct_repeat_heatmaps(dfs, dfnames, expected_dfs, mode)
 
-    plot_distribution_over_segments(dfs, dfnames, mode)
+   # plot_distribution_over_segments(dfs, dfnames, mode)

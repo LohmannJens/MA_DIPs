@@ -36,6 +36,7 @@ def calculate_direct_repeat(seq: str,
                     full junction site is 1234J6789
                     1: S 1234J | E 1234J (overlap beginning of both sites)
                     2: S 1234J | E J6789 (overlap what stays in deletion seq)
+                    3: S J6789 | E J6789 (overlap in DG-seq (Boussier))
 
         :return: Tuple with two entries:
                     Integer giving the number of overlapping nucleotides
@@ -66,6 +67,24 @@ def calculate_direct_repeat(seq: str,
             if seq[s-i:s] == seq[e-1:e-1+i]:
                 counter = i
                 overlap_seq = str(seq[s-i:s])
+
+    elif m == 3:
+        start_window = seq[s: s+w_len]
+        end_window = seq[e: e+w_len]
+        
+        #if they are the same return directly to avoid off-by-one error
+        if start_window == end_window:
+            return len(start_window), start_window
+
+        if len(seq) < e:
+            return 0, "_"
+     
+        for i in range(0, len(end_window)):
+            if start_window[i] == end_window[i]:
+                counter += 1
+            else:
+                break
+        overlap_seq = str(start_window[:counter])
 
     assert counter == len(overlap_seq), f"{counter=}, {len(overlap_seq)}"
     if len(overlap_seq) == 0:
