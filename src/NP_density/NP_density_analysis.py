@@ -125,7 +125,8 @@ def load_Williams_density_data(path: str, mode: str)-> dict:
 
 def map_positions_to_density(data: dict,
                              density_data: dict,
-                             density_data_2: dict=dict()
+                             density_data_2: dict=dict(),
+                             author: str=""
                              )-> dict:
     '''
         Maps the NP density to the start and end position of the deletion
@@ -180,7 +181,7 @@ def map_positions_to_density(data: dict,
             axs[i].set_xlabel("sequence position")
             axs[i].set_ylabel("NGS count")
 
-        save_path = os.path.join(RESULTSPATH, "NP_density", f"{k}_del_position_NP_density.pdf") # leave as .pdf, because saving as .png loses some bars
+        save_path = os.path.join(RESULTSPATH, "NP_density", f"{k}_{author}_del_position_NP_density.pdf") # leave as .pdf, because saving as .png loses some bars
         plt.savefig(save_path)
         plt.close()
 
@@ -223,7 +224,8 @@ def map_dens_to_dens(strain: str,
 
 def compare_position_with_density(data: dict,
                                   density_data: dict,
-                                  all_reads: dict
+                                  all_reads: dict,
+                                  author: str=""
                                   )-> None:
     '''
         Checks how many of the junction sites are at a position of low NP
@@ -304,7 +306,7 @@ def compare_position_with_density(data: dict,
         plt.legend(bbox_to_anchor=(1.0, 1.0))
         fig.suptitle(f"{STRAINS[k]}")
 
-        savepath = os.path.join(RESULTSPATH, "NP_density", f"{k}_high_low_NP_areas.png")
+        savepath = os.path.join(RESULTSPATH, "NP_density", f"{k}_{author}_high_low_NP_areas.png")
         fig.savefig(savepath)
         plt.close()
 
@@ -319,16 +321,18 @@ def plot_ratios_together(data: dict)-> None:
     '''
     plt.rc("font", size=18)
     fig, ax = plt.subplots(1, 1, figsize=(10, 4), tight_layout=True)
+    cm = plt.get_cmap('tab10')
+    ax.set_prop_cycle('color', [cm(1.*i/10) for i in range(10)])
     for i, (k, v) in enumerate(data.items()):
         obs = v["obs"]
         exp = v["exp"]
         symbol = v["symbol"]
 
-        bar_width = 0.1
+        bar_width = 0.05
         xs = np.arange(len(obs))
-        move = i * 0.25 - 0.25
+        move = i * 0.25 - 0.3 - (0.1*i)
         for x in xs:
-            ax.annotate(symbol[x], (x - bar_width/2 + move + 0.05, max(obs[x], exp[x])), horizontalalignment="center")
+            ax.annotate(symbol[x], (x - bar_width/2 + move + 0.025, max(obs[x], exp[x])), horizontalalignment="center", fontsize=8)
 
         ax.bar(xs - bar_width/2 + move, obs, bar_width, label=f"{k} exp.")
         ax.bar(xs + bar_width/2 + move, exp, bar_width, label=f"{k} obs.")
@@ -366,23 +370,30 @@ if __name__ == "__main__":
     ratio_data["Cal07"] = compare_position_with_density(NGS_count_dict, Cal07_dens_data, all_reads_dict)
     
     #    WSN data from Mendes 2021 or Boussier 2020
-    source = "Boussier"
     source = "Mendes"
     WSN_reads_dict = load_WSN_data(source)
     WSN_dens_path = os.path.join(density_path, "WSN")
     WSN_dens_data = load_Sage_density_data(WSN_dens_path)
     map_dens_to_dens("WSN", load_Lee_density_data(WSN_dens_path), WSN_dens_data)
     WSN_NGS_count_dict = map_positions_to_density(WSN_reads_dict, WSN_dens_data)
-    ratio_data["WSN"] = compare_position_with_density(WSN_NGS_count_dict, WSN_dens_data, WSN_reads_dict)
+    ratio_data["WSN Mendes"] = compare_position_with_density(WSN_NGS_count_dict, WSN_dens_data, WSN_reads_dict)
     
+    source = "Boussier"
+    WSN_reads_dict = load_WSN_data(source)   
+    WSN_NGS_count_dict = map_positions_to_density(WSN_reads_dict, WSN_dens_data, author=source)
+    ratio_data["WSN Boussier"] = compare_position_with_density(WSN_NGS_count_dict, WSN_dens_data, WSN_reads_dict, author=source)
+
     # NP data from Williams 2021 they define high and low areas
     #   PR8 data from Pelz and Alnaji2021
     PR8_dens_path = os.path.join(density_path, "PR8")
     PR8_high_dens_data = load_Williams_density_data(PR8_dens_path, "high")
     PR8_low_dens_data = load_Williams_density_data(PR8_dens_path, "low")
     PR8_reads_dict = load_full_alnaji2021()
-  #  PR8_reads_dict = load_pelz_dataset()
     PR8_NGS_count_dict = map_positions_to_density(PR8_reads_dict, PR8_high_dens_data, PR8_low_dens_data)
-    ratio_data["PR8"] = compare_position_with_density(PR8_NGS_count_dict, PR8_high_dens_data, PR8_reads_dict)
+    ratio_data["PR8 Alnaji"] = compare_position_with_density(PR8_NGS_count_dict, PR8_high_dens_data, PR8_reads_dict)
+
+    pelz_data = load_pelz_dataset()
+    PR8_NGS_count_dict = map_positions_to_density(pelz_data, PR8_high_dens_data, PR8_low_dens_data, author="Pelz")
+    ratio_data["PR8 Pelz"] = compare_position_with_density(PR8_NGS_count_dict, PR8_high_dens_data, PR8_reads_dict, author="Pelz")
 
     plot_ratios_together(ratio_data)
