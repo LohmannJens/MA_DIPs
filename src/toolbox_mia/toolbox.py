@@ -555,7 +555,6 @@ def plot_expected_vs_observed_direct_repeat_heatmaps(dfs, dfnames, expected_dfs 
         val_label.set_text(f"{val_label.get_text()}\n{val_labels[v_idx]}")
         val_label.set_size(6)
 
-
     x_ticks = axs.get_xticklabels()
     label = x_ticks[-2].get_text()
     x_ticks[-1].set_text(f"> {label}")
@@ -635,7 +634,68 @@ def plot_over_time(dfs, dfnames):
 
     return fig, axs
 
+
+def plot_distribution_over_segments(dfs, dfnames, mode):
+    """
+
+    Args:
+        dfs (list of pandas.DataFrame): The list of DataFrames containing the data. 
+                                        Each dataframe should be preprocessed with sequence_df(df)
+        dfnames (list of str): The names associated with each DataFrame in `dfs`.
+        col (str, optional): The column name in the DataFrames that contains the sequence segments of interest. 
+                             Default is 'seq_around_deletion_junction'.
+    Returns:
+        tuple: A tuple containing the figure and the axes of the subplots.
+            - fig (matplotlib.figure.Figure): The generated figure.
+            - axs (numpy.ndarray of matplotlib.axes.Axes): The axes of the subplots.
+
+    """
+    height = 6
+    width = len(dfs) * 1.5
+    fig, ax = plt.subplots(figsize=(width,height), nrows=1, ncols=1)
+    cm = plt.get_cmap('tab10')
+    ax.set_prop_cycle('color', [cm(1.*i/8) for i in range(8)])
+
+    fractions_dict = dict({s: list() for s in SEGMENTS})
+
+    for df in dfs:
+        counts = df['Segment'].value_counts()
+        total_entries = len(df)
+        fractions = counts / total_entries
+
+        for s in SEGMENTS:
+            if s in fractions:
+                frac = fractions[s]
+            else:
+                frac = 0.0
+            fractions_dict[s].append(frac)
+
+    bar_width = 0.5
+    x = np.arange(len(dfnames))
+    bottom = np.zeros(len(dfnames))
+
+    for s in SEGMENTS:
+        ax.bar(x, fractions_dict[s], bar_width, label=s, bottom=bottom)
+        bottom += fractions_dict[s]
+
+    # Add labels, title, and legend
+    ax.set_xlabel('Dataset')
+    ax.set_ylabel('Relative occurrence of DIs')
+    ax.set_title('Fractions of DIs from different datasets')
+    ax.set_xticks(x)
+    ax.set_xticklabels([f'{dfname} ({len(df)})' for dfname,df in zip(dfnames,dfs)])
+    ax.legend()
+
+    plt.tight_layout()
+    save_path = os.path.join(RESULTSPATH, "toolbox_mia", f"fraction_segments_{mode}.png")
+    plt.savefig(save_path)
+
+    return fig, ax
+
+
 if __name__ == "__main__":
+    plt.style.use('seaborn')
+
     # load all data frames and preprocess with sequence_df(df)
     dfs = list()
     dfnames = list()
@@ -643,8 +703,16 @@ if __name__ == "__main__":
 
     mode = "pelz_ot"
     mode = "all"
-    #mode = "alnaji_split"
+#    mode = "alnaji_split"
     #mode = "no_pelz"
+
+#    cleaned_data_dict = load_alnaji_excel()
+ #   all_reads_dict = load_short_reads(cleaned_data_dict)
+  #  for k, v in all_reads_dict.items():
+   #     dfs.append(preprocess(k, v))
+    #    dfnames.append(k)
+        #expected_dfs.append(preprocess(k, generate_expected_data(k, v)))
+
 
     if mode == "pelz_ot":
         df_pelz = load_pelz_dataset(by_time=True)
@@ -703,34 +771,36 @@ if __name__ == "__main__":
         for k, v in all_reads_dict.items():
             dfs.append(preprocess(k, v))
             dfnames.append(k)
-            expected_dfs.append(preprocess(k, generate_expected_data(k, v)))
+#            expected_dfs.append(preprocess(k, generate_expected_data(k, v)))
     
         alnaji_dict = load_full_alnaji2021()
         for k, v in alnaji_dict.items():
             dfs.append(preprocess(k, v))
             dfnames.append("Alnaji2021")
-            expected_dfs.append(preprocess(k, generate_expected_data(k, v)))
+ #           expected_dfs.append(preprocess(k, generate_expected_data(k, v)))
 
         df_pelz = load_pelz_dataset(long_dirna=True)
         for k, v in df_pelz.items():
             dfs.append(preprocess(k, v))
             dfnames.append("Pelz_long")
-            expected_dfs.append(preprocess(k, generate_expected_data(k, v)))
+  #          expected_dfs.append(preprocess(k, generate_expected_data(k, v)))
 
         df_mendes = load_WSN_data("Mendes")
         for k, v in df_mendes.items():
             dfs.append(preprocess(k, v))
             dfnames.append("Mendes")
-            expected_dfs.append(preprocess(k, generate_expected_data(k, v)))
+   #         expected_dfs.append(preprocess(k, generate_expected_data(k, v)))
 
         df_boussier = load_WSN_data("Boussier")
         for k, v in df_boussier.items():
             dfs.append(preprocess(k, v))
             dfnames.append("Boussier")
-            expected_dfs.append(preprocess(k, generate_expected_data(k, v)))
+    #        expected_dfs.append(preprocess(k, generate_expected_data(k, v)))
 
-    plot_nucleotide_ratio_around_deletion_junction_heatmaps(dfs, dfnames, mode)
-    plot_expected_vs_observed_nucleotide_enrichment_heatmaps(dfs, dfnames, expected_dfs, mode)
+#    plot_nucleotide_ratio_around_deletion_junction_heatmaps(dfs, dfnames, mode)
+ #   plot_expected_vs_observed_nucleotide_enrichment_heatmaps(dfs, dfnames, expected_dfs, mode)
 
-    plot_direct_repeat_ratio_heatmaps(dfs, dfnames, mode)
-    plot_expected_vs_observed_direct_repeat_heatmaps(dfs, dfnames, expected_dfs, mode)
+  #  plot_direct_repeat_ratio_heatmaps(dfs, dfnames, mode)
+   # plot_expected_vs_observed_direct_repeat_heatmaps(dfs, dfnames, expected_dfs, mode)
+
+    plot_distribution_over_segments(dfs, dfnames, mode)
