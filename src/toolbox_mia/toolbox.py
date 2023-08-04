@@ -24,7 +24,7 @@ sys.path.insert(0, "../direct_repeats")
 from search_direct_repeats import count_direct_repeats_overall, include_correction
 
 
-NUC = dict({"A": "Adenin", "C": "Cytosin", "G": "Guanin", "U": "Uracil"})
+NUC = dict({"A": "Adenine", "C": "Cytosine", "G": "Guanine", "U": "Uracil"})
 
 def create_nucleotide_ratio_matrix(df, col):
     probability_matrix = pd.DataFrame(columns=['A','C','G','U'])
@@ -335,6 +335,9 @@ def plot_expected_vs_observed_nucleotide_enrichment_heatmaps(dfs, dfnames, expec
                 else:
                     p1, p2 = p2, p1
                     n_s = n_samples2
+
+                n_s = min(n_s, 1000)
+                n_samples2 = min(n_samples2, 1000)
 
                 test_array = np.concatenate((np.ones(int(n_s * p1)), np.zeros(int(n_s - n_s * p1))))
                 test_array2 = np.concatenate((np.ones(int(n_samples2 * p2)), np.zeros(int(n_samples2 - n_samples2 * p2))))
@@ -714,7 +717,7 @@ if __name__ == "__main__":
 #    mode = "alnaji_split"
     #mode = "no_pelz"
 
-    mode = "test"
+    #mode = "test"
 #    cleaned_data_dict = load_alnaji_excel()
  #   all_reads_dict = load_short_reads(cleaned_data_dict)
   #  for k, v in all_reads_dict.items():
@@ -722,11 +725,6 @@ if __name__ == "__main__":
     #    dfnames.append(k)
      #   expected_dfs.append(preprocess(k, generate_expected_data(k, v)))
 
-    df_boussier = load_WSN_data("Boussier")
-    for k, v in df_boussier.items():
-        dfs.append(preprocess(k, v))
-        dfnames.append("Boussier")
-        #expected_dfs.append(preprocess(k, generate_expected_data(k, v)))
 
 
     if mode == "pelz_ot":
@@ -786,36 +784,37 @@ if __name__ == "__main__":
         for k, v in all_reads_dict.items():
             dfs.append(preprocess(k, v))
             dfnames.append(k)
-#            expected_dfs.append(preprocess(k, generate_expected_data(k, v)))
+            #expected_dfs.append(preprocess(k, generate_expected_data(k, v)))
     
         alnaji_dict = load_full_alnaji2021()
         for k, v in alnaji_dict.items():
             dfs.append(preprocess(k, v))
             dfnames.append("Alnaji2021")
- #           expected_dfs.append(preprocess(k, generate_expected_data(k, v)))
+            #expected_dfs.append(preprocess(k, generate_expected_data(k, v)))
 
         df_pelz = load_pelz_dataset(long_dirna=True)
         for k, v in df_pelz.items():
             dfs.append(preprocess(k, v))
             dfnames.append("Pelz_long")
-  #          expected_dfs.append(preprocess(k, generate_expected_data(k, v)))
+            #expected_dfs.append(preprocess(k, generate_expected_data(k, v)))
 
         df_mendes = load_WSN_data("Mendes")
         for k, v in df_mendes.items():
             dfs.append(preprocess(k, v))
             dfnames.append("Mendes")
-   #         expected_dfs.append(preprocess(k, generate_expected_data(k, v)))
+            #expected_dfs.append(preprocess(k, generate_expected_data(k, v)))
 
         df_boussier = load_WSN_data("Boussier")
         for k, v in df_boussier.items():
             dfs.append(preprocess(k, v))
             dfnames.append("Boussier")
-    #        expected_dfs.append(preprocess(k, generate_expected_data(k, v)))
+            #expected_dfs.append(preprocess(k, generate_expected_data(k, v)))
 
 #    plot_nucleotide_ratio_around_deletion_junction_heatmaps(dfs, dfnames, mode)
  #   plot_expected_vs_observed_nucleotide_enrichment_heatmaps(dfs, dfnames, expected_dfs, mode)
 
-    plot_direct_repeat_ratio_heatmaps(dfs, dfnames, mode)
-    #plot_expected_vs_observed_direct_repeat_heatmaps(dfs, dfnames, expected_dfs, mode)
+  #  plot_direct_repeat_ratio_heatmaps(dfs, dfnames, mode)
+   # plot_expected_vs_observed_direct_repeat_heatmaps(dfs, dfnames, expected_dfs, mode)
 
-   # plot_distribution_over_segments(dfs, dfnames, mode)
+    #plot_distribution_over_segments(dfs, dfnames, mode)
+    calculate_deletion_shifts(dfs, dfnames, mode)
