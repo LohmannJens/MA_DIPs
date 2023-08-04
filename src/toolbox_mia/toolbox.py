@@ -579,7 +579,7 @@ def plot_expected_vs_observed_direct_repeat_heatmaps(dfs, dfnames, expected_dfs 
     return fig, axs
 
 
-def plot_over_time(dfs, dfnames):
+def plot_nucleotide_enrichment_over_time(dfs, dfnames):
     """Plot heatmaps of nucleotide ratios around deletion junctions.
 
     Args:
@@ -598,8 +598,8 @@ def plot_over_time(dfs, dfnames):
             - axs (numpy.ndarray of matplotlib.axes.Axes): The axes of the subplots.
 
     """
-    height = len(dfs)
-    width = 10
+    height = 10
+    width = len(dfs) / 2
     col='seq_around_deletion_junction'
     fig, axs = plt.subplots(figsize=(width,height), nrows=2, ncols=2)
     axs = axs.flatten()
@@ -641,6 +641,76 @@ def plot_over_time(dfs, dfnames):
     axs[i].legend()
 
     save_path = os.path.join(RESULTSPATH, "toolbox_mia", f"nuc_occ_ot.png")
+    plt.savefig(save_path)
+
+    return fig, axs
+
+
+def plot_direct_repeats_over_time(dfs, dfnames):
+    """Plot heatmaps of nucleotide ratios around deletion junctions.
+
+    Args:
+        dfs (list of pandas.DataFrame): The list of DataFrames containing the data. 
+                                        Each dataframe should be preprocessed with sequence_df(df)
+        dfnames (list of str): The names associated with each DataFrame in `dfs`.
+        col (str, optional): The column name in the DataFrames that contains the sequence segments of interest. 
+                             Default is 'seq_around_deletion_junction'.
+        height (float, optional): The height of the figure in inches. Default is 20.
+        width (float, optional): The width of the figure in inches. Default is 16.
+        nucleotides (list of str, optional): The nucleotides to be plotted. Default is ['A', 'C', 'G', 'T'].
+
+    Returns:
+        tuple: A tuple containing the figure and the axes of the subplots.
+            - fig (matplotlib.figure.Figure): The generated figure.
+            - axs (numpy.ndarray of matplotlib.axes.Axes): The axes of the subplots.
+
+    """
+    height = 6
+    width = len(dfs) / 2
+    fig, axs = plt.subplots(figsize=(width,height), nrows=1, ncols=1)
+   # cm = plt.get_cmap('tab10')
+  #  axs.set_prop_cycle('color', [cm(1.*i/8) for i in range(8)])
+
+    y = dict({i: list() for i in range(6)})
+    for df in dfs:
+        all = 0
+        co = dict()
+        for s in SEGMENTS:
+            df_s = df[df["Segment"] == s]
+            if len(df_s) == 0:
+                continue
+                
+            seq = get_sequence(df_s["Strain"].unique()[0], s)
+            counts, _ = count_direct_repeats_overall(df_s, seq, mode=1)
+            counts = include_correction(counts)
+            for k, v in counts.items():
+                if k in co:
+                    co[k] += v
+                else:
+                    co[k] = v
+                all += v
+
+        for i in range(6):
+            y[i].append(co[i] / all)
+   
+    
+    bar_width = 0.5
+    x = [0.00, 0.50, 0.99, 1.40, 3.46, 4.00, 4.47, 5.00, 5.48, 7.95, 8.96, 9.42, 12.43, 12.97, 13.50, 16.01, 16.97, 17.45, 18.00, 19.48, 19.99, 20.44, 21.00, 22.00, 26.44, 29.95, 36.42, 42.42]
+    bottom = np.zeros(len(dfnames))
+
+    for i in range(6):
+        axs.bar(x, y[i], bar_width, label=i, bottom=bottom)
+        bottom += y[i]
+
+    axs.set_title(f'direct repeat ratios over time')
+    axs.set_ylabel('relative occurrence')
+    axs.set_xlabel('time')
+    axs.axvline(21.5)
+   
+    fig.tight_layout()
+    axs.legend()
+
+    save_path = os.path.join(RESULTSPATH, "toolbox_mia", f"direct_repeats_ot.png")
     plt.savefig(save_path)
 
     return fig, axs
@@ -767,7 +837,7 @@ if __name__ == "__main__":
     expected_dfs = list()
 
     mode = "pelz_ot"
-    mode = "all"
+    #mode = "all"
     #mode = "alnaji_split"
     #mode = "no_pelz"
 
@@ -795,7 +865,8 @@ if __name__ == "__main__":
                 df = v[v[t] != 0].copy()
                 dfs.append(preprocess(k, df))
                 dfnames.append(f"Pelz_{t}")
-        plot_over_time(dfs, dfnames, col='seq_around_deletion_junction', nucleotides=['A','C','G','U'])
+        plot_nucleotide_enrichment_over_time(dfs, dfnames)
+        plot_direct_repeats_over_time(dfs, dfnames)
         exit()
 
     elif mode == "no_pelz":
@@ -870,5 +941,5 @@ if __name__ == "__main__":
   #  plot_direct_repeat_ratio_heatmaps(dfs, dfnames, mode)
    # plot_expected_vs_observed_direct_repeat_heatmaps(dfs, dfnames, expected_dfs, mode)
 
-    #plot_distribution_over_segments(dfs, dfnames, mode)
+    plot_distribution_over_segments(dfs, dfnames, mode)
     calculate_deletion_shifts(dfs, dfnames, mode)
