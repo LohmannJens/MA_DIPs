@@ -671,8 +671,7 @@ def plot_distribution_over_segments(dfs, dfnames, mode):
 
     for df in dfs:
         counts = df['Segment'].value_counts()
-        total_entries = len(df)
-        fractions = counts / total_entries
+        fractions = counts / len(df)
 
         for s in SEGMENTS:
             if s in fractions:
@@ -703,6 +702,61 @@ def plot_distribution_over_segments(dfs, dfnames, mode):
 
     return fig, ax
 
+def calculate_deletion_shifts(dfs, dfnames, mode):
+    """
+
+    Args:
+        dfs (list of pandas.DataFrame): The list of DataFrames containing the data. 
+                                        Each dataframe should be preprocessed with sequence_df(df)
+        dfnames (list of str): The names associated with each DataFrame in `dfs`.
+        col (str, optional): The column name in the DataFrames that contains the sequence segments of interest. 
+                             Default is 'seq_around_deletion_junction'.
+    Returns:
+        tuple: A tuple containing the figure and the axes of the subplots.
+            - fig (matplotlib.figure.Figure): The generated figure.
+            - axs (numpy.ndarray of matplotlib.axes.Axes): The axes of the subplots.
+
+    """
+    height = 6
+    width = len(dfs) * 1.5
+    fig, ax = plt.subplots(figsize=(width,height), nrows=1, ncols=1)
+    cm = plt.get_cmap('tab10')
+    ax.set_prop_cycle('color', [cm(1.*i/8) for i in range(8)])
+
+    fractions_dict = dict({n: list() for n in [0, 1, 2]})
+
+    for df in dfs:
+        df["length"] = df["deleted_sequence"].apply(len)
+        df["shift"] = df["length"] % 3
+        
+        shifts = df["shift"].value_counts()
+        shifts = shifts / len(df)
+
+        for n in [0, 1, 2]:
+            fractions_dict[n].append(shifts[n])
+
+    bar_width = 0.5
+    x = np.arange(len(dfnames))
+    bottom = np.zeros(len(dfnames))
+
+    for n in [0, 1, 2]:
+        ax.bar(x, fractions_dict[n], bar_width, label=n, bottom=bottom)
+        bottom += fractions_dict[n]
+
+    # Add labels, title, and legend
+    ax.set_xlabel('Dataset')
+    ax.set_ylabel('Relative occurrence')
+    ax.set_title('Fractions of DIs with different offsets to in frame deletion')
+    ax.set_xticks(x)
+    ax.set_xticklabels([f'{dfname} ({len(df)})' for dfname,df in zip(dfnames,dfs)])
+    ax.legend()
+
+    plt.tight_layout()
+    save_path = os.path.join(RESULTSPATH, "toolbox_mia", f"deletion_shifts_{mode}.png")
+    plt.savefig(save_path)
+    
+    return fig, ax
+
 
 if __name__ == "__main__":
     plt.style.use('seaborn')
@@ -714,7 +768,7 @@ if __name__ == "__main__":
 
     mode = "pelz_ot"
     mode = "all"
-#    mode = "alnaji_split"
+    #mode = "alnaji_split"
     #mode = "no_pelz"
 
     #mode = "test"
