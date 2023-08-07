@@ -284,9 +284,12 @@ def get_inframe_deletion(row: pd.Series)-> int:
         :param row: data frame row including Strain, Segment, Start, and End    
 
         :return: 0 if inframe deletion
-                 1 or 2 if no inframe deletion
+                 -1 or 1 if no inframe deletion
     '''
-    return (row["End"] - 1 - row["Start"]) % 3
+    m = (row["End"] - 1 - row["Start"]) % 3
+    if m == 2:
+        m = -1
+    return m
     
 ### others ###
 def get_duplicate_info(df: pd.DataFrame)-> pd.DataFrame:
