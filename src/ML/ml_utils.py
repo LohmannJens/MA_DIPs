@@ -72,6 +72,8 @@ def generate_features(df: pd.DataFrame,
             feature_cols.append("delta_G")
         if "Peptide_Length" in features:
             feature_cols.append("Peptide_Length")
+        if "Inframe_Deletion" in features:
+            feature_cols.append("Inframe_Deletion")
 
     else:
         feature_cols = ["Start", "End"]
@@ -103,6 +105,9 @@ def generate_features(df: pd.DataFrame,
         if "Peptide_Length" in features:
             df["Peptide_Length"] = df.apply(get_peptide_length, axis=1)
             feature_cols.append("Peptide_Length")
+        if "Inframe_Deletion" in features:
+            df["Inframe_Deletion"] = df.apply(get_inframe_deletion, axis=1)
+            feature_cols.append("Inframe_Deletion")
 
     return df, feature_cols
 
@@ -272,6 +277,17 @@ def get_peptide_length(row: pd.Series)-> float:
     pep_seq = seq_obj.translate(to_stop=True)
     return len(pep_seq)
 
+def get_inframe_deletion(row: pd.Series)-> int:
+    '''
+        Checks for a DI candidate if the deletion is inframe. This is achieved
+        by applying modulo 3.
+        :param row: data frame row including Strain, Segment, Start, and End    
+
+        :return: 0 if inframe deletion
+                 1 or 2 if no inframe deletion
+    '''
+    return (row["End"] - 1 - row["Start"]) % 3
+    
 ### others ###
 def get_duplicate_info(df: pd.DataFrame)-> pd.DataFrame:
     '''

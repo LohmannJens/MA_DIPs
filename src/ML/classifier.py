@@ -134,7 +134,7 @@ def test_classifiers(df: pd.DataFrame,
         :return: None
     '''
     # add features
-    features = ["Segment", "DI_Length", "Direct_repeat","Junction", "3_5_ratio", "length_proportion", "delta_G", "Peptide_Length"]
+    features = ["Segment", "DI_Length", "Direct_repeat","Junction", "3_5_ratio", "length_proportion", "delta_G", "Peptide_Length", "Inframe_Deletion"]
     df, feature_cols = generate_features(df, features, load_precalc=True)
 
     features_out = "\n\t".join(features)
