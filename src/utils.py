@@ -330,3 +330,26 @@ def load_WSN_data(source: str)-> dict:
 
     data = dict({"WSN": df})
     return data
+
+def load_pelz_di244_dataset(by_time: bool=False)-> dict:
+    '''
+        Loads alternative data from Pelz et al 2021 publication.
+        Is a new experiment including DI244.
+        Is structured the same way as data from Alnaji 2019.
+        :param by_time: if True loads the dataset split up by timepoints
+
+        :return: dictionary with one key, value pair
+    '''
+    filename = "NGS_DI244_cutoffMPI_numbers.xlsx"
+
+    file_path = os.path.join(DATAPATH, "Pelz2021", filename)
+    data_dict = pd.read_excel(io=file_path,
+                              sheet_name=None,
+                              header=0,
+                              na_values=["", "None"],
+                              keep_default_na=False)
+
+    if not by_time:
+        exit("this needs to be implemented when needed.")
+    
+    return data_dict

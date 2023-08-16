@@ -17,7 +17,7 @@ import matplotlib.pyplot as plt
 import seaborn as sns
 
 sys.path.insert(0, "..")
-from utils import get_sequence, load_alnaji_excel, load_short_reads, load_full_alnaji2021, load_pelz_dataset, load_kupke, generate_sampling_data, load_WSN_data
+from utils import get_sequence, load_alnaji_excel, load_short_reads, load_full_alnaji2021, load_pelz_dataset, load_kupke, generate_sampling_data, load_WSN_data, load_pelz_di244_dataset
 from utils import SEGMENTS, QUANT, N_SAMPLES, RESULTSPATH
 
 sys.path.insert(0, "../direct_repeats")
@@ -618,8 +618,8 @@ def plot_nucleotide_enrichment_over_time(dfs, dfnames):
             for j in relevant_indices:
                 y[j].append(probability_matrix.loc[j,nuc])
 
-        #x = range(len(dfnames))
         x = [0.00, 0.50, 0.99, 1.40, 3.46, 4.00, 4.47, 5.00, 5.48, 7.95, 8.96, 9.42, 12.43, 12.97, 13.50, 16.01, 16.97, 17.45, 18.00, 19.48, 19.99, 20.44, 21.00, 22.00, 26.44, 29.95, 36.42, 42.42]
+    #    x = [0.0, 5.9, 9.9, 13.4, 14.3, 18.8, 22.3, 24.9]
         for k, v in y.items():
             # map relevant index to start/end and exact position
             if k <= 10:
@@ -696,6 +696,7 @@ def plot_direct_repeats_over_time(dfs, dfnames):
     
     bar_width = 0.5
     x = [0.00, 0.50, 0.99, 1.40, 3.46, 4.00, 4.47, 5.00, 5.48, 7.95, 8.96, 9.42, 12.43, 12.97, 13.50, 16.01, 16.97, 17.45, 18.00, 19.48, 19.99, 20.44, 21.00, 22.00, 26.44, 29.95, 36.42, 42.42]
+  #  x = [0.0, 5.9, 9.9, 13.4, 14.3, 18.8, 22.3, 24.9]
     bottom = np.zeros(len(dfnames))
 
     for i in range(6):
@@ -836,6 +837,7 @@ if __name__ == "__main__":
     dfnames = list()
     expected_dfs = list()
 
+    #mode = "pelz_di244"
     mode = "pelz_ot"
     #mode = "all"
     #mode = "alnaji_split"
@@ -849,7 +851,17 @@ if __name__ == "__main__":
     #    dfnames.append(k)
      #   expected_dfs.append(preprocess(k, generate_expected_data(k, v)))
 
+    if mode == "pelz_di244":
+        df_pelz = load_pelz_di244_dataset(by_time=True)
+        for k, v in df_pelz.items():
+            for t in ["VB1_Saat", "VB1_10", "VB1_18", "VB1_25", "VB1_27", "VB1_36", "VB1_43", "VB1_48"]:
+                df = v[v[t] != 0].copy()
+                dfs.append(preprocess(k, df))
+                dfnames.append(f"Pelz_{t}")
 
+        plot_nucleotide_enrichment_over_time(dfs, dfnames)
+        plot_direct_repeats_over_time(dfs, dfnames)
+        exit()
 
     if mode == "pelz_ot":
         df_pelz = load_pelz_dataset(by_time=True)
