@@ -85,7 +85,7 @@ def generate_maximum_overlap_candidates(dfs: list, dfnames: list):
     counts = list()
     dir_reps = list()
     for cand, count in candidate_counts.items():
-        if count > 0:
+        if count > 10:
             seg, s, e = cand.split("_")
             seq = get_sequence("PR8", seg)
             dir_rep, _ = calculate_direct_repeat(seq, int(s), int(e), w_len=10, m=1)
@@ -133,21 +133,12 @@ if __name__ == "__main__":
                 df = df.groupby(["DI", "Segment", "Start", "End"]).sum(["NGS_read_count"]).reset_index()
                 dfs.append(preprocess(k, df))
                 dfnames.append(f"Alnaji2021_{t}_{r}")   
-    '''
-    df_pelz = load_pelz_dataset()
-    for k, v in df_pelz.items():
-        dfs.append(preprocess(k, v))
-        dfnames.append("Pelz")
+
 
     df_pelz = load_pelz_dataset(long_dirna=True)
     for k, v in df_pelz.items():
         dfs.append(preprocess(k, v))
         dfnames.append("Pelz_long")
 
-    df_pelz = load_pelz_dataset(long_dirna=True, de_novo=True)
-    for k, v in df_pelz.items():
-        dfs.append(preprocess(k, v))
-        dfnames.append("Pelz_denovo")
-    '''
- #   generate_overlap_matrix_plot(dfs, dfnames)
+    generate_overlap_matrix_plot(dfs, dfnames)
     generate_maximum_overlap_candidates(dfs, dfnames)
