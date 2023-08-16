@@ -350,6 +350,29 @@ def load_pelz_di244_dataset(by_time: bool=False)-> dict:
                               keep_default_na=False)
 
     if not by_time:
-        exit("this needs to be implemented when needed.")
-    
+        df = data_dict["PR8"]
+        df["NGS_read_count"] = df.iloc[:,4:12].sum(axis=1)
+        df = df[['Segment', 'Start', 'End', 'NGS_read_count']].copy()
+        data_dict["PR8"] = df
+
+    return data_dict
+
+def load_pelz_PB2PB1PA_di244_dataset()-> dict:
+    '''
+        Loads alternative data from Pelz et al 2021 publication.
+        Is a new experiment including DI244.
+        Is structured the same way as data from Alnaji 2019.
+        :param by_time: if True loads the dataset split up by timepoints
+
+        :return: dictionary with one key, value pair
+    '''
+    filename = "Pelz_PB2PB1PA_DI244.xlsx"
+
+    file_path = os.path.join(DATAPATH, "Pelz2021", filename)
+    data_dict = pd.read_excel(io=file_path,
+                              sheet_name=None,
+                              header=0,
+                              na_values=["", "None"],
+                              keep_default_na=False)
+
     return data_dict

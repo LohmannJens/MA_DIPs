@@ -10,10 +10,8 @@ import seaborn as sns
 
 from collections import Counter
 
-
 sys.path.insert(0, "..")
-from utils import get_sequence, load_alnaji_excel, load_short_reads, load_full_alnaji2021, load_pelz_dataset, load_kupke, generate_sampling_data
-from utils import SEGMENTS, QUANT, N_SAMPLES
+from utils import get_sequence, load_full_alnaji2021, load_pelz_dataset, load_pelz_di244_dataset, load_pelz_PB2PB1PA_di244_dataset
 
 sys.path.insert(0, "../direct_repeats")
 from search_direct_repeats import calculate_direct_repeat
@@ -72,7 +70,7 @@ def generate_overlap_matrix_plot(dfs: list, dfnames: list):
     plt.show()
 
 
-def generate_maximum_overlap_candidates(dfs: list, dfnames: list):
+def generate_maximum_overlap_candidates(dfs: list, thresh: int):
     '''
     
     '''
@@ -85,7 +83,7 @@ def generate_maximum_overlap_candidates(dfs: list, dfnames: list):
     counts = list()
     dir_reps = list()
     for cand, count in candidate_counts.items():
-        if count > 10:
+        if count > thresh:
             seg, s, e = cand.split("_")
             seq = get_sequence("PR8", seg)
             dir_rep, _ = calculate_direct_repeat(seq, int(s), int(e), w_len=10, m=1)
@@ -94,6 +92,7 @@ def generate_maximum_overlap_candidates(dfs: list, dfnames: list):
             counts.append(count)
             dir_reps.append(dir_rep)
 
+    '''
     d = dict({"counts": counts, "dir_reps": dir_reps})
     df = pd.DataFrame(d)
     
@@ -104,6 +103,7 @@ def generate_maximum_overlap_candidates(dfs: list, dfnames: list):
 
     plt.scatter(counts, dir_reps, alpha=0.05)
     plt.show()
+    '''
 
 
 if __name__ == "__main__":
@@ -112,20 +112,7 @@ if __name__ == "__main__":
     dfnames = list()
 
     '''
-    cleaned_data_dict = load_alnaji_excel()
-    all_reads_dict = load_short_reads(cleaned_data_dict)
-    for k, v in all_reads_dict.items():
-        dfs.append(preprocess(k, v))
-        dfnames.append(k)
-    
-    df_alnaji = load_full_alnaji2021()
-    df_alnaji = df_alnaji.groupby(["DI"]).sum(["NGS_read_count"]).reset_index()
-    dfs.append(preprocess("PR8", df_alnaji))
-    dfnames.append("Alnaji2021")
-    
-    '''
     alnaji_dict = load_full_alnaji2021()
-
     for k, v in alnaji_dict.items():
         for t in ["3hpi", "6hpi", "14hpi_internal", "14hpi_external", "24hpi"]:
             for r in ["Rep1", "Rep2", "Rep3"]:
@@ -134,11 +121,33 @@ if __name__ == "__main__":
                 dfs.append(preprocess(k, df))
                 dfnames.append(f"Alnaji2021_{t}_{r}")   
 
+    generate_overlap_matrix_plot(dfs, dfnames)
+    generate_maximum_overlap_candidates(dfs, thresh=10)
+    '''
 
     df_pelz = load_pelz_dataset(long_dirna=True)
     for k, v in df_pelz.items():
         dfs.append(preprocess(k, v))
         dfnames.append("Pelz_long")
 
+    df_pelz = load_pelz_dataset(follow_up=True)
+    for k, v in df_pelz.items():
+        dfs.append(preprocess(k, v))
+        dfnames.append("Pelz_followup")
+
+    df_pelz = load_pelz_di244_dataset(by_time=False)
+    for k, v in df_pelz.items():
+        dfs.append(preprocess(k, v))
+        dfnames.append("Pelz_Di244")
+    
+    df_pelz = load_pelz_PB2PB1PA_di244_dataset()
+    for k, v in df_pelz.items():
+        for exp in ["B", "C"]:
+            for r in ["Rep1", "Rep2", "Rep3"]:
+                df = v[(v["Experiment"] == exp) & (v["Replicate"] == r)].copy()
+                dfs.append(preprocess(k, df))
+                dfnames.append(f"Pelz_Di244_{exp}_{r}")
+
     generate_overlap_matrix_plot(dfs, dfnames)
-    generate_maximum_overlap_candidates(dfs, dfnames)
+    generate_maximum_overlap_candidates(dfs, thresh=6)
+
