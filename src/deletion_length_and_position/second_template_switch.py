@@ -22,6 +22,8 @@ import pandas as pd
 import matplotlib.pyplot as plt
 import matplotlib.patches as patches
 
+from matplotlib.lines import Line2D
+
 sys.path.insert(0, "..")
 from utils import load_pelz_dataset, load_short_reads, load_alnaji_excel, load_WSN_data, load_full_alnaji2021, get_seq_len
 from utils import SEGMENTS
@@ -73,6 +75,8 @@ def create_start_end_connection_plot(df: pd.DataFrame,
     colors = [cm(1.*i/2) for i in range(2)]
 
     fig, ax = plt.subplots(figsize=(10, 5))
+
+    ''' #plot with circles
     for i, row in df.iterrows():
         center = row["Start"] + (row["End"] - row["Start"]) / 2
         radius = (row["End"] - row["Start"]) / 2
@@ -96,13 +100,49 @@ def create_start_end_connection_plot(df: pd.DataFrame,
     ax.set_xticks(np.arange(0, max_val, 200))
     ax.set_yticks([])
     ax.set_xlabel("Nucleotide position")
+    '''
+    y_start = -max_val/2
+    y_end = max_val/2
+
+    for i, row in df.iterrows():
+        if (row["Start"] < max_val/2) and (row["End"] > max_val/2):
+            x_start = row["Start"]
+            x_end = max_val - row["End"]
+            line = Line2D([x_start, x_end], [y_start+10, y_end], linewidth=1)
+            ax.add_line(line)
+        
+        else: # draw cicrle
+            radius = (row["End"] - row["Start"]) / 2
+            if row["Start"] < max_val/2: # is on bottom
+                center = row["Start"] + radius
+                start_angle = 180
+                end_angle = 0
+                y = y_start
+            else: # is on top
+                center = max_val - row["End"] + radius
+                start_angle = 0
+                end_angle = 180
+                y = y_end
+
+            half_cirlce = patches.Arc((center, y), radius*2, radius*2, angle=0, theta1=start_angle, theta2=end_angle)
+            ax.add_patch(half_cirlce)
+    
+    # add boxes for start and end of DI RNA sequence
+    ax.add_patch(plt.Rectangle((0, y_start), max_val/2, 10, alpha=0.7, color="black"))
+    ax.add_patch(plt.Rectangle((max_val/2, y_start), 10, max_val+10, alpha=0.7, facecolor="white", edgecolor="black", hatch=r"//"))
+    ax.add_patch(plt.Rectangle((0, y_end), max_val/2, 10, alpha=0.7, color="black"))
+
+    ax.set_xlim(0, y_end*1.3)
+    ax.set_ylim(y_start*1.3, y_end*1.3)
+
+
 
     # save figure
  #   plt.tight_layout()
   #  save_path = os.path.join(RESULTSPATH, "figure2", f"{strain}_{segment}_{cutoff}.png")
    # plt.savefig(save_path)
     plt.show()
-
+    exit()
 
 if __name__ == "__main__":
     plt.style.use('seaborn')
